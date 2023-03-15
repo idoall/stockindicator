@@ -36,7 +36,7 @@ type MacdData struct {
 	DIF  float64
 	DEA  float64
 	Macd float64
-	Hist float64
+	// Hist float64
 }
 
 // NewMacd new Func
@@ -64,7 +64,7 @@ func (e *Macd) Calculation() *Macd {
 			DIF:  dif,
 			DEA:  deas[i],
 			Macd: (dif - deas[i]) * 2,
-			Hist: dif - (dif-deas[i])*2,
+			// Hist: dif - (dif-deas[i])*2,
 		}
 	}
 

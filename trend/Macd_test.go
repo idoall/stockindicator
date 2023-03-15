@@ -26,7 +26,7 @@ func TestMacd(t *testing.T) {
 			break
 		}
 		var v = dataList[i]
-		fmt.Printf("\t[%d]Time:%s\t DIF:%f DEA:%f Macd:%f Hits:%f Side:%s\n", i, v.Time.Format("2006-01-02 15:04:05"), v.DIF, v.DEA, v.Macd, v.Hist, side.Data[i])
+		fmt.Printf("\t[%d]Time:%s\t DIF:%f DEA:%f Macd:%f Side:%s\n", i, v.Time.Format("2006-01-02 15:04:05"), v.DIF, v.DEA, v.Macd, side.Data[i])
 	}
 
 }
