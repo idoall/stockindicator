@@ -1,11 +1,10 @@
 package trend
 
 import (
-	"fmt"
+	"github.com/spf13/cast"
 	"math"
 	"time"
 
-	"github.com/idoall/TokenExchangeCommon/commonutils"
 	"github.com/idoall/stockindicator/utils"
 )
 
@@ -105,7 +104,7 @@ func (e *Cci) Calculation() *Cci {
 		for j := 0; j < e.Period; j++ {
 			avedevSum += math.Abs(e.typicalPrice[i-j] - e.maPrice[i])
 		}
-		tempAvedevPrice, _ := commonutils.FloatFromString(fmt.Sprintf("%d", e.Period))
+		tempAvedevPrice := cast.ToFloat64(e.Period)
 		e.avedevPrice = append(e.avedevPrice, avedevSum/tempAvedevPrice)
 	}
 

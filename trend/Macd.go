@@ -41,9 +41,15 @@ type MacdData struct {
 
 // NewMacd new Func
 // 使用方法，先添加最早日期的数据,最后一条应该是当前日期的数据，结果与 AICoin 对比完全一致
-func NewMacd(list utils.Klines) *Macd {
-	m := &Macd{Name: "Macd", PeriodShort: 12, PeriodSignal: 9, PeriodLong: 26, kline: list}
+func NewMacd(list utils.Klines, periodShort, periodLong, periodSignal int) *Macd {
+	m := &Macd{Name: "Macd", PeriodShort: periodShort, PeriodSignal: periodSignal, PeriodLong: periodLong, kline: list}
 	return m
+}
+
+// NewDefaultMacd new Func
+// 使用方法，先添加最早日期的数据,最后一条应该是当前日期的数据，结果与 AICoin 对比完全一致
+func NewDefaultMacd(list utils.Klines) *Macd {
+	return NewMacd(list, 12, 26, 9)
 }
 
 // Calculation Func
