@@ -1,6 +1,7 @@
 package oscillator
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/trend"
@@ -32,7 +33,7 @@ type StochasticOscillatorData struct {
 // NewStochasticOscillator new Func
 func NewStochasticOscillator(list utils.Klines, period int) *StochasticOscillator {
 	m := &StochasticOscillator{
-		Name:   "StochasticOscillator",
+		Name:   fmt.Sprintf("StochasticOscillator%d", period),
 		kline:  list,
 		Period: period,
 	}

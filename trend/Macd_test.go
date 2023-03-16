@@ -14,7 +14,7 @@ func TestMacd(t *testing.T) {
 	list := utils.GetTestKline()
 
 	//计算新的Macd
-	stock := NewMacd(list)
+	stock := NewDefaultMacd(list)
 
 	var dataList = stock.GetData()
 

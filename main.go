@@ -14,7 +14,7 @@ func main() {
 	list := utils.GetTestKline()
 
 	strategiesSides := utils.RunStrategies(
-		trend.NewMacd(list),
+		trend.NewDefaultMacd(list),
 		trend.NewDefaultKdj(list),
 		oscillator.NewAbsolutePriceOscillator(list),
 		trend.NewDefaultCci(list),

@@ -1,6 +1,7 @@
 package volume
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
@@ -34,7 +35,7 @@ type ChaikinMoneyFlowData struct {
 // NewChaikinMoneyFlow new Func
 func NewChaikinMoneyFlow(list utils.Klines, period int) *ChaikinMoneyFlow {
 	m := &ChaikinMoneyFlow{
-		Name:   "ChaikinMoneyFlow",
+		Name:   fmt.Sprintf("ChaikinMoneyFlow%d", period),
 		kline:  list,
 		Period: period,
 	}

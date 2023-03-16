@@ -15,6 +15,7 @@
 package channel
 
 import (
+	"fmt"
 	"math"
 	"time"
 
@@ -44,8 +45,8 @@ DN=MB－2×MD
 // 前者適合交易e 一個月至三個月左右的中期趨勢，後者適合拿來做短線價差交易，時間長度通常在一個月以內。
 type Boll struct {
 	Name    string
-	PeriodN int     //计算周期
-	PeriodK float64 //带宽
+	PeriodN int //计算周期
+	PeriodK int //带宽
 	data    []BollData
 	kline   utils.Klines
 }
@@ -59,8 +60,8 @@ type BollData struct {
 
 // NewBoll Func
 // 使用方法，先添加最早日期的数据,最后一条应该是当前日期的数据，结果与 AICoin 对比完全一致
-func NewBoll(list utils.Klines, PeriodN, periodK int) *Boll {
-	return &Boll{Name: "Boll", PeriodN: 20, PeriodK: 2.0, kline: list}
+func NewBoll(list utils.Klines, periodN, periodK int) *Boll {
+	return &Boll{Name: fmt.Sprintf("Boll%d-%d", periodN, periodK), PeriodN: periodN, PeriodK: periodK, kline: list}
 }
 
 // NewDefaultBoll Func

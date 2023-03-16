@@ -1,6 +1,7 @@
 package trend
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
@@ -41,9 +42,20 @@ type MacdData struct {
 
 // NewMacd new Func
 // 使用方法，先添加最早日期的数据,最后一条应该是当前日期的数据，结果与 AICoin 对比完全一致
-func NewMacd(list utils.Klines) *Macd {
-	m := &Macd{Name: "Macd", PeriodShort: 12, PeriodSignal: 9, PeriodLong: 26, kline: list}
+func NewMacd(list utils.Klines, short, signal, long int) *Macd {
+	m := &Macd{
+		Name:         fmt.Sprintf("Macd%d-%d-%d", short, signal, long),
+		PeriodShort:  short,
+		PeriodSignal: signal,
+		PeriodLong:   long,
+		kline:        list,
+	}
 	return m
+}
+
+// NewDefaultMacd new Func
+func NewDefaultMacd(list utils.Klines) *Macd {
+	return NewMacd(list, 12, 9, 26)
 }
 
 // Calculation Func

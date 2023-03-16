@@ -1,6 +1,7 @@
 package oscillator
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/trend"
@@ -31,7 +32,12 @@ type ChaikinOscillatorData struct {
 
 // NewChaikinOscillator new Func
 func NewChaikinOscillator(list utils.Klines, fastPeriod, slowPeriod int) *ChaikinOscillator {
-	m := &ChaikinOscillator{Name: "ChaikinOscillator", kline: list, FastPeriod: fastPeriod, SlowPeriod: slowPeriod}
+	m := &ChaikinOscillator{
+		Name:       fmt.Sprintf("ChaikinOscillator%d-%d", fastPeriod, slowPeriod),
+		kline:      list,
+		FastPeriod: fastPeriod,
+		SlowPeriod: slowPeriod,
+	}
 	return m
 }
 

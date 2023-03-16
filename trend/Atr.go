@@ -1,6 +1,7 @@
 package trend
 
 import (
+	"fmt"
 	"math"
 	"time"
 
@@ -23,7 +24,11 @@ type AtrData struct {
 
 // NewAtr new Func
 func NewAtr(list utils.Klines, period int) *Atr {
-	m := &Atr{Name: "Atr", kline: list, Period: period}
+	m := &Atr{
+		Name:   fmt.Sprintf("Atr%d", period),
+		kline:  list,
+		Period: period,
+	}
 	return m
 }
 

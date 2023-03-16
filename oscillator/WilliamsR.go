@@ -1,6 +1,7 @@
 package oscillator
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
@@ -29,7 +30,7 @@ type WilliamsRData struct {
 // NewWilliamsR new Func
 func NewWilliamsR(list utils.Klines, period int) *WilliamsR {
 	m := &WilliamsR{
-		Name:   "WilliamsR",
+		Name:   fmt.Sprintf("WilliamsR%d", period),
 		kline:  list,
 		Period: period,
 	}

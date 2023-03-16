@@ -1,6 +1,7 @@
 package trend
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
@@ -24,7 +25,11 @@ type DemaData struct {
 
 // NewDema new Func
 func NewDema(list utils.Klines, period int) *Dema {
-	m := &Dema{Name: "Dema", kline: list, Period: period}
+	m := &Dema{
+		Name:   fmt.Sprintf("Dema%d", period),
+		kline:  list,
+		Period: period,
+	}
 	return m
 }
 

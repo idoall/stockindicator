@@ -1,6 +1,7 @@
 package trend
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
@@ -22,7 +23,11 @@ type RsiData struct {
 // NewRsi new Func
 // 使用方法，先添加最早日期的数据,最后一条应该是当前日期的数据，结果与 AICoin 对比完全一致
 func NewRsi(list utils.Klines, period int) *Rsi {
-	m := &Rsi{Name: "Rsi", kline: list, Period: period}
+	m := &Rsi{
+		Name:   fmt.Sprintf("Rsi%d", period),
+		kline:  list,
+		Period: period,
+	}
 	return m
 }
 

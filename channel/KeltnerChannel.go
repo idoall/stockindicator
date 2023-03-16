@@ -1,6 +1,7 @@
 package channel
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/trend"
@@ -33,7 +34,7 @@ type KeltnerChannelData struct {
 // NewKeltnerChannel new Func
 func NewKeltnerChannel(list utils.Klines, period int) *KeltnerChannel {
 	m := &KeltnerChannel{
-		Name:   "KeltnerChannel",
+		Name:   fmt.Sprintf("KeltnerChannel%d", period),
 		kline:  list,
 		Period: period,
 	}

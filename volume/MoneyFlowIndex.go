@@ -1,6 +1,7 @@
 package volume
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
@@ -32,7 +33,7 @@ type MoneyFlowIndexData struct {
 // NewMoneyFlowIndex new Func
 func NewMoneyFlowIndex(list utils.Klines, period int) *MoneyFlowIndex {
 	m := &MoneyFlowIndex{
-		Name:   "MoneyFlowIndex",
+		Name:   fmt.Sprintf("MoneyFlowIndex%d", period),
 		kline:  list,
 		Period: period,
 	}
