@@ -44,6 +44,18 @@ func (e *Ma) GetData() []MaData {
 	return e.data
 }
 
+// GetValues return Values
+func (e *Ma) GetValues() []float64 {
+	if len(e.data) == 0 {
+		e = e.Calculation()
+	}
+	val := make([]float64, len(e.data))
+	for i, v := range e.data {
+		val[i] = v.Value
+	}
+	return val
+}
+
 // Calculation Func
 func (e *Ma) Calculation() *Ma {
 	for i := 0; i < len(e.kline); i++ {

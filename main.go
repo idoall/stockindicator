@@ -16,6 +16,8 @@ func main() {
 
 	strategiesSides := utils.RunStrategies(
 		trend.NewDefaultMacd(list),
+		trend.NewDefaultDma(list),
+		trend.NewDefaultTrix(list),
 		trend.NewDefaultKdj(list),
 		oscillator.NewAbsolutePriceOscillator(list),
 		trend.NewDefaultCci(list),

@@ -1,6 +1,7 @@
 package trend
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
@@ -40,7 +41,8 @@ type BbiData struct {
 
 // NewBbi new Func
 func NewBbi(list utils.Klines, periodMa1, periodMa2, periodMa3, periodMa4 int) *Bbi {
-	m := &Bbi{Name: "Bbi", kline: list,
+	m := &Bbi{Name: fmt.Sprintf("BBI%d-%d-%d-%d", periodMa1, periodMa2, periodMa3, periodMa4),
+		kline:     list,
 		periodMa1: periodMa1,
 		periodMa2: periodMa2,
 		periodMa3: periodMa3,
