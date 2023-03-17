@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/idoall/stockindicator/channel"
 	"strings"
 
 	"github.com/idoall/stockindicator/oscillator"
@@ -25,6 +26,8 @@ func main() {
 		oscillator.NewDefaultPercentagePriceOscillator(list),
 		oscillator.NewDefaultStochasticOscillator(list),
 		oscillator.NewDefaultWilliamsR(list),
+		channel.NewDefaultKeltnerChannel(list),
+		trend.NewDefaultBbi(list),
 	)
 
 	for i, v := range list {

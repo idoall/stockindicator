@@ -1,6 +1,7 @@
 package trend
 
 import (
+	"fmt"
 	"github.com/spf13/cast"
 	"math"
 	"time"
