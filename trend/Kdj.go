@@ -1,6 +1,7 @@
 package trend
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
@@ -27,7 +28,11 @@ type KdjData struct {
 // 短线选择：K线：18；D线：3；J线：3；
 // 中线选择：；K线：24；D线：3；J线：3。
 func NewKdj(list utils.Klines, period int) *Kdj {
-	m := &Kdj{Name: "Kdj", kline: list, Period: period}
+	m := &Kdj{
+		Name:   fmt.Sprintf("Kdj%d", period),
+		kline:  list,
+		Period: period,
+	}
 	return m
 }
 

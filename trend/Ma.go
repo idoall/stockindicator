@@ -1,6 +1,7 @@
 package trend
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
@@ -21,7 +22,11 @@ type MaData struct {
 
 // NewMa new Func
 func NewMa(list utils.Klines, period int) *Ma {
-	m := &Ma{Name: "Ma", kline: list, Period: period}
+	m := &Ma{
+		Name:   fmt.Sprintf("Ma%d", period),
+		kline:  list,
+		Period: period,
+	}
 	return m
 }
 

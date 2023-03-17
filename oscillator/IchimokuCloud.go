@@ -1,6 +1,7 @@
 package oscillator
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
@@ -39,7 +40,13 @@ type IchimokuCloudData struct {
 
 // NewIchimokuCloud new Func
 func NewIchimokuCloud(list utils.Klines, conversionPeriod, leadingSpanBPeriod, laggingLinePeriod int) *IchimokuCloud {
-	m := &IchimokuCloud{Name: "IchimokuCloud", kline: list, ConversionPeriod: conversionPeriod, LeadingSpanBPeriod: leadingSpanBPeriod, LaggingLinePeriod: laggingLinePeriod}
+	m := &IchimokuCloud{
+		Name:               fmt.Sprintf("IchimokuCloud%d-%d-%d", conversionPeriod, leadingSpanBPeriod, laggingLinePeriod),
+		kline:              list,
+		ConversionPeriod:   conversionPeriod,
+		LeadingSpanBPeriod: leadingSpanBPeriod,
+		LaggingLinePeriod:  laggingLinePeriod,
+	}
 	return m
 }
 

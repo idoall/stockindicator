@@ -23,7 +23,11 @@ type SmaData struct {
 
 // NewSma new Func
 func NewSma(list utils.Klines, period int) *Sma {
-	m := &Sma{Name: "Sma", kline: list, Period: period}
+	m := &Sma{
+		Name:   fmt.Sprintf("Sma%d", period),
+		kline:  list,
+		Period: period,
+	}
 	return m
 }
 

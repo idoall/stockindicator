@@ -1,6 +1,7 @@
 package volume
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
@@ -26,7 +27,7 @@ type VolumePriceTrendData struct {
 // NewVolumePriceTrend new Func
 func NewVolumePriceTrend(list utils.Klines, period int) *VolumePriceTrend {
 	m := &VolumePriceTrend{
-		Name:   "VolumePriceTrend",
+		Name:   fmt.Sprintf("VolumePriceTrend%d", period),
 		kline:  list,
 		Period: period,
 	}

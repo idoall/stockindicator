@@ -1,6 +1,7 @@
 package volume
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/trend"
@@ -27,7 +28,7 @@ type ForceIndexData struct {
 // NewForceIndex new Func
 func NewForceIndex(list utils.Klines, period int) *ForceIndex {
 	m := &ForceIndex{
-		Name:   "ForceIndex",
+		Name:   fmt.Sprintf("ForceIndex%d", period),
 		kline:  list,
 		Period: period,
 	}

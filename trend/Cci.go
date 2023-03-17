@@ -52,7 +52,12 @@ type CciData struct {
 
 // NewCci new Func
 func NewCci(list utils.Klines, period int) *Cci {
-	m := &Cci{Name: "Cci", kline: list, Period: period, factor: 0.015}
+	m := &Cci{
+		Name:   fmt.Sprintf("Cci%d", period),
+		kline:  list,
+		Period: period,
+		factor: 0.015,
+	}
 	return m
 }
 

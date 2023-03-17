@@ -1,6 +1,7 @@
 package trend
 
 import (
+	"fmt"
 	"math"
 	"time"
 
@@ -23,7 +24,11 @@ type VortexData struct {
 
 // NewVortex new Func
 func NewVortex(list utils.Klines, period int) *Vortex {
-	m := &Vortex{Name: "Vortex", kline: list, Period: period}
+	m := &Vortex{
+		Name:   fmt.Sprintf("Vortex%d", period),
+		kline:  list,
+		Period: period,
+	}
 	return m
 }
 

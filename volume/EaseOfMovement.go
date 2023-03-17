@@ -1,6 +1,7 @@
 package volume
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/trend"
@@ -31,7 +32,7 @@ type EaseOfMovementData struct {
 // NewEaseOfMovement new Func
 func NewEaseOfMovement(list utils.Klines, period int) *EaseOfMovement {
 	m := &EaseOfMovement{
-		Name:   "EaseOfMovement",
+		Name:   fmt.Sprintf("EaseOfMovement%d", period),
 		kline:  list,
 		Period: period,
 	}

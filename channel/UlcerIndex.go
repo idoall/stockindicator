@@ -1,6 +1,7 @@
 package channel
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/trend"
@@ -31,7 +32,7 @@ type UlcerIndexData struct {
 // NewUlcerIndex new Func
 func NewUlcerIndex(list utils.Klines, period int) *UlcerIndex {
 	m := &UlcerIndex{
-		Name:   "UlcerIndex",
+		Name:   fmt.Sprintf("UlcerIndex%d", period),
 		kline:  list,
 		Period: period,
 	}

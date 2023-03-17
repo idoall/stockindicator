@@ -1,6 +1,7 @@
 package volume
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
@@ -28,7 +29,11 @@ type VwmaData struct {
 
 // NewVwma new Func
 func NewVwma(list utils.Klines, period int) *Vwma {
-	m := &Vwma{Name: "Vwma", kline: list, Period: period}
+	m := &Vwma{
+		Name:   fmt.Sprintf("Vwma%d", period),
+		kline:  list,
+		Period: period,
+	}
 	return m
 }
 

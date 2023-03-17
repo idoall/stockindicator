@@ -1,6 +1,7 @@
 package channel
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
@@ -32,7 +33,7 @@ type DonchianChannelData struct {
 // NewDonchianChannel new Func
 func NewDonchianChannel(list utils.Klines, period int) *DonchianChannel {
 	m := &DonchianChannel{
-		Name:   "DonchianChannel",
+		Name:   fmt.Sprintf("DonchianChannel%d", period),
 		kline:  list,
 		Period: period,
 	}

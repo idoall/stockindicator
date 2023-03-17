@@ -1,6 +1,7 @@
 package trend
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
@@ -8,6 +9,7 @@ import (
 
 // Rolling Moving Average (Rma).
 type Rma struct {
+	Name   string
 	Period int //默认13
 	data   []RmaData
 	kline  utils.Klines
@@ -20,8 +22,16 @@ type RmaData struct {
 
 // NewRma new Func
 func NewRma(list utils.Klines, period int) *Rma {
-	m := &Rma{kline: list, Period: period}
+	m := &Rma{
+		Name:   fmt.Sprintf("Rma%d", period),
+		kline:  list,
+		Period: period,
+	}
 	return m
+}
+
+func NewDefaultRma(list utils.Klines) *Rma {
+	return NewRma(list, 13)
 }
 
 // Calculation Func

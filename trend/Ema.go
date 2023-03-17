@@ -1,6 +1,7 @@
 package trend
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
@@ -21,7 +22,11 @@ type EmaData struct {
 
 // NewEma new Func
 func NewEma(list utils.Klines, period int) *Ema {
-	m := &Ema{Name: "Ema", kline: list, Period: period}
+	m := &Ema{
+		Name:   fmt.Sprintf("Ema%d", period),
+		kline:  list,
+		Period: period,
+	}
 	return m
 }
 

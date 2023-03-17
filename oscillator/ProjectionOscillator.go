@@ -1,6 +1,7 @@
 package oscillator
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/trend"
@@ -29,7 +30,12 @@ type ProjectionOscillatorData struct {
 
 // NewProjectionOscillator new Func
 func NewProjectionOscillator(list utils.Klines, period, smooth int) *ProjectionOscillator {
-	m := &ProjectionOscillator{Name: "ProjectionOscillator", kline: list, Period: period, Smooth: smooth}
+	m := &ProjectionOscillator{
+		Name:   fmt.Sprintf("ProjectionOscillator%d-%d", period, smooth),
+		kline:  list,
+		Period: period,
+		Smooth: smooth,
+	}
 	return m
 }
 

@@ -1,6 +1,7 @@
 package oscillator
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/trend"
@@ -35,7 +36,7 @@ type PercentagePriceOscillatorData struct {
 // NewPercentagePriceOscillator new Func
 func NewPercentagePriceOscillator(list utils.Klines, fastPeriod, slowPeriod, signalPeriod int) *PercentagePriceOscillator {
 	m := &PercentagePriceOscillator{
-		Name:         "PercentagePriceOscillator",
+		Name:         fmt.Sprintf("PercentagePriceOscillator%d-%d-%d", fastPeriod, slowPeriod, signalPeriod),
 		kline:        list,
 		FastPeriod:   fastPeriod,
 		SlowPeriod:   slowPeriod,

@@ -23,7 +23,7 @@ func TestUlcerIndex(t *testing.T) {
 			break
 		}
 		var v = dataList[i]
-		fmt.Printf("\t[%d]Time:%s\tPrice:%f\tSMA:%f\n",
+		fmt.Printf("\t[%d]Time:%s\tPrice:%f\tValue:%f\n",
 			i,
 			v.Time.Format("2006-01-02 15:04:05"),
 			list[i].Close,
