@@ -39,10 +39,7 @@ func (e *Rma) Calculation() *Rma {
 
 	result := make([]float64, len(e.kline))
 
-	closeing := make([]float64, len(e.kline))
-	for _, v := range e.kline {
-		closeing = append(closeing, v.Close)
-	}
+	closeing := e.kline.GetOHLC().Close
 
 	period := e.Period
 	sum := float64(0)

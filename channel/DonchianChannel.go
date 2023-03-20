@@ -50,10 +50,7 @@ func (e *DonchianChannel) Calculation() *DonchianChannel {
 
 	var period = e.Period
 
-	var closing []float64
-	for _, v := range e.kline {
-		closing = append(closing, v.Close)
-	}
+	var closing = e.kline.GetOHLC().Close
 
 	upperChannel := utils.Max(period, closing)
 	lowerChannel := utils.Min(period, closing)

@@ -44,11 +44,9 @@ func NewDefaultForceIndex(list utils.Klines) *ForceIndex {
 func (e *ForceIndex) Calculation() *ForceIndex {
 
 	period := e.Period
-	var closing, volume []float64
-	for _, v := range e.kline {
-		closing = append(closing, v.Close)
-		volume = append(volume, v.Volume)
-	}
+	var ohlc = e.kline.GetOHLC()
+	var closing = ohlc.Close
+	var volume = ohlc.Volume
 
 	var vals = trend.NewEma(utils.CloseArrayToKline(utils.Multiply(utils.Diff(closing, 1), volume)), period).GetValues()
 

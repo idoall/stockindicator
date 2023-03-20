@@ -53,16 +53,14 @@ func NewDefaultPercentagePriceOscillator(list utils.Klines) *PercentagePriceOsci
 // Calculation Func
 func (e *PercentagePriceOscillator) Calculation() *PercentagePriceOscillator {
 
-	var price []float64
 	var fastPeriod = e.FastPeriod
 	var slowPeriod = e.SlowPeriod
 	var signalPeriod = e.SignalPeriod
-	for _, v := range e.kline {
-		price = append(price, v.Close)
-	}
 
-	fastEma := trend.NewEma(utils.CloseArrayToKline(price), fastPeriod).GetValues()
-	slowEma := trend.NewEma(utils.CloseArrayToKline(price), slowPeriod).GetValues()
+	var closing = e.kline.GetOHLC().Close
+
+	fastEma := trend.NewEma(utils.CloseArrayToKline(closing), fastPeriod).GetValues()
+	slowEma := trend.NewEma(utils.CloseArrayToKline(closing), slowPeriod).GetValues()
 
 	ppo := utils.MultiplyBy(utils.Divide(utils.Subtract(fastEma, slowEma), slowEma), 100)
 	signal := trend.NewEma(utils.CloseArrayToKline(ppo), signalPeriod).GetValues()

@@ -46,13 +46,11 @@ func NewDefaultAccumulationDistribution(list utils.Klines) *AccumulationDistribu
 // Calculation Func
 func (e *AccumulationDistribution) Calculation() *AccumulationDistribution {
 
-	var high, low, closing, volume []float64
-	for _, v := range e.kline {
-		high = append(high, v.High)
-		low = append(low, v.Low)
-		closing = append(closing, v.Close)
-		volume = append(volume, v.Volume)
-	}
+	var ohlc = e.kline.GetOHLC()
+	var high = ohlc.High
+	var low = ohlc.Low
+	var closing = ohlc.Close
+	var volume = ohlc.Volume
 
 	ad := make([]float64, len(closing))
 

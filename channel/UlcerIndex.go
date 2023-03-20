@@ -49,10 +49,7 @@ func (e *UlcerIndex) Calculation() *UlcerIndex {
 
 	var period = e.Period
 
-	var closing []float64
-	for _, v := range e.kline {
-		closing = append(closing, v.Close)
-	}
+	var closing = e.kline.GetOHLC().Close
 
 	highClosing := utils.Max(period, closing)
 	percentageDrawdown := utils.MultiplyBy(utils.Divide(utils.Subtract(closing, highClosing), highClosing), 100)

@@ -47,12 +47,10 @@ func (e *WilliamsR) Calculation() *WilliamsR {
 
 	var period = e.Period
 
-	var high, low, closing []float64
-	for _, v := range e.kline {
-		high = append(high, v.High)
-		low = append(low, v.Low)
-		closing = append(closing, v.Close)
-	}
+	var ohlc = e.kline.GetOHLC()
+	var high = ohlc.High
+	var low = ohlc.Low
+	var closing = ohlc.Close
 
 	highestHigh := utils.Max(period, high)
 	lowestLow := utils.Min(period, low)

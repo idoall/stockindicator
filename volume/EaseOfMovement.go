@@ -48,12 +48,10 @@ func NewDefaultEaseOfMovement(list utils.Klines) *EaseOfMovement {
 func (e *EaseOfMovement) Calculation() *EaseOfMovement {
 
 	period := e.Period
-	var high, low, volume []float64
-	for _, v := range e.kline {
-		high = append(high, v.High)
-		low = append(low, v.Low)
-		volume = append(volume, v.Volume)
-	}
+	var ohlc = e.kline.GetOHLC()
+	var high = ohlc.High
+	var low = ohlc.Low
+	var volume = ohlc.Volume
 
 	distanceMoved := utils.Diff(utils.DivideBy(utils.Add(high, low), 2), 1)
 	boxRatio := utils.Divide(utils.DivideBy(volume, float64(100000000)), utils.Subtract(high, low))

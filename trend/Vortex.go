@@ -41,12 +41,11 @@ func NewDefaultVortex(list utils.Klines) *Vortex {
 func (e *Vortex) Calculation() *Vortex {
 
 	period := e.Period
-	var high, low, closing []float64
-	for _, v := range e.kline {
-		high = append(high, v.High)
-		low = append(low, v.Low)
-		closing = append(closing, v.Close)
-	}
+
+	var ohlc = e.kline.GetOHLC()
+	var high = ohlc.High
+	var low = ohlc.Low
+	var closing = ohlc.Close
 
 	plusVi := make([]float64, len(high))
 	minusVi := make([]float64, len(high))

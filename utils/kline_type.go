@@ -18,42 +18,31 @@ type Kline struct {
 
 type Klines []Kline
 
-func (e Klines) GetCloses() []float64 {
-	var vals = make([]float64, len(e))
-	for i, v := range e {
-		vals[i] = v.Close
-	}
-	return vals
+// OHLC is a connector for technical analysis usage
+type OHLC struct {
+	Open   []float64
+	High   []float64
+	Low    []float64
+	Close  []float64
+	Volume []float64
 }
 
-func (e Klines) GetHighs() []float64 {
-	var vals = make([]float64, len(e))
-	for i, v := range e {
-		vals[i] = v.High
+// GetOHLC returns the entire subset of candles as a friendly type for gct
+// technical analysis usage.
+func (k Klines) GetOHLC() *OHLC {
+	ohlc := &OHLC{
+		Open:   make([]float64, len(k)),
+		High:   make([]float64, len(k)),
+		Low:    make([]float64, len(k)),
+		Close:  make([]float64, len(k)),
+		Volume: make([]float64, len(k)),
 	}
-	return vals
-}
-
-func (e Klines) GetLows() []float64 {
-	var vals = make([]float64, len(e))
-	for i, v := range e {
-		vals[i] = v.Low
+	for x := range k {
+		ohlc.Open[x] = k[x].Open
+		ohlc.High[x] = k[x].High
+		ohlc.Low[x] = k[x].Low
+		ohlc.Close[x] = k[x].Close
+		ohlc.Volume[x] = k[x].Volume
 	}
-	return vals
-}
-
-func (e Klines) GetOpen() []float64 {
-	var vals = make([]float64, len(e))
-	for i, v := range e {
-		vals[i] = v.Open
-	}
-	return vals
-}
-
-func (e Klines) GetVolumes() []float64 {
-	var vals = make([]float64, len(e))
-	for i, v := range e {
-		vals[i] = v.Volume
-	}
-	return vals
+	return ohlc
 }

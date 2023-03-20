@@ -45,11 +45,9 @@ func NewDefaultNegativeVolumeIndex(list utils.Klines) *NegativeVolumeIndex {
 // Calculation Func
 func (e *NegativeVolumeIndex) Calculation() *NegativeVolumeIndex {
 
-	var closing, volume []float64
-	for _, v := range e.kline {
-		closing = append(closing, v.Close)
-		volume = append(volume, v.Volume)
-	}
+	var ohlc = e.kline.GetOHLC()
+	var closing = ohlc.Close
+	var volume = ohlc.Volume
 
 	nvi := make([]float64, len(closing))
 
