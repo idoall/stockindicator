@@ -37,11 +37,8 @@ func NewDefaultRsi(list utils.Klines) *Rsi {
 
 // Calculation Func
 func (e *Rsi) Calculation() *Rsi {
-	var closeArray []float64
-	for _, v := range e.kline {
-		closeArray = append(closeArray, v.Close)
-	}
-	rsiArray := e.rsi(closeArray, e.Period)
+
+	rsiArray := e.rsi(e.kline.GetOHLC().Close, e.Period)
 
 	rsiArrayLen := len(rsiArray)
 	for i := 0; i <= (rsiArrayLen - 1); i++ {

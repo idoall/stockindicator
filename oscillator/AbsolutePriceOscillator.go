@@ -32,10 +32,7 @@ func NewAbsolutePriceOscillator(list utils.Klines) *AbsolutePriceOscillator {
 // Calculation Func
 func (e *AbsolutePriceOscillator) Calculation() *AbsolutePriceOscillator {
 
-	var closing []float64
-	for _, v := range e.kline {
-		closing = append(closing, v.Close)
-	}
+	var closing = e.kline.GetOHLC().Close
 
 	fast := trend.NewEma(utils.CloseArrayToKline(closing), e.FastPeriod).GetValues()
 	slow := trend.NewEma(utils.CloseArrayToKline(closing), e.SlowPeriod).GetValues()

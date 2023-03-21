@@ -43,11 +43,9 @@ func NewDefaultVolumePriceTrend(list utils.Klines) *VolumePriceTrend {
 func (e *VolumePriceTrend) Calculation() *VolumePriceTrend {
 
 	period := e.Period
-	var closing, volume []float64
-	for _, v := range e.kline {
-		closing = append(closing, v.Close)
-		volume = append(volume, v.Volume)
-	}
+	var ohlc = e.kline.GetOHLC()
+	var closing = ohlc.Close
+	var volume = ohlc.Volume
 
 	previousClosing := utils.ShiftRightAndFillBy(period, closing[0], closing)
 	vpt := utils.Multiply(volume, utils.Divide(utils.Subtract(closing, previousClosing), previousClosing))

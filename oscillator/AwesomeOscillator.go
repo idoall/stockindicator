@@ -34,11 +34,9 @@ func NewAwesomeOscillator(list utils.Klines) *AwesomeOscillator {
 // Calculation Func
 func (e *AwesomeOscillator) Calculation() *AwesomeOscillator {
 
-	var low, high []float64
-	for _, v := range e.kline {
-		low = append(low, v.Low)
-		high = append(high, v.High)
-	}
+	var ohlc = e.kline.GetOHLC()
+	var high = ohlc.High
+	var low = ohlc.Low
 
 	medianPrice := utils.DivideBy(utils.Add(low, high), float64(2))
 	sma5 := trend.NewEma(utils.CloseArrayToKline(medianPrice), 5).GetValues()

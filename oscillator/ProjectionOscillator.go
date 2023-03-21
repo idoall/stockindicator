@@ -49,12 +49,10 @@ func (e *ProjectionOscillator) Calculation() *ProjectionOscillator {
 
 	period := e.Period
 	smooth := e.Smooth
-	var high, low, closing []float64
-	for _, v := range e.kline {
-		high = append(high, v.High)
-		low = append(low, v.Low)
-		closing = append(closing, v.Close)
-	}
+	var ohlc = e.kline.GetOHLC()
+	var high = ohlc.High
+	var low = ohlc.Low
+	var closing = ohlc.Close
 
 	x := utils.GenerateNumbers(0, float64(len(closing)), 1)
 	mHigh, _ := utils.MovingLeastSquare(period, x, high)

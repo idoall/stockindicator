@@ -51,13 +51,11 @@ func NewDefaultChaikinMoneyFlow(list utils.Klines) *ChaikinMoneyFlow {
 func (e *ChaikinMoneyFlow) Calculation() *ChaikinMoneyFlow {
 
 	period := e.Period
-	var high, low, closing, volume []float64
-	for _, v := range e.kline {
-		high = append(high, v.High)
-		low = append(low, v.Low)
-		closing = append(closing, v.Close)
-		volume = append(volume, v.Volume)
-	}
+	var ohlc = e.kline.GetOHLC()
+	var high = ohlc.High
+	var low = ohlc.Low
+	var closing = ohlc.Close
+	var volume = ohlc.Volume
 
 	moneyFlowMultiplier := utils.Divide(
 		utils.Subtract(utils.Subtract(closing, low), utils.Subtract(high, closing)),

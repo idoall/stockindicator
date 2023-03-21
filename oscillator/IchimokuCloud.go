@@ -61,12 +61,10 @@ func (e *IchimokuCloud) Calculation() *IchimokuCloud {
 	conversionPeriod := e.ConversionPeriod
 	leadingSpanBPeriod := e.LeadingSpanBPeriod
 	laggingLinePeriod := e.LaggingLinePeriod
-	var high, low, closing []float64
-	for _, v := range e.kline {
-		high = append(high, v.High)
-		low = append(low, v.Low)
-		closing = append(closing, v.Close)
-	}
+	var ohlc = e.kline.GetOHLC()
+	var high = ohlc.High
+	var low = ohlc.Low
+	var closing = ohlc.Close
 
 	// 转换线
 	conversionLine := utils.DivideBy(utils.Add(utils.Max(9, high), utils.Min(conversionPeriod, low)), float64(2))

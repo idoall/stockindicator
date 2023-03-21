@@ -81,14 +81,9 @@ func (e *Atr) ChandelierExit(period int) ([]float64, []float64) {
 		e = e.Calculation()
 	}
 
-	var high, low []float64
-	for _, v := range e.kline {
-		high = append(high, v.High)
-		low = append(low, v.Low)
-	}
-
-	highestHigh22 := utils.Max(period, high)
-	lowestLow22 := utils.Min(period, low)
+	var ohlc = e.kline.GetOHLC()
+	highestHigh22 := utils.Max(period, ohlc.High)
+	lowestLow22 := utils.Min(period, ohlc.Low)
 
 	chandelierExitLong := make([]float64, len(e.data))
 	chandelierExitShort := make([]float64, len(e.data))
