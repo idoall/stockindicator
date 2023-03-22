@@ -49,7 +49,8 @@ func (e Klines) GetOHLC() *OHLC {
 }
 
 // RemoveDuplicates 删除任何重复的蜡烛
-func (e Klines) RemoveDuplicates() {
+func (e Klines) RemoveDuplicates() Klines {
+	var result Klines
 	lookup := make(map[int64]bool)
 	target := 0
 	for _, keep := range e {
@@ -59,11 +60,13 @@ func (e Klines) RemoveDuplicates() {
 			target++
 		}
 	}
-	e = e[:target]
+	result = e[:target]
+	return result
 }
 
 // RemoveOutsideRange 删除开始和结束日期之外的所有蜡烛图。
-func (e Klines) RemoveOutsideRange(start, end time.Time) {
+func (e Klines) RemoveOutsideRange(start, end time.Time) Klines {
+	var result Klines
 	target := 0
 	for _, keep := range e {
 		if keep.Time.Equal(start) || (keep.Time.After(start) && keep.Time.Before(end)) {
@@ -71,14 +74,16 @@ func (e Klines) RemoveOutsideRange(start, end time.Time) {
 			target++
 		}
 	}
-	e = e[:target]
+	result = e[:target]
+	return result
 }
 
 // SortCandlesByTimestamp 排序
-func (e Klines) SortCandlesByTimestamp(desc bool) {
+func (e Klines) SortCandlesByTimestamp(desc bool) Klines {
 	if desc {
 		sort.Slice(e, func(i, j int) bool { return e[i].Time.After(e[j].Time) })
-		return
+		return e
 	}
 	sort.Slice(e, func(i, j int) bool { return e[i].Time.Before(e[j].Time) })
+	return e
 }
