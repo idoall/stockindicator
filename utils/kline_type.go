@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"sort"
 	"time"
 )
 
@@ -29,20 +30,55 @@ type OHLC struct {
 
 // GetOHLC returns the entire subset of candles as a friendly type for gct
 // technical analysis usage.
-func (k Klines) GetOHLC() *OHLC {
+func (e Klines) GetOHLC() *OHLC {
 	ohlc := &OHLC{
-		Open:   make([]float64, len(k)),
-		High:   make([]float64, len(k)),
-		Low:    make([]float64, len(k)),
-		Close:  make([]float64, len(k)),
-		Volume: make([]float64, len(k)),
+		Open:   make([]float64, len(e)),
+		High:   make([]float64, len(e)),
+		Low:    make([]float64, len(e)),
+		Close:  make([]float64, len(e)),
+		Volume: make([]float64, len(e)),
 	}
-	for x := range k {
-		ohlc.Open[x] = k[x].Open
-		ohlc.High[x] = k[x].High
-		ohlc.Low[x] = k[x].Low
-		ohlc.Close[x] = k[x].Close
-		ohlc.Volume[x] = k[x].Volume
+	for x := range e {
+		ohlc.Open[x] = e[x].Open
+		ohlc.High[x] = e[x].High
+		ohlc.Low[x] = e[x].Low
+		ohlc.Close[x] = e[x].Close
+		ohlc.Volume[x] = e[x].Volume
 	}
 	return ohlc
+}
+
+// RemoveDuplicates 删除任何重复的蜡烛
+func (e Klines) RemoveDuplicates() {
+	lookup := make(map[int64]bool)
+	target := 0
+	for _, keep := range e {
+		if key := keep.Time.Unix(); !lookup[key] {
+			lookup[key] = true
+			e[target] = keep
+			target++
+		}
+	}
+	e = e[:target]
+}
+
+// RemoveOutsideRange 删除开始和结束日期之外的所有蜡烛图。
+func (e Klines) RemoveOutsideRange(start, end time.Time) {
+	target := 0
+	for _, keep := range e {
+		if keep.Time.Equal(start) || (keep.Time.After(start) && keep.Time.Before(end)) {
+			e[target] = keep
+			target++
+		}
+	}
+	e = e[:target]
+}
+
+// SortCandlesByTimestamp 排序
+func (e Klines) SortCandlesByTimestamp(desc bool) {
+	if desc {
+		sort.Slice(e, func(i, j int) bool { return e[i].Time.After(e[j].Time) })
+		return
+	}
+	sort.Slice(e, func(i, j int) bool { return e[i].Time.Before(e[j].Time) })
 }
