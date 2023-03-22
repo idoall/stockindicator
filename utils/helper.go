@@ -7,7 +7,7 @@ import (
 	"github.com/idoall/stockindicator/container/bst"
 )
 
-// Multiply 对 values 数组元素遍历乘以 multiplier 进行乘法运算.
+// MultiplyBy 对 values 数组元素遍历乘以 multiplier 进行乘法运算.
 func MultiplyBy(values []float64, multiplier float64) []float64 {
 	result := make([]float64, len(values))
 
@@ -407,8 +407,8 @@ func Abs(values []float64) []float64 {
 	return result
 }
 
-// mean 返回float64值数组的平均值
-func mean(values []float64) float64 {
+// Mean 返回float64值数组的平均值
+func Mean(values []float64) float64 {
 	var total float64 = 0
 	for x := range values {
 		total += values[x]
@@ -416,8 +416,25 @@ func mean(values []float64) float64 {
 	return total / float64(len(values))
 }
 
-// trueRange 返回高低闭合的真实范围
-func trueRange(inHigh, inLow, inClose []float64) []float64 {
+func AvgPrice(values ...[]float64) []float64 {
+	dataLen := float64(len(values))
+	if dataLen < 2 {
+		return values[0]
+	}
+
+	outReal := make([]float64, len(values[0]))
+	for i, _ := range values[0] {
+		val := 0.0
+		for _, item := range values {
+			val += item[i]
+		}
+		outReal[i] = val / dataLen
+	}
+	return outReal
+}
+
+// TrueRange 返回高低闭合的真实范围
+func TrueRange(inHigh, inLow, inClose []float64) []float64 {
 	outReal := make([]float64, len(inClose))
 
 	startIdx := 1
@@ -444,8 +461,8 @@ func trueRange(inHigh, inLow, inClose []float64) []float64 {
 	return outReal
 }
 
-// variance 返回给定时间段的方差
-func variance(inReal []float64, inTimePeriod int) []float64 {
+// Variance 返回给定时间段的方差
+func Variance(inReal []float64, inTimePeriod int) []float64 {
 	outReal := make([]float64, len(inReal))
 
 	nbInitialElementNeeded := inTimePeriod - 1
@@ -484,9 +501,9 @@ func variance(inReal []float64, inTimePeriod int) []float64 {
 	return outReal
 }
 
-// stdDev - Standard Deviation
-func stdDev(inReal []float64, inTimePeriod int, inNbDev float64) []float64 {
-	outReal := variance(inReal, inTimePeriod)
+// StdDev - Standard Deviation
+func StdDev(inReal []float64, inTimePeriod int, inNbDev float64) []float64 {
+	outReal := Variance(inReal, inTimePeriod)
 
 	if inNbDev != 1.0 {
 		for i := 0; i < len(inReal); i++ {
@@ -508,6 +525,14 @@ func stdDev(inReal []float64, inTimePeriod int, inNbDev float64) []float64 {
 		}
 	}
 	return outReal
+}
+
+func IfCase[T any](condition bool, trueVal, falseVal T) T {
+	if condition {
+		return trueVal
+	}
+
+	return falseVal
 }
 
 func GetTestKline() Klines {
