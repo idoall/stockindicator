@@ -8,6 +8,7 @@ import (
 )
 
 // TTMSqueeze Pro 挤压指标
+// Usage: https://cn.tradingview.com/script/0drMdHsO-TTM-Squeeze-Pro/
 type TTMSqueeze struct {
 	Name                                     string
 	Period                                   int

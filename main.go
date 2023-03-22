@@ -29,6 +29,7 @@ func main() {
 		oscillator.NewDefaultWilliamsR(list),
 		channel.NewDefaultKeltnerChannel(list),
 		trend.NewDefaultBbi(list),
+		trend.NewDefaultTTMSqueeze(list),
 	)
 
 	for i, v := range list {
