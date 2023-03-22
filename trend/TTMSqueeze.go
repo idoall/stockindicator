@@ -1,7 +1,6 @@
 package trend
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
@@ -78,7 +77,7 @@ type TTMSqueezeData struct {
 // NewTTMSqueeze new Func
 func NewTTMSqueeze(list utils.Klines, period int, multBB, multHighKC, multMidKC, multLowKC float64) *TTMSqueeze {
 	m := &TTMSqueeze{
-		Name:       fmt.Sprintf("TTMSqueeze%d-%f-%f-%f-%f", period, multBB, multLowKC, multMidKC, multHighKC),
+		Name:       "TTMSqueeze Pro",
 		kline:      list,
 		Period:     period,
 		MultBB:     multBB,
