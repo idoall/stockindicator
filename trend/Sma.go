@@ -82,6 +82,6 @@ func (e *Sma) GetValues() []float64 {
 	for i, v := range e.data {
 		val[i] = v.Value
 	}
-	fmt.Println(val)
+	// fmt.Println(val)
 	return val
 }
