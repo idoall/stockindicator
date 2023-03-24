@@ -3,6 +3,8 @@ package utils
 import (
 	"sort"
 	"time"
+
+	"github.com/idoall/stockindicator/container/bst"
 )
 
 // Kline struct
@@ -86,4 +88,27 @@ func (e Klines) SortCandlesByTimestamp(desc bool) Klines {
 	}
 	sort.Slice(e, func(i, j int) bool { return e[i].Time.Before(e[j].Time) })
 	return e
+}
+
+// ToHeikinAshi 转换成平均K线
+func (e Klines) ToHeikinAshi() Klines {
+	var result Klines
+
+	for _, candle := range e {
+
+		var open = candle.Open
+		if len(e) > 1 {
+			var prev = e[len(e)-1]
+			open = (prev.Open + prev.Close) / 2
+		}
+
+		result = append(result, Kline{
+			Open:  open,
+			Close: (candle.Open + candle.High + candle.Low + candle.Close) / 4,
+			High:  bst.New().Inserts([]float64{candle.High, candle.Open, candle.Close}).Max().(float64),
+			Low:   bst.New().Inserts([]float64{candle.Close, candle.Open, candle.Close}).Min().(float64),
+		})
+	}
+
+	return result
 }

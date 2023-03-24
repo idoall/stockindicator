@@ -21,10 +21,11 @@ func New() *Tree {
 	return &Tree{}
 }
 
-func (t *Tree) Inserts(values []float64) {
+func (t *Tree) Inserts(values []float64) *Tree {
 	for _, v := range values {
 		t.Insert(v)
 	}
+	return t
 }
 
 // Inserts 插入新值，小于当前值向左插入，大于当前值向右插入.
