@@ -42,7 +42,7 @@ func Divide(values1, values2 []float64) []float64 {
 
 	for i := 0; i < len(result); i++ {
 		val := values1[i] / values2[i]
-		if math.IsNaN(val) {
+		if math.IsNaN(val) || math.IsInf(val, 0) {
 			val = 0
 		}
 		result[i] = val

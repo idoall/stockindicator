@@ -12,6 +12,7 @@
 - [Relative Strength Index(RSI)](#relative-strength-index)
 - [Simple Moving Average(SMA)](#simple-moving-average)
 - [Vortex Indicator(Vortex)](#vortex-indicator)
+- [Stochastic Relative Strength Index(Stoch RSI)](#stochastic-relative-strength-index)
 
 
 
@@ -133,6 +134,33 @@ Vortex Indicator 线的计算取自指定时间内的特定价格高点和低点
 
 ```golang
 stock := NewDefaultVortex(list)
+
+var dataList = stock.GetData()
+```
+
+### Stochastic Relative Strength Index
+
+Stoch RSI(Stochastic Relative Strength Index)结合了两种非常流行的技术分析指标，随机指标KDJ和相对强弱指标RSI。KDJ指标和RSI指标是基于价格计算得出的，而Stoch RSI是基于价格的RSI指标得出的；换句话说，就是把KDJ指标用在RSI指标上计算产生的。
+
+應用法則
+
+1. 超卖线交叉：Stoch RSI从超卖区穿越至超卖线(20)以上，这是一个买入信号。
+
+2. 中线交叉：Stoch RSI从下往上穿过0.50线，可以用来确认其它技术指标产生的买入信号。
+
+3. 底背离：在价格持续下跌的过程中，Stoch RSI却止跌回涨并穿越0.20线，形成底背离，这是一个买入信号。
+
+4. 超买线交叉: Stoch RSI从超买区穿越至超买线(80) 以下，这是一个卖出信号。
+
+5. 中线交叉：Stoch RSI从上往下穿过0.50线，可以用来确认其它技术指标产生的卖出信号。
+
+6. 顶背离：在价格持续上涨的过程中，Stoch RSI却开始下跌并穿越0.80线，形成顶背离，这是一个卖出信号。
+
+7. 在价格强力上涨和下跌的过程中，Stoch RSI和KDJ及RSI指标一样，会造成短期时间内的钝化现象。
+
+
+```golang
+stock := NewDefaultStochRsi(list)
 
 var dataList = stock.GetData()
 ```

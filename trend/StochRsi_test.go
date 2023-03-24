@@ -1,4 +1,4 @@
-package oscillator
+package trend
 
 import (
 	"fmt"
@@ -7,19 +7,19 @@ import (
 	"github.com/idoall/stockindicator/utils"
 )
 
-// RUN
-// go test -v ./oscillator -run TestStochasticOscillator
-func TestStochasticOscillator(t *testing.T) {
+// Run:
+// go test -v ./trend -run TestStochRsi
+func TestStochRsi(t *testing.T) {
 	t.Parallel()
 	list := utils.GetTestKline()
 
-	stock := NewDefaultStochasticOscillator(list)
+	stock := NewDefaultStochRsi(list)
 
 	var dataList = stock.GetData()
 
 	var side = stock.AnalysisSide()
 
-	fmt.Printf("-- %s --\n", side.Name)
+	fmt.Printf("-- %s --\n", stock.Name)
 	for i := len(dataList) - 1; i > 0; i-- {
 		if i < len(dataList)-10 {
 			break

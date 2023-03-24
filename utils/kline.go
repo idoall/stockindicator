@@ -6,5 +6,5 @@ func CloseArrayToKline(closeing []float64) (result Klines) {
 			Close: v,
 		})
 	}
-	return
+	return result
 }
