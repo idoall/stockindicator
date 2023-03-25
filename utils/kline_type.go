@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"sort"
 	"time"
 
@@ -97,9 +98,12 @@ func (e Klines) ToHeikinAshi() Klines {
 	for _, candle := range e {
 
 		var open = candle.Open
-		if len(e) > 1 {
-			var prev = e[len(e)-1]
+		if len(result) > 1 {
+			var prev = e[len(result)-1]
 			open = (prev.Open + prev.Close) / 2
+			if len(result) < 100 {
+				fmt.Printf("[%d]prev:%+v\n", len(result), prev)
+			}
 		}
 
 		result = append(result, Kline{
@@ -107,7 +111,12 @@ func (e Klines) ToHeikinAshi() Klines {
 			Close: (candle.Open + candle.High + candle.Low + candle.Close) / 4,
 			High:  bst.New().Inserts([]float64{candle.High, candle.Open, candle.Close}).Max().(float64),
 			Low:   bst.New().Inserts([]float64{candle.Close, candle.Open, candle.Close}).Min().(float64),
+			Time:  candle.Time,
 		})
+		if len(result) < 100 {
+			fmt.Printf("[%d]kline:%+v\n", len(result), candle)
+			fmt.Printf("[%d]avgkline:%+v\n", len(result), result[len(result)-1])
+		}
 	}
 
 	return result
