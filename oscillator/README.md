@@ -10,6 +10,7 @@
 - [Projection Oscillator](#projection-oscillator)
 - [Stochastic Oscillator](#stochastic-oscillator)
 - [Williams R](#williams-r)
+- [Volume Oscillator](#volume-oscillator)
 
 
 多一个指标作参考及分析固然是好，但世上没有无敌指标的，并非用了那个指标进行交易便能必胜，要明白指标的原理及优点，将其融入你个人的交易策略做分析，看看是否能提高回报，这才是正确的做法!
@@ -128,4 +129,18 @@ stock := NewDefaultWilliamsR(klineList)
 
 var dataList = stock.GetData()
 var side = stock.AnalysisSide()
+```
+
+### Volume Oscillator
+
+Volume Oscillator. 又名移动平均成交量指标，但是，它并非仅仅计算成交量的移动平均线，
+
+而是通过对成交量的长期移动平均线和短期移动平均线之间的比较
+
+分析成交量的运行趋势和及时研判趋势转变方向
+
+```golang
+stock := TestVolumeOscillator(klineList)
+
+var dataList = stock.GetData()
 ```

@@ -510,6 +510,16 @@ func stdDev(inReal []float64, inTimePeriod int, inNbDev float64) []float64 {
 	return outReal
 }
 
+// Nz 以系列中的指定数替换NaN值。
+func Nz(vals []float64, replacement float64) []float64 {
+	for i := 0; i < len(vals); i++ {
+		if math.IsNaN(vals[i]) {
+			vals[i] = replacement
+		}
+	}
+	return vals
+}
+
 func GetTestKline() Klines {
 	return []Kline{
 		Kline{Amount: 0, Count: 0, Open: 19193.700000, Close: 19004.500000, Low: 18600.000000, High: 19995.000000, Volume: 14700.175002, Time: time.UnixMicro(1663776000000000)},
