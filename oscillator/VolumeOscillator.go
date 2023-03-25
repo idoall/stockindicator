@@ -44,7 +44,7 @@ func NewDefaultVolumeOscillator(list utils.Klines) *VolumeOscillator {
 // Calculation Func
 func (e *VolumeOscillator) Calculation() *VolumeOscillator {
 
-	var volumes = e.kline.GetOHLC().Volume
+	var volumes = utils.Nz(e.kline.GetOHLC().Volume, 0)
 
 	short := trend.NewEma(utils.CloseArrayToKline(volumes), e.ShortLength).GetValues()
 	long := trend.NewEma(utils.CloseArrayToKline(volumes), e.LongLength).GetValues()
