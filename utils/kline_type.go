@@ -9,36 +9,44 @@ import (
 
 // Kline struct
 type Kline struct {
-	Amount float64   // 成交额
-	Count  int64     // 成交笔数
-	Open   float64   // 开盘价
-	Close  float64   // 收盘价, 当K线为最晚的一根时, 时最新成交价
-	Low    float64   // 最低价
-	High   float64   // 最高价
-	Volume float64   // 成交量
-	Time   time.Time // k线时间
+	Amount float64 // 成交额
+	Count  int64   // 成交笔数
+	Open   float64 // 开盘价
+	Close  float64 // 收盘价, 当K线为最晚的一根时, 时最新成交价
+	Low    float64 // 最低价
+	High   float64 // 最高价
+	Volume float64 // 成交量
+	// 涨跌幅
+	ChangePercent float64
+	// 是否阳线上涨
+	IsBullMarket bool
+	Time         time.Time // k线时间
 }
 
 type Klines []Kline
 
 // OHLC is a connector for technical analysis usage
 type OHLC struct {
-	Open   []float64
-	High   []float64
-	Low    []float64
-	Close  []float64
-	Volume []float64
+	Open          []float64
+	High          []float64
+	Low           []float64
+	Close         []float64
+	Volume        []float64
+	ChangePercent []float64
+	IsBullMarket  []bool
 }
 
 // GetOHLC returns the entire subset of candles as a friendly type for gct
 // technical analysis usage.
 func (e Klines) GetOHLC() *OHLC {
 	ohlc := &OHLC{
-		Open:   make([]float64, len(e)),
-		High:   make([]float64, len(e)),
-		Low:    make([]float64, len(e)),
-		Close:  make([]float64, len(e)),
-		Volume: make([]float64, len(e)),
+		Open:          make([]float64, len(e)),
+		High:          make([]float64, len(e)),
+		Low:           make([]float64, len(e)),
+		Close:         make([]float64, len(e)),
+		Volume:        make([]float64, len(e)),
+		ChangePercent: make([]float64, len(e)),
+		IsBullMarket:  make([]bool, len(e)),
 	}
 	for x := range e {
 		ohlc.Open[x] = e[x].Open
@@ -46,6 +54,8 @@ func (e Klines) GetOHLC() *OHLC {
 		ohlc.Low[x] = e[x].Low
 		ohlc.Close[x] = e[x].Close
 		ohlc.Volume[x] = e[x].Volume
+		ohlc.ChangePercent[x] = e[x].ChangePercent
+		ohlc.IsBullMarket[x] = e[x].IsBullMarket
 	}
 	return ohlc
 }
@@ -102,13 +112,18 @@ func (e Klines) ToHeikinAshi() Klines {
 			open = (prev.Open + prev.Close) / 2
 		}
 
-		result = append(result, Kline{
+		var k = Kline{
 			Open:  open,
 			Close: (candle.Open + candle.High + candle.Low + candle.Close) / 4,
 			High:  bst.New().Inserts([]float64{candle.High, candle.Open, candle.Close}).Max().(float64),
 			Low:   bst.New().Inserts([]float64{candle.Close, candle.Open, candle.Close}).Min().(float64),
 			Time:  candle.Time,
-		})
+		}
+		k.ChangePercent = (candle.Close - candle.Open) / candle.Open
+		if candle.Close > candle.Open {
+			k.IsBullMarket = true
+		}
+		result = append(result, k)
 	}
 
 	return result

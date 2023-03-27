@@ -12,9 +12,6 @@
 - [Williams R](#williams-r)
 - [Volume Oscillator](#volume-oscillator)
 
-
-多一个指标作参考及分析固然是好，但世上没有无敌指标的，并非用了那个指标进行交易便能必胜，要明白指标的原理及优点，将其融入你个人的交易策略做分析，看看是否能提高回报，这才是正确的做法!
-
 ### Absolute Price Oscillator
 
 Absolute Price Oscillator(APO) 也叫绝对波动指数. 用于跟踪趋势的技术指标。APO 上穿零表示看涨，而下穿零表示看跌。正值表示上升趋势，负值表示下降趋势。

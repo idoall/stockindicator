@@ -37,8 +37,14 @@ func NewDefaultEma(list utils.Klines) *Ema {
 
 // Calculation Func
 func (e *Ema) Calculation() *Ema {
-	for _, v := range e.kline {
-		e.add(v.Time, v.Close)
+	var vals = e.Ema(e.Period, e.kline.GetOHLC().Close)
+
+	e.data = make([]EmaData, len(vals))
+	for i, v := range e.kline {
+		e.data[i] = EmaData{
+			Time:  v.Time,
+			Value: vals[i],
+		}
 	}
 	return e
 }
@@ -83,4 +89,23 @@ func (e *Ema) add(timestamp time.Time, value float64) {
 	emaT := alpha*value + (1-alpha)*emaTminusOne
 	p.Value = emaT
 	e.data = append(e.data, p)
+}
+
+// Exponential Moving Average (EMA).
+func (e *Ema) Ema(period int, values []float64) []float64 {
+	result := make([]float64, len(values))
+
+	// k := float64(2) / float64(1+period)
+
+	for i, value := range values {
+		if i > 0 {
+			// result[i] = (value * k) + (result[i-1] * float64(1-k))
+			// result[i] = k*(values[i]-result[i-1]) + result[i-1]
+			result[i] = (2*value + float64(e.Period-1)*(result[i-1])) / float64(e.Period+1)
+		} else {
+			result[i] = value
+		}
+	}
+
+	return result
 }
