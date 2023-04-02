@@ -22,7 +22,7 @@ func TestMacd(t *testing.T) {
 
 	fmt.Printf("-- %s --\n", stock.Name)
 	for i := len(dataList) - 1; i > 0; i-- {
-		if i < len(dataList)-10 {
+		if i < len(dataList)-20 {
 			break
 		}
 		var v = dataList[i]
