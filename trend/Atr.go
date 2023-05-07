@@ -40,7 +40,7 @@ func NewDefaultAtr(list utils.Klines) *Atr {
 // Calculation Func
 func (e *Atr) Calculation() *Atr {
 
-	var tr []float64
+	var tr = make([]float64, len(e.kline))
 	for i := 0; i < len(e.kline); i++ {
 		klineItem := e.kline[i]
 		var AtrPointStruct AtrData
@@ -49,23 +49,20 @@ func (e *Atr) Calculation() *Atr {
 		if i != 0 {
 			prevClose = e.kline[i-1].Close
 		}
-		AtrPointStruct.TR = math.Max(klineItem.High-klineItem.Low, math.Max(klineItem.High-prevClose, klineItem.Low-prevClose))
+		tr[i] = math.Max(klineItem.High-klineItem.Low, math.Max(klineItem.High-prevClose, klineItem.Low-prevClose))
 		AtrPointStruct.Time = e.kline[i].Time
-		e.data = append(e.data, AtrPointStruct)
-
-		tr = append(tr, AtrPointStruct.TR)
 	}
+	var atr = (&Rma{}).Rma(e.Period, tr)
 
-	for i, v := range e.data {
-		if i == 0 {
-			continue
+	e.data = make([]AtrData, len(e.kline))
+	for i, v := range atr {
+		e.data[i] = AtrData{
+			Time: e.kline[i].Time,
+			TR:   tr[i],
+			Atr:  v,
 		}
-		e.data[i].Atr = (v.TR + float64(e.Period-1)*e.data[i-1].TR) / float64(e.Period)
 	}
-	// var atr = NewEma(utils.CloseArrayToKline(tr), e.Period).Calculation().GetData()
-	// for i := 0; i < len(atr); i++ {
-	// 	e.data[i].Atr = atr[i].Value
-	// }
+
 	return e
 }
 
@@ -96,7 +93,7 @@ func (e *Atr) ChandelierExit(period int) ([]float64, []float64) {
 	return chandelierExitLong, chandelierExitShort
 }
 
-// GetData Func
+// GetValues Func
 func (e *Atr) GetValues() (tr []float64, atr []float64) {
 	if len(e.data) == 0 {
 		e = e.Calculation()
@@ -114,4 +111,82 @@ func (e *Atr) GetData() []AtrData {
 		e = e.Calculation()
 	}
 	return e.data
+}
+
+// Atr - Average True Range
+func (e *Atr) Atr(inHigh []float64, inLow []float64, inClose []float64, inTimePeriod int) []float64 {
+
+	outReal := make([]float64, len(inClose))
+
+	inTimePeriodF := float64(inTimePeriod)
+
+	if inTimePeriod < 1 {
+		return outReal
+	}
+
+	if inTimePeriod <= 1 {
+		return utils.TRange(inHigh, inLow, inClose)
+	}
+
+	outIdx := inTimePeriod
+	today := inTimePeriod + 1
+
+	tr := utils.TRange(inHigh, inLow, inClose)
+	prevATRTemp := (&Rma{}).Rma(inTimePeriod, tr)
+	prevATR := prevATRTemp[inTimePeriod]
+	outReal[inTimePeriod] = prevATR
+
+	for outIdx = inTimePeriod + 1; outIdx < len(inClose); outIdx++ {
+		prevATR *= inTimePeriodF - 1.0
+		prevATR += tr[today]
+		prevATR /= inTimePeriodF
+		outReal[outIdx] = prevATR
+		today++
+	}
+
+	return outReal
+}
+
+// Natr - Normalized Average True Range
+func (e *Atr) Natr(inHigh []float64, inLow []float64, inClose []float64, inTimePeriod int) []float64 {
+
+	outReal := make([]float64, len(inClose))
+
+	if inTimePeriod < 1 {
+		return outReal
+	}
+
+	if inTimePeriod <= 1 {
+		return utils.TRange(inHigh, inLow, inClose)
+	}
+
+	inTimePeriodF := float64(inTimePeriod)
+	outIdx := inTimePeriod
+	today := inTimePeriod
+
+	tr := utils.TRange(inHigh, inLow, inClose)
+	prevATRTemp := (&Sma{}).Sma(inTimePeriod, tr)
+	prevATR := prevATRTemp[inTimePeriod]
+
+	tempValue := inClose[today]
+	if tempValue != 0.0 {
+		outReal[outIdx] = (prevATR / tempValue) * 100.0
+	} else {
+		outReal[outIdx] = 0.0
+	}
+
+	for outIdx = inTimePeriod + 1; outIdx < len(inClose); outIdx++ {
+		today++
+		prevATR *= inTimePeriodF - 1.0
+		prevATR += tr[today]
+		prevATR /= inTimePeriodF
+		tempValue = inClose[today]
+		if tempValue != 0.0 {
+			outReal[outIdx] = (prevATR / tempValue) * 100.0
+		} else {
+			outReal[0] = 0.0
+		}
+	}
+
+	return outReal
 }

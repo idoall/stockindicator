@@ -77,7 +77,7 @@ func (e *LinearRegressionCandles) Calculation() *LinearRegressionCandles {
 	return e
 }
 
-// GetData Func
+// GetValues Func
 func (e *LinearRegressionCandles) GetValues() (signal []float64) {
 	if len(e.data) == 0 {
 		e = e.Calculation()

@@ -37,26 +37,14 @@ func NewDefaultRma(list utils.Klines) *Rma {
 // Calculation Func
 func (e *Rma) Calculation() *Rma {
 
-	result := make([]float64, len(e.kline))
+	var rma = e.Rma(e.Period, e.kline.GetOHLC().Close)
 
-	closeing := e.kline.GetOHLC().Close
-
-	period := e.Period
-	sum := float64(0)
-
-	for i, value := range closeing {
-		count := i + 1
-
-		if i < period {
-			sum += value
-		} else {
-			sum = (result[i-1] * float64(period-1)) + value
-			count = period
-		}
+	e.data = make([]RmaData, len(rma))
+	for i, value := range rma {
 
 		e.data = append(e.data, RmaData{
 			Time:  e.kline[i].Time,
-			Value: sum / float64(count),
+			Value: value,
 		})
 	}
 
@@ -69,4 +57,30 @@ func (e *Rma) GetData() []RmaData {
 		e = e.Calculation()
 	}
 	return e.data
+}
+
+// Rolling Moving Average (RMA).
+//
+// R[0] to R[p-1] is SMA(values)
+// R[p] and after is R[i] = ((R[i-1]*(p-1)) + v[i]) / p
+//
+// Returns r.
+func (e *Rma) Rma(period int, values []float64) []float64 {
+	result := make([]float64, len(values))
+	sum := float64(0)
+
+	for i, value := range values {
+		count := i + 1
+
+		if i < period {
+			sum += value
+		} else {
+			sum = (result[i-1] * float64(period-1)) + value
+			count = period
+		}
+
+		result[i] = sum / float64(count)
+	}
+
+	return result
 }

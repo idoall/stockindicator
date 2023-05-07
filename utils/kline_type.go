@@ -128,3 +128,23 @@ func (e Klines) ToHeikinAshi() Klines {
 
 	return result
 }
+
+// HLC3 (最高价+最低价+收盘价)/3
+func (e Klines) HLC3() []float64 {
+	var result []float64
+
+	for _, candle := range e {
+		result = append(result, (candle.High+candle.Low+candle.Close)/3)
+	}
+	return result
+}
+
+// OHLC4 (开盘价 + 最高价 + 最低价 + 收盘价)/4
+func (e Klines) OHLC4() []float64 {
+	var result []float64
+
+	for _, candle := range e {
+		result = append(result, (candle.Open+candle.High+candle.Low+candle.Close)/4)
+	}
+	return result
+}

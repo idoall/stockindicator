@@ -672,6 +672,35 @@ func LinearRegSlope(inReal []float64, inTimePeriod int) []float64 {
 	return outReal
 }
 
+// TRange - True Range
+func TRange(inHigh []float64, inLow []float64, inClose []float64) []float64 {
+
+	outReal := make([]float64, len(inClose))
+
+	startIdx := 1
+	outIdx := startIdx
+	today := startIdx
+	for today < len(inClose) {
+		tempLT := inLow[today]
+		tempHT := inHigh[today]
+		tempCY := inClose[today-1]
+		greatest := tempHT - tempLT
+		val2 := math.Abs(tempCY - tempHT)
+		if val2 > greatest {
+			greatest = val2
+		}
+		val3 := math.Abs(tempCY - tempLT)
+		if val3 > greatest {
+			greatest = val3
+		}
+		outReal[outIdx] = greatest
+		outIdx++
+		today++
+	}
+
+	return outReal
+}
+
 func GetTestKline() Klines {
 	return []Kline{
 		Kline{Open: 9986.300000, Close: 9800.010000, Low: 9705.000000, High: 10035.960000, Volume: 100683.796400, Time: time.UnixMicro(1588896000000000), ChangePercent: -0.018655, IsBullMarket: false},
