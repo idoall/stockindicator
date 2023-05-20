@@ -510,13 +510,21 @@ func stdDev(inReal []float64, inTimePeriod int, inNbDev float64) []float64 {
 	return outReal
 }
 
-// Nz 以系列中的指定数替换NaN值。
-func Nz(vals []float64, replacement float64) []float64 {
+// Nzs 以系列中的指定数替换NaN值。
+func Nzs(vals []float64, replacement float64) []float64 {
 	for i := 0; i < len(vals); i++ {
-		if math.IsNaN(vals[i]) {
-			vals[i] = replacement
-		}
+		vals[i] = Nz(vals[i], replacement)
 	}
+	return vals
+}
+
+// Nz 以系列中的指定数替换NaN值。
+func Nz(vals float64, replacement float64) float64 {
+
+	if math.IsNaN(vals) {
+		return replacement
+	}
+
 	return vals
 }
 

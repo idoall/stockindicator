@@ -129,6 +129,16 @@ func (e Klines) ToHeikinAshi() Klines {
 	return result
 }
 
+// HL2 (最高价+最低价)/2
+func (e Klines) HL2() []float64 {
+	var result []float64
+
+	for _, candle := range e {
+		result = append(result, (candle.High+candle.Low)/2)
+	}
+	return result
+}
+
 // HLC3 (最高价+最低价+收盘价)/3
 func (e Klines) HLC3() []float64 {
 	var result []float64

@@ -13,13 +13,14 @@ func TestEma(t *testing.T) {
 	t.Parallel()
 	list := utils.GetTestKline()
 	//计算新的EMA
-	stock := NewDefaultEma(list)
+	// stock := NewDefaultEma(list)
+	stock := NewEma(list, 200)
 
 	dataList := stock.GetData()
 
 	fmt.Printf("-- %s --\n", stock.Name)
 	for i := len(dataList) - 1; i > 0; i-- {
-		if i < len(dataList)-5 {
+		if i < len(dataList)-100 {
 			break
 		}
 		var v = dataList[i]
