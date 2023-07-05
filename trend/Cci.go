@@ -5,8 +5,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/idoall/TokenExchangeCommon/commonutils"
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/commonutils"
 )
 
 /*

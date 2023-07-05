@@ -45,11 +45,9 @@ func (e *Dema) Calculation() *Dema {
 
 	e.data = make([]DemaData, len(e.kline))
 
-	// 计算 EMA1 值
-	ema1 := NewEma(e.kline, period).GetValues()
-
-	// 计算 EMA2 值
-	ema2 := NewEma(utils.CloseArrayToKline(ema1), period).GetValues()
+	var close = e.kline.GetOHLC().Close
+	var ema1 = (&Ema{}).Ema(period, close)
+	var ema2 = (&Ema{}).Ema(period, ema1)
 
 	// 2 * N日EMA － N日EMA的EMA
 	demas := utils.Subtract(utils.MultiplyBy(ema1, 2), ema2)
@@ -69,4 +67,16 @@ func (e *Dema) GetData() []DemaData {
 		e = e.Calculation()
 	}
 	return e.data
+}
+
+// GetValues return Values
+func (e *Dema) GetValues() []float64 {
+	if len(e.data) == 0 {
+		e = e.Calculation()
+	}
+	val := make([]float64, len(e.data))
+	for i, v := range e.data {
+		val[i] = v.Value
+	}
+	return val
 }

@@ -186,55 +186,55 @@ func (e *Kdj) calculationJ() []float64 {
 	return j
 }
 
-func (e *Kdj) highest(priceArray []float64, periods int) []float64 {
-	var periodArr []float64
-	length := len(priceArray)
-	var HighestLine []float64 = make([]float64, length)
+// func (e *Kdj) highest(priceArray []float64, periods int) []float64 {
+// 	var periodArr []float64
+// 	length := len(priceArray)
+// 	var HighestLine []float64 = make([]float64, length)
 
-	// Loop through the entire array.
-	for i := 0; i < length; i++ {
-		// add points to the array.
-		periodArr = append(periodArr, priceArray[i])
-		// 1: Check if array is "filled" else create null point in line.
-		// 2: Calculate average.
-		// 3: Remove first value.
-		if periods == len(periodArr) {
-			HighestLine[i] = e.arrayHighest(periodArr)
+// 	// Loop through the entire array.
+// 	for i := 0; i < length; i++ {
+// 		// add points to the array.
+// 		periodArr = append(periodArr, priceArray[i])
+// 		// 1: Check if array is "filled" else create null point in line.
+// 		// 2: Calculate average.
+// 		// 3: Remove first value.
+// 		if periods == len(periodArr) {
+// 			HighestLine[i] = e.arrayHighest(periodArr)
 
-			// remove first value in array.
-			periodArr = periodArr[1:]
-		} else {
-			HighestLine[i] = 0
-		}
-	}
+// 			// remove first value in array.
+// 			periodArr = periodArr[1:]
+// 		} else {
+// 			HighestLine[i] = 0
+// 		}
+// 	}
 
-	return HighestLine
-}
+// 	return HighestLine
+// }
 
-func (e *Kdj) lowest(priceArray []float64, periods int) []float64 {
-	var periodArr []float64
-	length := len(priceArray)
-	var LowestLine []float64 = make([]float64, length)
+// func (e *Kdj) lowest(priceArray []float64, periods int) []float64 {
+// 	var periodArr []float64
+// 	length := len(priceArray)
+// 	var LowestLine []float64 = make([]float64, length)
 
-	// Loop through the entire array.
-	for i := 0; i < length; i++ {
-		// add points to the array.
-		periodArr = append(periodArr, priceArray[i])
-		// 1: Check if array is "filled" else create null point in line.
-		// 2: Calculate average.
-		// 3: Remove first value.
-		if periods == len(periodArr) {
-			LowestLine[i] = e.arrayLowest(periodArr)
+// 	// Loop through the entire array.
+// 	for i := 0; i < length; i++ {
+// 		// add points to the array.
+// 		periodArr = append(periodArr, priceArray[i])
+// 		// 1: Check if array is "filled" else create null point in line.
+// 		// 2: Calculate average.
+// 		// 3: Remove first value.
+// 		if periods == len(periodArr) {
+// 			LowestLine[i] = e.arrayLowest(periodArr)
 
-			// remove first value in array.
-			periodArr = periodArr[1:]
-		} else {
-			LowestLine[i] = 0
-		}
-	}
+// 			// remove first value in array.
+// 			periodArr = periodArr[1:]
+// 		} else {
+// 			LowestLine[i] = 0
+// 		}
+// 	}
 
-	return LowestLine
-}
+// 	return LowestLine
+// }
 
 func (e *Kdj) arrayLowest(priceArray []float64) float64 {
 	length := len(priceArray)

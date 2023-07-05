@@ -71,25 +71,25 @@ func (e *Ema) GetValues() []float64 {
 
 // Add adds a new Value to Ema
 // 使用方法，先添加最早日期的数据,最后一条应该是当前日期的数据，结果与 AICoin 对比完全一致
-func (e *Ema) add(timestamp time.Time, value float64) {
-	p := EmaData{}
-	p.Time = timestamp
+// func (e *Ema) add(timestamp time.Time, value float64) {
+// 	p := EmaData{}
+// 	p.Time = timestamp
 
-	//平滑指数，一般取作2/(N+1)
-	alpha := 2.0 / (float64(e.Period) + 1.0)
+// 	//平滑指数，一般取作2/(N+1)
+// 	alpha := 2.0 / (float64(e.Period) + 1.0)
 
-	// fmt.Println(alpha)
+// 	// fmt.Println(alpha)
 
-	emaTminusOne := value
-	if len(e.data) > 0 {
-		emaTminusOne = e.data[len(e.data)-1].Value
-	}
+// 	emaTminusOne := value
+// 	if len(e.data) > 0 {
+// 		emaTminusOne = e.data[len(e.data)-1].Value
+// 	}
 
-	// 计算 Ema指数
-	emaT := alpha*value + (1-alpha)*emaTminusOne
-	p.Value = emaT
-	e.data = append(e.data, p)
-}
+// 	// 计算 Ema指数
+// 	emaT := alpha*value + (1-alpha)*emaTminusOne
+// 	p.Value = emaT
+// 	e.data = append(e.data, p)
+// }
 
 // Exponential Moving Average (EMA).
 func (e *Ema) Ema(period int, values []float64) []float64 {
@@ -106,6 +106,6 @@ func (e *Ema) Ema(period int, values []float64) []float64 {
 			result[i] = value
 		}
 	}
-
+	values = nil
 	return result
 }

@@ -1,4 +1,2 @@
-github.com/idoall/TokenExchangeCommon v0.0.0-20230306120902-5c378b2f904b h1:Y1t7CcHj2b6chG7J1DGNiXplHiRl6vNreUKtVMvq5O0=
-github.com/idoall/TokenExchangeCommon v0.0.0-20230306120902-5c378b2f904b/go.mod h1:udbTrushIreT/VGtbHDXoJjC52QQM6x/tehuuxbT40k=
 github.com/shopspring/decimal v1.3.1 h1:2Usl1nmF/WZucqkFZhnfFYxxxu8LG21F6nPQBE5gKV8=
 github.com/shopspring/decimal v1.3.1/go.mod h1:DKyhrW/HYNuLGql+MJL6WCR6knT2jwCFRcu2hWCYk4o=

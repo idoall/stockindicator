@@ -61,6 +61,18 @@ func (e *SuperTrend) Calculation() *SuperTrend {
 	var src = e.kline.HL2()
 	var close = e.kline.GetOHLC().Close
 
+	defer func() {
+		up = nil
+		upb = nil
+		up1 = nil
+		dn = nil
+		dnb = nil
+		dn1 = nil
+		trend = nil
+		atr = nil
+		src = nil
+		close = nil
+	}()
 	// 是否使用原ATR算法
 	if e.ChangeAtr {
 		_, atr = NewAtr(e.kline, e.AtrPeriod).GetValues()

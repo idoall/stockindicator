@@ -74,6 +74,15 @@ func (e *LinearRegressionCandles) Calculation() *LinearRegressionCandles {
 		}
 
 	}
+
+	defer func() {
+		ohlc = nil
+		bopen = nil
+		bhigh = nil
+		blow = nil
+		bclose = nil
+		signal = nil
+	}()
 	return e
 }
 

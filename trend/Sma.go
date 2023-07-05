@@ -96,5 +96,6 @@ func (e *Sma) Sma(period int, values []float64) []float64 {
 		}
 	}
 
+	values = nil
 	return result
 }
