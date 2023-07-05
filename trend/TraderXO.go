@@ -45,6 +45,11 @@ func (e *TraderXO) Calculation() *TraderXO {
 	v_fastEMAList := NewEma(e.kline, e.FastPeriod).GetValues()
 	v_slowEMAList := NewEma(e.kline, e.SlowPeriod).GetValues()
 
+	defer func() {
+		v_fastEMAList = nil
+		v_slowEMAList = nil
+	}()
+
 	e.data = make([]TraderXOData, len(e.kline))
 	for i := 0; i < len(e.kline); i++ {
 

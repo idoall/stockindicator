@@ -67,8 +67,6 @@ func (e *BreakoutProbability) Calculation() *BreakoutProbability {
 	var open = e.kline.GetOHLC().Open
 	var close = e.kline.GetOHLC().Close
 
-	nbr := e.NumberOfLines
-
 	//第1、2行是up；
 	// 3、4行是down;
 	// 5 行是 第1列green汇总；第2列red汇总
@@ -81,6 +79,15 @@ func (e *BreakoutProbability) Calculation() *BreakoutProbability {
 	for i := 0; i < 5; i++ {
 		vals[i] = make([]float64, 4)
 	}
+
+	defer func() {
+		high = nil
+		low = nil
+		open = nil
+		close = nil
+		total = nil
+		vals = nil
+	}()
 
 	e.data = make([]BreakoutProbabilityData, len(e.kline))
 	for klineIndex, row := range e.kline {
@@ -119,7 +126,7 @@ func (e *BreakoutProbability) Calculation() *BreakoutProbability {
 		a2 := vals[0][2]
 		b2 := vals[0][3]
 
-		for i := 0; i < nbr; i++ {
+		for i := 0; i < e.NumberOfLines; i++ {
 
 			if (green && math.Min(vals[i][0], vals[i][1]) > 0) || (red && math.Min(vals[i][2], vals[i][3]) > 0) {
 

@@ -50,6 +50,13 @@ func (e *UTBot) Calculation() *UTBot {
 	var atr = (&Atr{}).Atr(ohlc.High, ohlc.Low, ohlc.Close, e.AtrPeriod)
 	var closeing = ohlc.Close
 
+	defer func() {
+		xATRTrailingStop = nil
+		ohlc = nil
+		atr = nil
+		closeing = nil
+	}()
+
 	e.data = make([]UTBotData, len(e.kline))
 	for i, close := range closeing {
 		if i == 0 {
