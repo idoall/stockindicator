@@ -52,7 +52,7 @@ func (e *Atr) Calculation() *Atr {
 		tr[i] = math.Max(klineItem.High-klineItem.Low, math.Max(klineItem.High-prevClose, klineItem.Low-prevClose))
 		AtrPointStruct.Time = e.kline[i].Time
 	}
-	var atr = (&Rma{}).Rma(e.Period, tr)
+	var atr = utils.Rma(e.Period, tr)
 
 	e.data = make([]AtrData, len(e.kline))
 	for i, v := range atr {
@@ -132,7 +132,7 @@ func (e *Atr) Atr(inHigh []float64, inLow []float64, inClose []float64, inTimePe
 	today := inTimePeriod + 1
 
 	tr := utils.TRange(inHigh, inLow, inClose)
-	prevATRTemp := (&Rma{}).Rma(inTimePeriod, tr)
+	prevATRTemp := utils.Rma(inTimePeriod, tr)
 	prevATR := prevATRTemp[inTimePeriod]
 	outReal[inTimePeriod] = prevATR
 
@@ -165,7 +165,7 @@ func (e *Atr) Natr(inHigh []float64, inLow []float64, inClose []float64, inTimeP
 	today := inTimePeriod
 
 	tr := utils.TRange(inHigh, inLow, inClose)
-	prevATRTemp := (&Sma{}).Sma(inTimePeriod, tr)
+	prevATRTemp := utils.Sma(inTimePeriod, tr)
 	prevATR := prevATRTemp[inTimePeriod]
 
 	tempValue := inClose[today]

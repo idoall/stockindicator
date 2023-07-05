@@ -79,7 +79,7 @@ func (e *SuperTrend) Calculation() *SuperTrend {
 
 	} else {
 		var tr, _ = NewAtr(e.kline, e.AtrPeriod).GetValues()
-		atr = (&Sma{}).Sma(e.AtrPeriod, tr)
+		atr = utils.Sma(e.AtrPeriod, tr)
 	}
 
 	for i := 0; i < len(src); i++ {

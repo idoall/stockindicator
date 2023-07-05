@@ -54,9 +54,9 @@ func (e *LinearRegressionCandles) Calculation() *LinearRegressionCandles {
 
 	var signal []float64
 	if e.SMASignal {
-		signal = (&Sma{}).Sma(e.SignalSmoothing, bclose)
+		signal = utils.Sma(e.SignalSmoothing, bclose)
 	} else {
-		signal = (&Ema{}).Ema(e.SignalSmoothing, bclose)
+		signal = utils.Ema(e.SignalSmoothing, bclose)
 	}
 	// ? sma(bclose, signal_length) : ema(bclose, signal_length)
 

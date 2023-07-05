@@ -46,8 +46,8 @@ func (e *Dema) Calculation() *Dema {
 	e.data = make([]DemaData, len(e.kline))
 
 	var close = e.kline.GetOHLC().Close
-	var ema1 = (&Ema{}).Ema(period, close)
-	var ema2 = (&Ema{}).Ema(period, ema1)
+	var ema1 = utils.Ema(period, close)
+	var ema2 = utils.Ema(period, ema1)
 
 	// 2 * N日EMA － N日EMA的EMA
 	demas := utils.Subtract(utils.MultiplyBy(ema1, 2), ema2)

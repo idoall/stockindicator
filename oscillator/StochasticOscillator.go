@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/idoall/stockindicator/trend"
 	"github.com/idoall/stockindicator/utils"
 )
 
@@ -55,11 +54,15 @@ func (e *StochasticOscillator) Calculation() *StochasticOscillator {
 	var low = ohlc.Low
 	var closing = ohlc.Close
 
-	highestHigh14 := utils.Max(period, high)
-	lowestLow14 := utils.Min(period, low)
-
-	k := utils.MultiplyBy(utils.Divide(utils.Subtract(closing, lowestLow14), utils.Subtract(highestHigh14, lowestLow14)), float64(100))
-	d := trend.NewSma(utils.CloseArrayToKline(k), 3).GetValues()
+	var k, d = utils.Stochastic(closing, high, low, period)
+	defer func() {
+		ohlc = nil
+		high = nil
+		low = nil
+		closing = nil
+		k = nil
+		d = nil
+	}()
 
 	for i := 0; i < len(k); i++ {
 		e.data = append(e.data, StochasticOscillatorData{
@@ -106,6 +109,20 @@ func (e *StochasticOscillator) AnalysisSide() utils.SideData {
 		Name: e.Name,
 		Data: sides,
 	}
+}
+
+// GetValues Func
+func (e *StochasticOscillator) GetValues() (k []float64, d []float64) {
+	if len(e.data) == 0 {
+		e = e.Calculation()
+	}
+	k = make([]float64, len(e.data))
+	d = make([]float64, len(e.data))
+	for i, v := range e.data {
+		k[i] = v.K
+		d[i] = v.D
+	}
+	return
 }
 
 // GetData Func

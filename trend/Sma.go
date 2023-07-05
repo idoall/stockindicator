@@ -2,7 +2,6 @@ package trend
 
 import (
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
@@ -41,7 +40,7 @@ func (e *Sma) Calculation() *Sma {
 
 	var period = e.Period
 
-	smas := e.Sma(period, e.kline.GetOHLC().Close)
+	smas := utils.Sma(period, e.kline.GetOHLC().Close)
 	e.data = make([]SmaData, len(e.kline))
 
 	for i, sma := range smas {
@@ -73,29 +72,4 @@ func (e *Sma) GetValues() []float64 {
 	}
 	// fmt.Println(val)
 	return val
-}
-
-func (e *Sma) Sma(period int, values []float64) []float64 {
-	result := make([]float64, len(values))
-	sum := float64(0)
-
-	for i, value := range values {
-		count := i + 1
-		sum += value
-
-		if i >= period {
-			sum -= values[i-period]
-			count = period
-		}
-
-		val := sum / float64(count)
-		if math.IsNaN(val) || math.IsInf(val, -1) {
-			result[i] = 0
-		} else {
-			result[i] = val
-		}
-	}
-
-	values = nil
-	return result
 }

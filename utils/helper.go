@@ -709,6 +709,125 @@ func TRange(inHigh []float64, inLow []float64, inClose []float64) []float64 {
 	return outReal
 }
 
+func Stochastic(closing, highs, lows []float64, period int) (k, d []float64) {
+	highestHigh := Max(period, highs)
+	lowestLow := Min(period, lows)
+
+	k = MultiplyBy(Divide(Subtract(closing, lowestLow), Subtract(highestHigh, lowestLow)), float64(100))
+	d = Sma(3, k)
+	return k, d
+}
+
+func Sma(period int, values []float64) []float64 {
+	result := make([]float64, len(values))
+	sum := float64(0)
+
+	for i, value := range values {
+		count := i + 1
+		sum += value
+
+		if i >= period {
+			sum -= values[i-period]
+			count = period
+		}
+
+		val := sum / float64(count)
+		if math.IsNaN(val) || math.IsInf(val, -1) {
+			result[i] = 0
+		} else {
+			result[i] = val
+		}
+	}
+
+	values = nil
+	return result
+}
+
+// Rolling Moving Average (RMA).
+//
+// R[0] to R[p-1] is SMA(values)
+// R[p] and after is R[i] = ((R[i-1]*(p-1)) + v[i]) / p
+//
+// Returns r.
+func Rma(period int, values []float64) []float64 {
+	result := make([]float64, len(values))
+	sum := float64(0)
+
+	for i, value := range values {
+		count := i + 1
+
+		if i < period {
+			sum += value
+		} else {
+			sum = (result[i-1] * float64(period-1)) + value
+			count = period
+		}
+
+		result[i] = sum / float64(count)
+	}
+
+	return result
+}
+
+func Ema(period int, values []float64) []float64 {
+	result := make([]float64, len(values))
+
+	// k := float64(2) / float64(1+period)
+
+	for i, value := range values {
+		if i > 0 {
+			// result[i] = (value * k) + (result[i-1] * float64(1-k))
+			// result[i] = k*(values[i]-result[i-1]) + result[i-1]
+			result[i] = (2*value + float64(period-1)*(result[i-1])) / float64(period+1)
+		} else {
+			result[i] = value
+		}
+	}
+	values = nil
+	return result
+}
+
+// Wma - Weighted Moving Average
+func Wma(period int, values []float64) []float64 {
+
+	result := make([]float64, len(values))
+
+	lookbackTotal := period - 1
+	startIdx := lookbackTotal
+
+	if period == 1 {
+		copy(result, values)
+		return result
+	}
+	divider := (period * (period + 1)) >> 1
+	outIdx := period - 1
+	trailingIdx := startIdx - lookbackTotal
+	periodSum, periodSub := 0.0, 0.0
+	inIdx := trailingIdx
+	i := 1
+	for inIdx < startIdx {
+		tempReal := values[inIdx]
+		periodSub += tempReal
+		periodSum += tempReal * float64(i)
+		inIdx++
+		i++
+	}
+	trailingValue := 0.0
+	for inIdx < len(values) {
+		tempReal := values[inIdx]
+		periodSub += tempReal
+		periodSub -= trailingValue
+		periodSum += tempReal * float64(period)
+		trailingValue = values[trailingIdx]
+		result[outIdx] = periodSum / float64(divider)
+		periodSum -= periodSub
+		inIdx++
+		trailingIdx++
+		outIdx++
+	}
+	return result
+}
+
 func GetTestKline() Klines {
 	return []Kline{
 		Kline{Open: 9986.300000, Close: 9800.010000, Low: 9705.000000, High: 10035.960000, Volume: 100683.796400, Time: time.UnixMicro(1588896000000000), ChangePercent: -0.018655, IsBullMarket: false},
