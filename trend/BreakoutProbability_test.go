@@ -25,7 +25,21 @@ func TestBreakoutProbability(t *testing.T) {
 			break
 		}
 		var v = dataList[i]
-		fmt.Printf("\t[%d]Time:%s\t%+v\n", i, v.Time.Format("2006-01-02 15:04:05"), v)
+		fmt.Printf("\t[%d]Price:%f\tTime:%s\tWin:%.2f\tLoss:%.2f\tProfitability:%.2f%%\n", i, list[i].Close, v.Time.Format("2006-01-02 15:04:05"), v.Win, v.Loss, v.Win/(v.Win+v.Loss)*100)
+		fmt.Printf("\t\tBUY:\n\t\t\t")
+		for _, vv := range v.List {
+			if vv.Up {
+				fmt.Printf("[%.2f/%.2f%%]\t", vv.Price, vv.Per)
+			}
+		}
+		fmt.Printf("\n")
+		fmt.Printf("\t\tSELL:\n\t\t\t")
+		for _, vv := range v.List {
+			if !vv.Up {
+				fmt.Printf("[%.2f/%.2f%%]\t", vv.Price, vv.Per)
+			}
+		}
+		fmt.Printf("\n")
 	}
 
 }

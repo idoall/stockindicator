@@ -51,9 +51,11 @@ func NewDefaultPivotPointSuperTrend(list utils.Klines) *PivotPointSuperTrend {
 func (e *PivotPointSuperTrend) Calculation() *PivotPointSuperTrend {
 
 	var close = e.kline.GetOHLC().Close
+	var highs = e.kline.GetOHLC().High
+	var lows = e.kline.GetOHLC().Low
 
-	var ph = utils.PivotHigh(close, e.Period, e.Period)
-	var pl = utils.PivotLow(close, e.Period, e.Period)
+	var ph = utils.PivotHigh(highs, e.Period, e.Period)
+	var pl = utils.PivotLow(lows, e.Period, e.Period)
 	var _, atr = NewAtr(e.kline, e.AtrPeriod).GetValues()
 
 	var tUP = make([]float64, len(e.kline))
@@ -96,9 +98,9 @@ func (e *PivotPointSuperTrend) Calculation() *PivotPointSuperTrend {
 		var Up = tCenter[i] - (e.AtrFactor * atr[i])
 		var Dn = tCenter[i] + (e.AtrFactor * atr[i])
 
-		tUP[i] = commonutils.If(closePrev > tUP[i], math.Max(Up, tUP[1]), Up).(float64)
-		tDown[i] = commonutils.If(closePrev < tDown[i], math.Max(Dn, tDown[1]), Dn).(float64)
-		trend[i] = commonutils.If(c > tDown[i], 1, commonutils.If(c < tUP[i], -1, trend[i-1]).(int)).(int)
+		tUP[i] = commonutils.If(closePrev > tUP[i-1], math.Max(Up, tUP[i-1]), Up).(float64)
+		tDown[i] = commonutils.If(closePrev < tDown[i-1], math.Min(Dn, tDown[i-1]), Dn).(float64)
+		trend[i] = commonutils.If(c > tDown[i-1], 1, commonutils.If(c < tUP[i-1], -1, trend[i-1]).(int)).(int)
 
 		var trailingsl = commonutils.If(trend[i] == 1, tUP[i], tDown[i]).(float64)
 

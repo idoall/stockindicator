@@ -20,10 +20,8 @@ func TestPivotPointSuperTrend(t *testing.T) {
 	var side = stock.AnalysisSide()
 
 	fmt.Printf("-- %s --\n", stock.Name)
-	for i := len(dataList) - 1; i > 0; i-- {
-		if i < len(dataList)-100 {
-			break
-		}
+	for i := len(dataList) - 10; i < len(dataList)-1; i++ {
+
 		var v = dataList[i]
 		fmt.Printf("\t[%d]Time:%s\tUp:%f\tUpTrendBegin:%f\tDown:%f\tDownTrendBegin:%f\tSide:%s\n", i, v.Time.Format("2006-01-02 15:04:05"), v.UpTrend, v.UpTrendBegin, v.DownTrend, v.DownTrendBegin, side.Data[i].String())
 	}

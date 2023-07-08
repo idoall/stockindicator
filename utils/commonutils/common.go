@@ -1,8 +1,13 @@
 package commonutils
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io/ioutil"
+	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/shopspring/decimal"
 )
@@ -44,4 +49,21 @@ func If(condition bool, trueVal, falseVal interface{}) interface{} {
 		return trueVal
 	}
 	return falseVal
+}
+
+// ReadFile reads a file and returns read data as byte array.
+func ReadFile(path string) ([]byte, error) {
+	file, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return file, nil
+}
+
+// JSONDecode decodes JSON data into a structure
+func JSONDecode(data []byte, to interface{}) error {
+	if !strings.Contains(reflect.ValueOf(to).Type().String(), "*") {
+		return errors.New("json decode error - memory address not supplied")
+	}
+	return json.Unmarshal(data, to)
 }

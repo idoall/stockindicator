@@ -50,7 +50,7 @@ func NewStochasticHeat(list utils.Klines, inc, smoothFast, smoothSlow, plotNum i
 }
 
 func NewDefaultStochasticHeat(list utils.Klines) *StochasticHeat {
-	return NewStochasticHeat(list, 8, 7, 26, 28, types.WMA)
+	return NewStochasticHeat(list, 8, 7, 26, 25, types.WMA)
 }
 
 // Calculation Func
