@@ -6,6 +6,7 @@ import (
 
 	"github.com/idoall/stockindicator/trend"
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // Keltner Channels是一个波动性指标，由一位名叫 Chester Keltner 的交易商在他 1960 年的著作《如何在商品中赚钱》中引入。
@@ -53,11 +54,11 @@ func (e *KeltnerChannel) Calculation() *KeltnerChannel {
 
 	_, atr := trend.NewAtr(e.kline, period).GetValues()
 	// _, atr := trend.Atr(period, high, low, closing)
-	atr2 := utils.MultiplyBy(atr, 2)
+	atr2 := ta.MultiplyBy(atr, 2)
 
 	middleLine := trend.NewEma(e.kline, period).GetValues()
-	upperBand := utils.Add(middleLine, atr2)
-	lowerBand := utils.Subtract(middleLine, atr2)
+	upperBand := ta.Add(middleLine, atr2)
+	lowerBand := ta.Subtract(middleLine, atr2)
 
 	for i := 0; i < len(middleLine); i++ {
 		e.data = append(e.data, KeltnerChannelData{

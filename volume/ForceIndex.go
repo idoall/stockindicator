@@ -6,6 +6,7 @@ import (
 
 	"github.com/idoall/stockindicator/trend"
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // The Force Index (FI) 强力指数指标，简称FI指标,它是由Alexander elder发明的.
@@ -48,7 +49,7 @@ func (e *ForceIndex) Calculation() *ForceIndex {
 	var closing = ohlc.Close
 	var volume = ohlc.Volume
 
-	var vals = trend.NewEma(utils.CloseArrayToKline(utils.Multiply(utils.Diff(closing, 1), volume)), period).GetValues()
+	var vals = trend.NewEma(utils.CloseArrayToKline(ta.Multiply(ta.Diff(closing, 1), volume)), period).GetValues()
 
 	for i := 0; i < len(vals); i++ {
 		e.data = append(e.data, ForceIndexData{

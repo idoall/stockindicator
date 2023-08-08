@@ -60,6 +60,19 @@ func (e Klines) GetOHLC() *OHLC {
 	return ohlc
 }
 
+func (e Klines) Contains(k Kline) bool {
+	for i := range e {
+		if e[i].Time.Equal(k.Time) &&
+			e[i].High == k.High &&
+			e[i].Low == k.Low &&
+			e[i].Open == k.Open &&
+			e[i].Close == k.Close {
+			return true
+		}
+	}
+	return false
+}
+
 // RemoveDuplicates 删除任何重复的蜡烛
 func (e Klines) RemoveDuplicates() Klines {
 	var result Klines

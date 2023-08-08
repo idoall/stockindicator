@@ -7,6 +7,7 @@ import (
 
 	"github.com/idoall/stockindicator/utils"
 	"github.com/idoall/stockindicator/utils/commonutils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // PivotPointSuperTrend struct
@@ -54,8 +55,8 @@ func (e *PivotPointSuperTrend) Calculation() *PivotPointSuperTrend {
 	var highs = e.kline.GetOHLC().High
 	var lows = e.kline.GetOHLC().Low
 
-	var ph = utils.PivotHigh(highs, e.Period, e.Period)
-	var pl = utils.PivotLow(lows, e.Period, e.Period)
+	var ph = ta.PivotHigh(highs, e.Period, e.Period)
+	var pl = ta.PivotLow(lows, e.Period, e.Period)
 	var _, atr = NewAtr(e.kline, e.AtrPeriod).GetValues()
 
 	var tUP = make([]float64, len(e.kline))
@@ -72,6 +73,8 @@ func (e *PivotPointSuperTrend) Calculation() *PivotPointSuperTrend {
 		trend = nil
 		tCenter = nil
 		close = nil
+		highs = nil
+		lows = nil
 	}()
 
 	e.data = make([]PivotPointSuperTrendData, len(e.kline))

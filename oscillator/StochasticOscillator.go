@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // Stochastic Oscillator. 显示了一定时期内收盘价相对于高低区间的位置。
@@ -54,7 +55,7 @@ func (e *StochasticOscillator) Calculation() *StochasticOscillator {
 	var low = ohlc.Low
 	var closing = ohlc.Close
 
-	var k, d = utils.Stochastic(closing, high, low, period)
+	var k, d = ta.Stochastic(closing, high, low, period)
 	defer func() {
 		ohlc = nil
 		high = nil

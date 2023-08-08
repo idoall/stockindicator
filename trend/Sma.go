@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // Sma struct
@@ -40,7 +41,7 @@ func (e *Sma) Calculation() *Sma {
 
 	var period = e.Period
 
-	smas := utils.Sma(period, e.kline.GetOHLC().Close)
+	smas := ta.Sma(period, e.kline.GetOHLC().Close)
 	e.data = make([]SmaData, len(e.kline))
 
 	for i, sma := range smas {

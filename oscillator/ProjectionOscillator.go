@@ -6,6 +6,7 @@ import (
 
 	"github.com/idoall/stockindicator/trend"
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // ProjectionOscillator Percentage Price Oscillator (PPO). 由Dr. Mel Widner 研仓。
@@ -54,17 +55,17 @@ func (e *ProjectionOscillator) Calculation() *ProjectionOscillator {
 	var low = ohlc.Low
 	var closing = ohlc.Close
 
-	x := utils.GenerateNumbers(0, float64(len(closing)), 1)
+	x := ta.GenerateNumbers(0, float64(len(closing)), 1)
 	mHigh, _ := utils.MovingLeastSquare(period, x, high)
 	mLow, _ := utils.MovingLeastSquare(period, x, low)
 
-	vHigh := utils.Add(high, utils.Multiply(mHigh, x))
-	vLow := utils.Add(low, utils.Multiply(mLow, x))
+	vHigh := ta.Add(high, ta.Multiply(mHigh, x))
+	vLow := ta.Add(low, ta.Multiply(mLow, x))
 
-	pu := utils.Max(period, vHigh)
-	pl := utils.Min(period, vLow)
+	pu := ta.Max(period, vHigh)
+	pl := ta.Min(period, vLow)
 
-	po := utils.Divide(utils.MultiplyBy(utils.Subtract(closing, pl), 100), utils.Subtract(pu, pl))
+	po := ta.Divide(ta.MultiplyBy(ta.Subtract(closing, pl), 100), ta.Subtract(pu, pl))
 	spo := trend.NewEma(utils.CloseArrayToKline(po), smooth).GetValues()
 	for i := 0; i < len(po); i++ {
 		e.data = append(e.data, ProjectionOscillatorData{

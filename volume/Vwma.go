@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // Vwma struct
@@ -49,7 +50,7 @@ func (e *Vwma) Calculation() *Vwma {
 	var closing = ohlc.Close
 	var volume = ohlc.Volume
 
-	vwmas := utils.Divide(utils.Sum(e.Period, utils.Multiply(closing, volume)), utils.Sum(e.Period, volume))
+	vwmas := ta.Divide(ta.Sum(e.Period, ta.Multiply(closing, volume)), ta.Sum(e.Period, volume))
 
 	for i := 0; i < len(vwmas); i++ {
 		e.data = append(e.data, VwmaData{

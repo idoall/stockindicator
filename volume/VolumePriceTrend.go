@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // The Volume Price Trend (VPT) provides a correlation between the
@@ -47,9 +48,9 @@ func (e *VolumePriceTrend) Calculation() *VolumePriceTrend {
 	var closing = ohlc.Close
 	var volume = ohlc.Volume
 
-	previousClosing := utils.ShiftRightAndFillBy(period, closing[0], closing)
-	vpt := utils.Multiply(volume, utils.Divide(utils.Subtract(closing, previousClosing), previousClosing))
-	vals := utils.Sum(len(vpt), vpt)
+	previousClosing := ta.ShiftRightAndFillBy(period, closing[0], closing)
+	vpt := ta.Multiply(volume, ta.Divide(ta.Subtract(closing, previousClosing), previousClosing))
+	vals := ta.Sum(len(vpt), vpt)
 
 	for i := 0; i < len(vals); i++ {
 		e.data = append(e.data, VolumePriceTrendData{

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // StochRsi is the main object
@@ -48,10 +49,10 @@ func (e *StochRsi) Calculation() *StochRsi {
 
 	rsi := NewRsi(e.kline, e.RsiLength).GetValue()
 
-	highestHigh := utils.Max(e.StochLength, rsi)
-	lowestLow := utils.Min(e.StochLength, rsi)
+	highestHigh := ta.Max(e.StochLength, rsi)
+	lowestLow := ta.Min(e.StochLength, rsi)
 
-	k := NewSma(utils.CloseArrayToKline(utils.MultiplyBy(utils.Divide(utils.Subtract(rsi, lowestLow), utils.Subtract(highestHigh, lowestLow)), float64(100))), e.SmoothK).GetValues()
+	k := NewSma(utils.CloseArrayToKline(ta.MultiplyBy(ta.Divide(ta.Subtract(rsi, lowestLow), ta.Subtract(highestHigh, lowestLow)), float64(100))), e.SmoothK).GetValues()
 	d := NewSma(utils.CloseArrayToKline(k), e.SmoothD).GetValues()
 
 	for i := 0; i < len(k); i++ {

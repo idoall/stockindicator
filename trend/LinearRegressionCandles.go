@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // LinearRegressionCandles struct
@@ -47,16 +48,16 @@ func NewDefaultLinearRegressionCandles(list utils.Klines) *LinearRegressionCandl
 func (e *LinearRegressionCandles) Calculation() *LinearRegressionCandles {
 
 	var ohlc = e.kline.GetOHLC()
-	var bopen = utils.LinearReg(ohlc.Open, e.LinearRegressionLength)
-	var bhigh = utils.LinearReg(ohlc.High, e.LinearRegressionLength)
-	var blow = utils.LinearReg(ohlc.Low, e.LinearRegressionLength)
-	var bclose = utils.LinearReg(ohlc.Close, e.LinearRegressionLength)
+	var bopen = ta.LinearReg(ohlc.Open, e.LinearRegressionLength)
+	var bhigh = ta.LinearReg(ohlc.High, e.LinearRegressionLength)
+	var blow = ta.LinearReg(ohlc.Low, e.LinearRegressionLength)
+	var bclose = ta.LinearReg(ohlc.Close, e.LinearRegressionLength)
 
 	var signal []float64
 	if e.SMASignal {
-		signal = utils.Sma(e.SignalSmoothing, bclose)
+		signal = ta.Sma(e.SignalSmoothing, bclose)
 	} else {
-		signal = utils.Ema(e.SignalSmoothing, bclose)
+		signal = ta.Ema(e.SignalSmoothing, bclose)
 	}
 	// ? sma(bclose, signal_length) : ema(bclose, signal_length)
 

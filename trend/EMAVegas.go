@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // EMAVegas struct
@@ -55,11 +56,11 @@ func (e *EMAVegas) Calculation() *EMAVegas {
 
 	var closeing = e.kline.GetOHLC().Close
 
-	ema := utils.Ema(e.Period, closeing)
-	emaShort1 := utils.Ema(e.PeriodShort1, closeing)
-	emaShort2 := utils.Ema(e.PeriodShort2, closeing)
-	emaLong1 := utils.Ema(e.PeriodLong1, closeing)
-	emaLong2 := utils.Ema(e.PeriodLong2, closeing)
+	ema := ta.Ema(e.Period, closeing)
+	emaShort1 := ta.Ema(e.PeriodShort1, closeing)
+	emaShort2 := ta.Ema(e.PeriodShort2, closeing)
+	emaLong1 := ta.Ema(e.PeriodLong1, closeing)
+	emaLong2 := ta.Ema(e.PeriodLong2, closeing)
 
 	for i := 0; i < len(emaShort1); i++ {
 		e.data[i] = EMAVegasData{

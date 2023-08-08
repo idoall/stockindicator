@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // Atr struct
@@ -52,7 +53,7 @@ func (e *Atr) Calculation() *Atr {
 		tr[i] = math.Max(klineItem.High-klineItem.Low, math.Max(klineItem.High-prevClose, klineItem.Low-prevClose))
 		AtrPointStruct.Time = e.kline[i].Time
 	}
-	var atr = utils.Rma(e.Period, tr)
+	var atr = ta.Rma(e.Period, tr)
 
 	e.data = make([]AtrData, len(e.kline))
 	for i, v := range atr {
@@ -79,8 +80,8 @@ func (e *Atr) ChandelierExit(period int) ([]float64, []float64) {
 	}
 
 	var ohlc = e.kline.GetOHLC()
-	highestHigh22 := utils.Max(period, ohlc.High)
-	lowestLow22 := utils.Min(period, ohlc.Low)
+	highestHigh22 := ta.Max(period, ohlc.High)
+	lowestLow22 := ta.Min(period, ohlc.Low)
 
 	chandelierExitLong := make([]float64, len(e.data))
 	chandelierExitShort := make([]float64, len(e.data))
@@ -111,82 +112,4 @@ func (e *Atr) GetData() []AtrData {
 		e = e.Calculation()
 	}
 	return e.data
-}
-
-// Atr - Average True Range
-func (e *Atr) Atr(inHigh []float64, inLow []float64, inClose []float64, inTimePeriod int) []float64 {
-
-	outReal := make([]float64, len(inClose))
-
-	inTimePeriodF := float64(inTimePeriod)
-
-	if inTimePeriod < 1 {
-		return outReal
-	}
-
-	if inTimePeriod <= 1 {
-		return utils.TRange(inHigh, inLow, inClose)
-	}
-
-	outIdx := inTimePeriod
-	today := inTimePeriod + 1
-
-	tr := utils.TRange(inHigh, inLow, inClose)
-	prevATRTemp := utils.Rma(inTimePeriod, tr)
-	prevATR := prevATRTemp[inTimePeriod]
-	outReal[inTimePeriod] = prevATR
-
-	for outIdx = inTimePeriod + 1; outIdx < len(inClose); outIdx++ {
-		prevATR *= inTimePeriodF - 1.0
-		prevATR += tr[today]
-		prevATR /= inTimePeriodF
-		outReal[outIdx] = prevATR
-		today++
-	}
-
-	return outReal
-}
-
-// Natr - Normalized Average True Range
-func (e *Atr) Natr(inHigh []float64, inLow []float64, inClose []float64, inTimePeriod int) []float64 {
-
-	outReal := make([]float64, len(inClose))
-
-	if inTimePeriod < 1 {
-		return outReal
-	}
-
-	if inTimePeriod <= 1 {
-		return utils.TRange(inHigh, inLow, inClose)
-	}
-
-	inTimePeriodF := float64(inTimePeriod)
-	outIdx := inTimePeriod
-	today := inTimePeriod
-
-	tr := utils.TRange(inHigh, inLow, inClose)
-	prevATRTemp := utils.Sma(inTimePeriod, tr)
-	prevATR := prevATRTemp[inTimePeriod]
-
-	tempValue := inClose[today]
-	if tempValue != 0.0 {
-		outReal[outIdx] = (prevATR / tempValue) * 100.0
-	} else {
-		outReal[outIdx] = 0.0
-	}
-
-	for outIdx = inTimePeriod + 1; outIdx < len(inClose); outIdx++ {
-		today++
-		prevATR *= inTimePeriodF - 1.0
-		prevATR += tr[today]
-		prevATR /= inTimePeriodF
-		tempValue = inClose[today]
-		if tempValue != 0.0 {
-			outReal[outIdx] = (prevATR / tempValue) * 100.0
-		} else {
-			outReal[0] = 0.0
-		}
-	}
-
-	return outReal
 }

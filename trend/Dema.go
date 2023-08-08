@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // Dema struct
@@ -46,11 +47,11 @@ func (e *Dema) Calculation() *Dema {
 	e.data = make([]DemaData, len(e.kline))
 
 	var close = e.kline.GetOHLC().Close
-	var ema1 = utils.Ema(period, close)
-	var ema2 = utils.Ema(period, ema1)
+	var ema1 = ta.Ema(period, close)
+	var ema2 = ta.Ema(period, ema1)
 
 	// 2 * N日EMA － N日EMA的EMA
-	demas := utils.Subtract(utils.MultiplyBy(ema1, 2), ema2)
+	demas := ta.Subtract(ta.MultiplyBy(ema1, 2), ema2)
 
 	for i := 0; i < len(demas); i++ {
 		e.data[i] = DemaData{

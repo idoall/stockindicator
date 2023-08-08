@@ -6,6 +6,7 @@ import (
 
 	"github.com/idoall/stockindicator/trend"
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // Percentage Price Oscillator (PPO). 百分比价格振荡器,是一个动量技术指标，它表示动量方向作为振荡器的迹象
@@ -62,9 +63,9 @@ func (e *PercentagePriceOscillator) Calculation() *PercentagePriceOscillator {
 	fastEma := trend.NewEma(utils.CloseArrayToKline(closing), fastPeriod).GetValues()
 	slowEma := trend.NewEma(utils.CloseArrayToKline(closing), slowPeriod).GetValues()
 
-	ppo := utils.MultiplyBy(utils.Divide(utils.Subtract(fastEma, slowEma), slowEma), 100)
+	ppo := ta.MultiplyBy(ta.Divide(ta.Subtract(fastEma, slowEma), slowEma), 100)
 	signal := trend.NewEma(utils.CloseArrayToKline(ppo), signalPeriod).GetValues()
-	histogram := utils.Subtract(ppo, signal)
+	histogram := ta.Subtract(ppo, signal)
 
 	for i := 0; i < len(ppo); i++ {
 		e.data = append(e.data, PercentagePriceOscillatorData{

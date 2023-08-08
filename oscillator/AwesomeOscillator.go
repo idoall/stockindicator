@@ -5,6 +5,7 @@ import (
 
 	"github.com/idoall/stockindicator/trend"
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // AwesomeOscillator struct
@@ -38,10 +39,10 @@ func (e *AwesomeOscillator) Calculation() *AwesomeOscillator {
 	var high = ohlc.High
 	var low = ohlc.Low
 
-	medianPrice := utils.DivideBy(utils.Add(low, high), float64(2))
+	medianPrice := ta.DivideBy(ta.Add(low, high), float64(2))
 	sma5 := trend.NewEma(utils.CloseArrayToKline(medianPrice), 5).GetValues()
 	sma34 := trend.NewEma(utils.CloseArrayToKline(medianPrice), 34).GetValues()
-	ao := utils.Subtract(sma5, sma34)
+	ao := ta.Subtract(sma5, sma34)
 
 	for i := 0; i < len(ao); i++ {
 		e.data = append(e.data, AwesomeOscillatorData{

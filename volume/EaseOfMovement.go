@@ -6,6 +6,7 @@ import (
 
 	"github.com/idoall/stockindicator/trend"
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // The Ease of Movement (EMV) 简易波动指标（Ease of Movement Value）又称EMV指标.
@@ -53,10 +54,10 @@ func (e *EaseOfMovement) Calculation() *EaseOfMovement {
 	var low = ohlc.Low
 	var volume = ohlc.Volume
 
-	distanceMoved := utils.Diff(utils.DivideBy(utils.Add(high, low), 2), 1)
-	boxRatio := utils.Divide(utils.DivideBy(volume, float64(100000000)), utils.Subtract(high, low))
+	distanceMoved := ta.Diff(ta.DivideBy(ta.Add(high, low), 2), 1)
+	boxRatio := ta.Divide(ta.DivideBy(volume, float64(100000000)), ta.Subtract(high, low))
 
-	emv := trend.NewSma(utils.CloseArrayToKline(utils.Divide(distanceMoved, boxRatio)), period).GetValues()
+	emv := trend.NewSma(utils.CloseArrayToKline(ta.Divide(distanceMoved, boxRatio)), period).GetValues()
 
 	for i := 0; i < len(emv); i++ {
 		e.data = append(e.data, EaseOfMovementData{

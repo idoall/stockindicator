@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // Williams R. 是由美国作家、股市投资家拉里·威廉斯（Larry R. Williams）在1973年出版的《我如何赚得一百万》一书中首先发表，这个指标是一个振荡指标，是依股价的摆动点来度量股票／指数是否处于超买或超卖的现象。
@@ -52,8 +53,8 @@ func (e *WilliamsR) Calculation() *WilliamsR {
 	var low = ohlc.Low
 	var closing = ohlc.Close
 
-	highestHigh := utils.Max(period, high)
-	lowestLow := utils.Min(period, low)
+	highestHigh := ta.Max(period, high)
+	lowestLow := ta.Min(period, low)
 
 	result := make([]float64, len(closing))
 

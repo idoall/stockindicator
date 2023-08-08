@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // Donchian 唐奇安通道指标，由“潮流之父”Richard Donchian 在二十世纪中叶开发。
@@ -52,9 +53,9 @@ func (e *DonchianChannel) Calculation() *DonchianChannel {
 
 	var closing = e.kline.GetOHLC().Close
 
-	upperChannel := utils.Max(period, closing)
-	lowerChannel := utils.Min(period, closing)
-	middleChannel := utils.DivideBy(utils.Add(upperChannel, lowerChannel), 2)
+	upperChannel := ta.Max(period, closing)
+	lowerChannel := ta.Min(period, closing)
+	middleChannel := ta.DivideBy(ta.Add(upperChannel, lowerChannel), 2)
 
 	for i := 0; i < len(middleChannel); i++ {
 		e.data = append(e.data, DonchianChannelData{

@@ -21,6 +21,7 @@ import (
 
 	"github.com/idoall/stockindicator/trend"
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 /*
@@ -96,8 +97,8 @@ func (e *Boll) Calculation() *Boll {
 
 	var middle = trend.NewSma(e.kline, e.PeriodN).GetValues()
 	var md = e.dma(middle)
-	var upper = utils.Add(middle, md)
-	var lower = utils.Subtract(middle, md)
+	var upper = ta.Add(middle, md)
+	var lower = ta.Subtract(middle, md)
 
 	for i, _ := range middle {
 		e.data[i] = BollData{

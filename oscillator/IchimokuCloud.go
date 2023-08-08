@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // Ichimoku Cloud. 也称为 Ichimoku Kinko Hyo，计算一个多功能指标，定义支撑和阻力，识别趋势方向，衡量动量，并提供交易信号。
@@ -67,15 +68,15 @@ func (e *IchimokuCloud) Calculation() *IchimokuCloud {
 	var closing = ohlc.Close
 
 	// 转换线
-	conversionLine := utils.DivideBy(utils.Add(utils.Max(9, high), utils.Min(conversionPeriod, low)), float64(2))
+	conversionLine := ta.DivideBy(ta.Add(ta.Max(9, high), ta.Min(conversionPeriod, low)), float64(2))
 	// 基线
-	baseLine := utils.DivideBy(utils.Add(utils.Max(26, high), utils.Min(26, low)), float64(2))
+	baseLine := ta.DivideBy(ta.Add(ta.Max(26, high), ta.Min(26, low)), float64(2))
 	// 先行带A（Senkou Span A）：通过转换线和基线的移动平均值预计未来26日内趋势
-	leadingSpanA := utils.DivideBy(utils.Add(conversionLine, baseLine), float64(2))
+	leadingSpanA := ta.DivideBy(ta.Add(conversionLine, baseLine), float64(2))
 	// 先行带B（Senkou Span B）：通过52日移动平均值预计未来26日内趋势。
-	leadingSpanB := utils.DivideBy(utils.Add(utils.Max(leadingSpanBPeriod, high), utils.Min(leadingSpanBPeriod, low)), float64(2))
+	leadingSpanB := ta.DivideBy(ta.Add(ta.Max(leadingSpanBPeriod, high), ta.Min(leadingSpanBPeriod, low)), float64(2))
 	// 迟行带（Chikou Span）：今日收盘价与过去26日中线的差值。
-	laggingLine := utils.ShiftRight(laggingLinePeriod, closing)
+	laggingLine := ta.ShiftRight(laggingLinePeriod, closing)
 
 	for i := 0; i < len(conversionLine); i++ {
 		e.data = append(e.data, IchimokuCloudData{

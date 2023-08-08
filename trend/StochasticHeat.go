@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 	"github.com/idoall/stockindicator/utils/types"
 )
 
@@ -105,11 +106,11 @@ func (e *StochasticHeat) Calculation() *StochasticHeat {
 		fast[i] = ((getAverage / 100) * float64(e.PlotNum))
 
 		if e.MATypes == types.EMA {
-			slow = utils.Ema(e.SmoothSlow, fast)
+			slow = ta.Ema(e.SmoothSlow, fast)
 		} else if e.MATypes == types.SMA {
-			slow = utils.Sma(e.SmoothSlow, fast)
+			slow = ta.Sma(e.SmoothSlow, fast)
 		} else {
-			slow = utils.Wma(e.SmoothSlow, fast)
+			slow = ta.Wma(e.SmoothSlow, fast)
 		}
 	}
 	for i := 0; i < len(e.kline); i++ {
@@ -164,14 +165,14 @@ func (e *StochasticHeat) Calculation() *StochasticHeat {
 func (e *StochasticHeat) getStoch(i int, closing, highs, lows []float64) []float64 {
 
 	var c = i * e.Increment
-	var k, _ = utils.Stochastic(closing, highs, lows, c)
+	var k, _ = ta.Stochastic(closing, highs, lows, c)
 	switch e.MATypes {
 	case types.EMA:
-		return utils.Ema(e.SmoothFast, k)
+		return ta.Ema(e.SmoothFast, k)
 	case types.SMA:
-		return utils.Sma(e.SmoothFast, k)
+		return ta.Sma(e.SmoothFast, k)
 	case types.WMA:
-		return utils.Wma(e.SmoothFast, k)
+		return ta.Wma(e.SmoothFast, k)
 	default:
 		return k
 	}

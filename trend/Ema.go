@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // Ema struct
@@ -37,7 +38,7 @@ func NewDefaultEma(list utils.Klines) *Ema {
 
 // Calculation Func
 func (e *Ema) Calculation() *Ema {
-	var vals = utils.Ema(e.Period, e.kline.GetOHLC().Close)
+	var vals = ta.Ema(e.Period, e.kline.GetOHLC().Close)
 
 	defer func() {
 		vals = nil

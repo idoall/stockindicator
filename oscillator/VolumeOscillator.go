@@ -6,6 +6,7 @@ import (
 
 	"github.com/idoall/stockindicator/trend"
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // Volume Oscillator. 又名移动平均成交量指标，但是，它并非仅仅计算成交量的移动平均线，
@@ -44,12 +45,12 @@ func NewDefaultVolumeOscillator(list utils.Klines) *VolumeOscillator {
 // Calculation Func
 func (e *VolumeOscillator) Calculation() *VolumeOscillator {
 
-	var volumes = utils.Nzs(e.kline.GetOHLC().Volume, 0)
+	var volumes = ta.Nzs(e.kline.GetOHLC().Volume, 0)
 
 	short := trend.NewEma(utils.CloseArrayToKline(volumes), e.ShortLength).GetValues()
 	long := trend.NewEma(utils.CloseArrayToKline(volumes), e.LongLength).GetValues()
 
-	oscs := utils.MultiplyBy(utils.Divide(utils.Subtract(short, long), long), 100.0)
+	oscs := ta.MultiplyBy(ta.Divide(ta.Subtract(short, long), long), 100.0)
 
 	e.data = make([]VolumeOscillatorData, len(oscs))
 	for i := 0; i < len(oscs); i++ {

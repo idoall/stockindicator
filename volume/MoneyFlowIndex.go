@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // The Money Flow Index (MFI) 资金流量指标,1989年3月由JWellesWilder's首次发表MFI指标的用法。
@@ -59,19 +60,19 @@ func (e *MoneyFlowIndex) Calculation() *MoneyFlowIndex {
 	for i := 0; i < len(typicalPrice); i++ {
 		typicalPrice[i] = (high[i] + low[i] + closing[i]) / float64(3)
 	}
-	rawMoneyFlow := utils.Multiply(typicalPrice, volume)
+	rawMoneyFlow := ta.Multiply(typicalPrice, volume)
 
-	signs := utils.ExtractSign(utils.Diff(rawMoneyFlow, 1))
-	moneyFlow := utils.Multiply(signs, rawMoneyFlow)
+	signs := ta.ExtractSign(ta.Diff(rawMoneyFlow, 1))
+	moneyFlow := ta.Multiply(signs, rawMoneyFlow)
 
-	positiveMoneyFlow := utils.KeepPositives(moneyFlow)
-	negativeMoneyFlow := utils.KeepNegatives(moneyFlow)
+	positiveMoneyFlow := ta.KeepPositives(moneyFlow)
+	negativeMoneyFlow := ta.KeepNegatives(moneyFlow)
 
-	moneyRatio := utils.Divide(
-		utils.Sum(period, positiveMoneyFlow),
-		utils.Sum(period, utils.MultiplyBy(negativeMoneyFlow, -1)))
+	moneyRatio := ta.Divide(
+		ta.Sum(period, positiveMoneyFlow),
+		ta.Sum(period, ta.MultiplyBy(negativeMoneyFlow, -1)))
 
-	moneyFlowIndex := utils.AddBy(utils.MultiplyBy(utils.Pow(utils.AddBy(moneyRatio, 1), -1), -100), 100)
+	moneyFlowIndex := ta.AddBy(ta.MultiplyBy(ta.Pow(ta.AddBy(moneyRatio, 1), -1), -100), 100)
 
 	for i := 0; i < len(moneyFlowIndex); i++ {
 		e.data = append(e.data, MoneyFlowIndexData{

@@ -5,6 +5,7 @@ import (
 
 	"github.com/idoall/stockindicator/trend"
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // AbsolutePriceOscillator struct
@@ -36,7 +37,7 @@ func (e *AbsolutePriceOscillator) Calculation() *AbsolutePriceOscillator {
 
 	fast := trend.NewEma(utils.CloseArrayToKline(closing), e.FastPeriod).GetValues()
 	slow := trend.NewEma(utils.CloseArrayToKline(closing), e.SlowPeriod).GetValues()
-	apo := utils.Subtract(fast, slow)
+	apo := ta.Subtract(fast, slow)
 
 	for i := 0; i < len(apo); i++ {
 		e.data = append(e.data, AbsolutePriceOscillatorData{

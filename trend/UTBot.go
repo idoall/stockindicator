@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // UTBot struct
@@ -47,7 +48,7 @@ func (e *UTBot) Calculation() *UTBot {
 
 	var ohlc = e.kline.GetOHLC()
 
-	var atr = (&Atr{}).Atr(ohlc.High, ohlc.Low, ohlc.Close, e.AtrPeriod)
+	var atr = ta.Atr(ohlc.High, ohlc.Low, ohlc.Close, e.AtrPeriod)
 	var closeing = ohlc.Close
 
 	defer func() {

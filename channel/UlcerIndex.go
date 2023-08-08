@@ -6,6 +6,7 @@ import (
 
 	"github.com/idoall/stockindicator/trend"
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // Ulcer Index (UI) 溃疡指数是一种技术指标，可根据价格下跌的深度和持续时间来衡量下行风险。
@@ -51,11 +52,11 @@ func (e *UlcerIndex) Calculation() *UlcerIndex {
 
 	var closing = e.kline.GetOHLC().Close
 
-	highClosing := utils.Max(period, closing)
-	percentageDrawdown := utils.MultiplyBy(utils.Divide(utils.Subtract(closing, highClosing), highClosing), 100)
-	squaredAverage := trend.NewEma(utils.CloseArrayToKline(utils.Multiply(percentageDrawdown, percentageDrawdown)), period).GetValues()
+	highClosing := ta.Max(period, closing)
+	percentageDrawdown := ta.MultiplyBy(ta.Divide(ta.Subtract(closing, highClosing), highClosing), 100)
+	squaredAverage := trend.NewEma(utils.CloseArrayToKline(ta.Multiply(percentageDrawdown, percentageDrawdown)), period).GetValues()
 
-	ui := utils.Sqrt(squaredAverage)
+	ui := ta.Sqrt(squaredAverage)
 
 	for i := 0; i < len(ui); i++ {
 		e.data = append(e.data, UlcerIndexData{

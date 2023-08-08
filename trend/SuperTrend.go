@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // SuperTrend 超级趋势 struct
@@ -79,7 +80,7 @@ func (e *SuperTrend) Calculation() *SuperTrend {
 
 	} else {
 		var tr, _ = NewAtr(e.kline, e.AtrPeriod).GetValues()
-		atr = utils.Sma(e.AtrPeriod, tr)
+		atr = ta.Sma(e.AtrPeriod, tr)
 	}
 
 	for i := 0; i < len(src); i++ {
@@ -90,19 +91,19 @@ func (e *SuperTrend) Calculation() *SuperTrend {
 		}
 
 		up[i] = src[i] - (float64(e.AtrMultiplier) * atr[i])
-		up1[i] = utils.Nz(up[i-1], up[i])
+		up1[i] = ta.Nz(up[i-1], up[i])
 		if close[i-1] > up1[i] {
 			up[i] = math.Max(up[i], up1[i])
 		}
 
 		dn[i] = src[i] + (float64(e.AtrMultiplier) * atr[i])
-		dn1[i] = utils.Nz(dn[i-1], dn[i])
+		dn1[i] = ta.Nz(dn[i-1], dn[i])
 		if close[i-1] < dn1[i] {
 			dn[i] = math.Min(dn[i], dn1[i])
 		}
 
 		trend[i] = 1
-		trend[i] = utils.Nz(trend[i-1], trend[i])
+		trend[i] = ta.Nz(trend[i-1], trend[i])
 
 		if trend[i] == -1 && close[i] > dn1[i] {
 			trend[i] = 1

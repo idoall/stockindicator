@@ -6,6 +6,7 @@ import (
 
 	"github.com/idoall/stockindicator/trend"
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 	"github.com/idoall/stockindicator/volume"
 )
 
@@ -52,7 +53,7 @@ func (e *ChaikinOscillator) Calculation() *ChaikinOscillator {
 	ad := volume.NewAccumulationDistribution(e.kline).GetValues()
 	fastEMA := trend.NewEma(utils.CloseArrayToKline(ad), e.FastPeriod).GetValues()
 	slowEMA := trend.NewEma(utils.CloseArrayToKline(ad), e.SlowPeriod).GetValues()
-	co := utils.Subtract(fastEMA, slowEMA)
+	co := ta.Subtract(fastEMA, slowEMA)
 
 	// var co, ad = trend.ChaikinOscillator(e.FastPeriod, e.SlowPeriod, low, high, closing, volume)
 

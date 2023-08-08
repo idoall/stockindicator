@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 /*
@@ -62,7 +63,7 @@ func NewDefaultMacd(list utils.Klines) *Macd {
 func (e *Macd) Calculation() *Macd {
 
 	// 计算DIF
-	difs := utils.Subtract(
+	difs := ta.Subtract(
 		NewEma(e.kline, e.PeriodShort).Calculation().GetValues(),
 		NewEma(e.kline, e.PeriodLong).Calculation().GetValues(),
 	)

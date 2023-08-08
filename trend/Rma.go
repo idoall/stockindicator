@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // Rolling Moving Average (Rma).
@@ -37,7 +38,7 @@ func NewDefaultRma(list utils.Klines) *Rma {
 // Calculation Func
 func (e *Rma) Calculation() *Rma {
 
-	var rma = utils.Rma(e.Period, e.kline.GetOHLC().Close)
+	var rma = ta.Rma(e.Period, e.kline.GetOHLC().Close)
 
 	e.data = make([]RmaData, len(rma))
 	for i, value := range rma {

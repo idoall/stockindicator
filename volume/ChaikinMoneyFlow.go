@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // Chaikin Money Flow (CMF) 蔡金资金流量是用于在一段时间内衡量资金流量的技术分析指标。
@@ -57,15 +58,15 @@ func (e *ChaikinMoneyFlow) Calculation() *ChaikinMoneyFlow {
 	var closing = ohlc.Close
 	var volume = ohlc.Volume
 
-	moneyFlowMultiplier := utils.Divide(
-		utils.Subtract(utils.Subtract(closing, low), utils.Subtract(high, closing)),
-		utils.Subtract(high, low))
+	moneyFlowMultiplier := ta.Divide(
+		ta.Subtract(ta.Subtract(closing, low), ta.Subtract(high, closing)),
+		ta.Subtract(high, low))
 
-	moneyFlowVolume := utils.Multiply(moneyFlowMultiplier, volume)
+	moneyFlowVolume := ta.Multiply(moneyFlowMultiplier, volume)
 
-	cmf := utils.Divide(
-		utils.Sum(period, moneyFlowVolume),
-		utils.Sum(period, volume))
+	cmf := ta.Divide(
+		ta.Sum(period, moneyFlowVolume),
+		ta.Sum(period, volume))
 
 	for i := 0; i < len(cmf); i++ {
 		e.data = append(e.data, ChaikinMoneyFlowData{
