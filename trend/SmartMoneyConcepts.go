@@ -69,8 +69,10 @@ type SmartMoneyConceptsData struct {
 	LowBOSLong float64
 	// 底部的长线特征变化
 	LowChoCHLong float64
-	EQH          float64
-	EQL          float64
+
+	// 双顶、双底区域
+	EQH float64
+	EQL float64
 }
 
 // NewSmartMoneyConcepts new Func
