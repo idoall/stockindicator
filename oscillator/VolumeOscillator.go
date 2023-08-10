@@ -42,6 +42,11 @@ func NewDefaultVolumeOscillator(list utils.Klines) *VolumeOscillator {
 	return NewVolumeOscillator(list, 5, 10)
 }
 
+func (e *VolumeOscillator) Clear() {
+	e.data = nil
+	e.kline = nil
+}
+
 // Calculation Func
 func (e *VolumeOscillator) Calculation() *VolumeOscillator {
 

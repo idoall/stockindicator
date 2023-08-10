@@ -23,6 +23,7 @@ func TestSmartMoneyConcepts(t *testing.T) {
 
 	stock := NewDefaultSmartMoneyConcepts(list)
 
+	// stock.EQHEQL_Enable = false
 	// stock.Calculation()
 
 	var dataList = stock.GetData()
@@ -30,7 +31,7 @@ func TestSmartMoneyConcepts(t *testing.T) {
 	// var side = stock.AnalysisSide()
 
 	fmt.Printf("-- %s --\n", stock.Name)
-	for i := len(dataList) - 10; i < len(dataList)-1; i++ {
+	for i := len(dataList) - 100; i < len(dataList)-1; i++ {
 
 		var v = dataList[i]
 		fmt.Printf("[%d][%s]H_BOS_S[%.2f]\tH_CHoCH_S[%.2f]\tL_BOS_S[%.2f]\tL_ChoCH_S[%.2f]H_BOS_L[%.2f]\tH_CHoCH_L[%.2f]\tL_BOS_L[%.2f]\tL_ChoCH_L[%.2f]\tEQH[%.2f]\tEQL[%.2f]\n",
@@ -48,7 +49,7 @@ func TestSmartMoneyConcepts(t *testing.T) {
 			v.EQL,
 		)
 	}
-	fmt.Printf("Strong High[%s]:%.2f\tWeak High[%s]:%.2f\tStrong Low[%s]:%.2f\tWeak Low[%s]:%.2f\n",
+	fmt.Printf("Strong High[%s]:%.2f\tWeak High[%s]:%.2f\tStrong Low[%s]:%.2f\tWeak Low[%s]:%.2f\tLastClose:%.2f\n",
 		stock.StrongHigh.Time.Format("2006-01-02 15:04:05"),
 		stock.StrongHigh.Value,
 		stock.WeakHigh.Time.Format("2006-01-02 15:04:05"),
@@ -57,6 +58,7 @@ func TestSmartMoneyConcepts(t *testing.T) {
 		stock.StrongLow.Value,
 		stock.WeakLow.Time.Format("2006-01-02 15:04:05"),
 		stock.WeakLow.Value,
+		list[len(list)-1].Close,
 	)
 	fmt.Printf("OrderBlockBullish:%d\n", len(stock.OrderBlockBullish))
 	for i, v := range stock.OrderBlockBullish {

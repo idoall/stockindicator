@@ -643,12 +643,17 @@ func Min(period int, values []float64) []float64 {
 //		values 要计算的数组
 //		lenght 计算的长度
 func Highest(values []float64, lenght int) float64 {
-	bst := bst.New()
+	var result = values[len(values)-1]
 	for i := len(values) - 1; i >= len(values)-lenght; i-- {
-		bst.Insert(values[i])
+		if i < 0 {
+			break
+		}
+		if values[i] > result {
+			result = values[i]
+		}
 	}
 
-	return bst.Max().(float64)
+	return result
 }
 
 // Lowest 返回给定数目的最低值。
@@ -657,11 +662,16 @@ func Highest(values []float64, lenght int) float64 {
 //		values 要计算的数组
 //		lenght 计算的长度
 func Lowest(values []float64, lenght int) float64 {
-	bst := bst.New()
+	var result = values[len(values)-1]
 	for i := len(values) - 1; i >= len(values)-lenght; i-- {
-		bst.Insert(values[i])
+		if i < 0 {
+			break
+		}
+		if values[i] < result {
+			result = values[i]
+		}
 	}
-	return bst.Min().(float64)
+	return result
 }
 
 // PivotHigh 此函数返回枢轴高点的价格。 如果没有枢轴高点，则返回“0”。

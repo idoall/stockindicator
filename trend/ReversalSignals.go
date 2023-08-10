@@ -37,6 +37,11 @@ func NewReversalSignals(list utils.Klines) *ReversalSignals {
 	return m
 }
 
+func (e *ReversalSignals) Clear() {
+	e.data = nil
+	e.kline = nil
+}
+
 // Calculation Func
 func (e *ReversalSignals) Calculation() *ReversalSignals {
 

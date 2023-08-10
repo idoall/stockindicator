@@ -15,26 +15,27 @@ import (
 // 特征变化（CHOCH）： 特征变化意味着市场在一段时间内改变了其趋势或订单流。
 // 结构突破 (BOS)：  “结构突破”用于描述超过图表上关键支撑位或阻力位的重大价格变动。该水平通常由机构交易员或其他重要投资者预先确定，他们将其设定为市场变动的关键阈值。
 type SmartMoneyConcepts struct {
-	// Atr Period
-	AtrPeriod int
-	// Atr Factor
-	AtrFactor float64
-	// Pivot Point Period
-	Period int
 
 	// Real Time Swing Structure
 	SwingLenght int
+
 	// Bars Confirmation，最小是1
 	//
 	// 用于确认相等高点和相等低点的条数
 	EQHEQL_BarsConfirmation int
+
 	// Threshold，1-5之间
 	//
 	// 用于检测相等的高低的范围（0，1）内的灵敏度阈值\n\n较低的值将返回较少但更相关的结果
-	EQHEQL_Threshold  int
-	Name              string
-	data              []SmartMoneyConceptsData
-	kline             utils.Klines
+	EQHEQL_Threshold int
+
+	EQHEQL_Enable bool
+
+	Name  string
+	data  []SmartMoneyConceptsData
+	kline utils.Klines
+	// Order Blocks Number
+	OrderBlockNumber  int
 	OrderBlockBullish SmartMoneyConceptsDataOrderBlockList
 	OrderBlockBearish SmartMoneyConceptsDataOrderBlockList
 
@@ -83,6 +84,8 @@ func NewSmartMoneyConcepts(list utils.Klines, swingLenght int, eqheql_BarsConfir
 		SwingLenght:             swingLenght,
 		EQHEQL_BarsConfirmation: eqheql_BarsConfirmation,
 		EQHEQL_Threshold:        eqheql_Threshold,
+		// EQHEQL_Enable:           eqheql_enable,
+		OrderBlockNumber: 5,
 	}
 
 	return m
@@ -94,7 +97,10 @@ func NewDefaultSmartMoneyConcepts(list utils.Klines) *SmartMoneyConcepts {
 }
 
 func (e *SmartMoneyConcepts) Clear() {
-	// e.os = nil
+	e.data = nil
+	e.OrderBlockBearish = nil
+	e.OrderBlockBullish = nil
+	e.kline = nil
 }
 
 // Calculation Func
@@ -138,16 +144,10 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 	var eq_prev_btm = 0.0
 	var eq_btm_x = 0
 
-	var top = make([]float64, len(e.kline))
-	var btm = make([]float64, len(e.kline))
-	var itop = make([]float64, len(e.kline))
-	var ibtm = make([]float64, len(e.kline))
-
 	defer func() {
-		top = nil
-		btm = nil
-		itop = nil
-		ibtm = nil
+		closes = nil
+		highs = nil
+		lows = nil
 	}()
 
 	for i := 1; i < len(e.kline); i++ {
@@ -169,47 +169,51 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 			continue
 		}
 
-		top[i], btm[i] = e.swings(highs[:i+1], lows[:i+1], e.SwingLenght, i, 1)
-		itop[i], ibtm[i] = e.swings(highs[:i+1], lows[:i+1], 5, i, 2)
+		var top, btm = e.swings(highs[:i+1], lows[:i+1], e.SwingLenght, i, 1)
+		var itop, ibtm = e.swings(highs[:i+1], lows[:i+1], 5, i, 2)
 
-		if top[i] != 0.0 {
+		if top != 0.0 {
 			top_cross = true
 			// var txt_top =
-			top_y = top[i]
+			top_y = top
 			top_x = i - e.SwingLenght
 
-			trail_up = top[i]
+			trail_up = top
 			trail_up_x = i - e.SwingLenght
 		}
 
-		if itop[i] != 0.0 {
+		if itop != 0.0 {
 			itop_cross = true
-			itop_y = itop[i]
+			itop_y = itop
 			itop_x = i - 5
 		}
 
 		trail_up = math.Max(high, trail_up)
-		trail_up_x = commonutils.If(trail_up == high, i, trail_up_x).(int)
+		if trail_up == high {
+			trail_up_x = i
+		}
 
-		if btm[i] != 0.0 {
+		if btm != 0.0 {
 			btm_cross = true
 
-			btm_y = btm[i]
+			btm_y = btm
 			btm_x = i - e.SwingLenght
 
-			trail_dn = btm[i]
+			trail_dn = btm
 			trail_dn_x = i - e.SwingLenght
 		}
 
-		if ibtm[i] != 0.0 {
+		if ibtm != 0.0 {
 			ibtm_cross = true
 
-			ibtm_y = ibtm[i]
+			ibtm_y = ibtm
 			ibtm_x = i - 5
 		}
 
 		trail_dn = math.Min(low, trail_dn)
-		trail_dn_x = commonutils.If(trail_dn == low, i, trail_dn_x).(int)
+		if trail_dn == low {
+			trail_dn_x = i
+		}
 
 		//
 		// Pivot High BOS/CHoCH
@@ -320,7 +324,7 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 			} else if close > v.Kline.High && v.IsTop {
 				orderBlockBullishRemovelist = append(orderBlockBullishRemovelist, v)
 			}
-			if j > 5 && !orderBlockBullishRemovelist.Contains(v) {
+			if j > e.OrderBlockNumber && !orderBlockBullishRemovelist.Contains(v) {
 				orderBlockBullishRemovelist = append(orderBlockBullishRemovelist, v)
 			}
 		}
@@ -336,7 +340,7 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 			} else if close > v.Kline.High && v.IsTop {
 				orderBlockBearishRemovelist = append(orderBlockBearishRemovelist, v)
 			}
-			if j > 5 && !orderBlockBearishRemovelist.Contains(v) {
+			if j > e.OrderBlockNumber && !orderBlockBearishRemovelist.Contains(v) {
 				orderBlockBearishRemovelist = append(orderBlockBearishRemovelist, v)
 			}
 		}
@@ -347,39 +351,42 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 		//
 		// EQH/EQL
 		//
-		var eq_topArr = ta.PivotHigh(highs[:i+1], e.EQHEQL_BarsConfirmation, e.EQHEQL_BarsConfirmation)
-		var eq_top = eq_topArr[len(eq_topArr)-1]
-		var eq_btmArr = ta.PivotLow(lows[:i+1], e.EQHEQL_BarsConfirmation, e.EQHEQL_BarsConfirmation)
-		var eq_btm = eq_btmArr[len(eq_btmArr)-1]
+		if e.EQHEQL_Enable {
+			var eq_topArr = ta.PivotHigh(highs[:i+1], e.EQHEQL_BarsConfirmation, e.EQHEQL_BarsConfirmation)
+			var eq_top = eq_topArr[len(eq_topArr)-1]
+			var eq_btmArr = ta.PivotLow(lows[:i+1], e.EQHEQL_BarsConfirmation, e.EQHEQL_BarsConfirmation)
+			var eq_btm = eq_btmArr[len(eq_btmArr)-1]
 
-		if eq_top != 0.0 {
-			var max = math.Max(eq_top, eq_prev_top)
-			var min = math.Min(eq_top, eq_prev_top)
-			if max < (min + atr[i]*float64(e.EQHEQL_Threshold)/10.0) {
-				// 划EQH线
-				for candleIndex := eq_top_x; candleIndex <= i-e.EQHEQL_BarsConfirmation; candleIndex++ {
-					e.data[candleIndex].EQH = eq_prev_top
+			if eq_top != 0.0 {
+				var max = math.Max(eq_top, eq_prev_top)
+				var min = math.Min(eq_top, eq_prev_top)
+				if max < (min + atr[i]*float64(e.EQHEQL_Threshold)/10.0) {
+					// 划EQH线
+					for candleIndex := eq_top_x; candleIndex <= i-e.EQHEQL_BarsConfirmation; candleIndex++ {
+						e.data[candleIndex].EQH = eq_prev_top
+					}
 				}
+				eq_prev_top = eq_top
+				eq_top_x = i - e.EQHEQL_BarsConfirmation
 			}
-			eq_prev_top = eq_top
-			eq_top_x = i - e.EQHEQL_BarsConfirmation
+
+			if eq_btm != 0.0 {
+				var max = math.Max(eq_btm, eq_prev_btm)
+				var min = math.Min(eq_btm, eq_prev_btm)
+				if min > (max - atr[i]*float64(e.EQHEQL_Threshold)/10.0) {
+					// 划EQL线
+					for candleIndex := eq_btm_x; candleIndex <= i-e.EQHEQL_BarsConfirmation; candleIndex++ {
+						e.data[candleIndex].EQL = eq_prev_btm
+					}
+				}
+				eq_prev_btm = eq_btm
+				eq_btm_x = i - e.EQHEQL_BarsConfirmation
+			}
 		}
 
-		if eq_btm != 0.0 {
-			var max = math.Max(eq_btm, eq_prev_btm)
-			var min = math.Min(eq_btm, eq_prev_btm)
-			if min > (max - atr[i]*float64(e.EQHEQL_Threshold)/10.0) {
-				// 划EQL线
-				for candleIndex := eq_btm_x; candleIndex <= i-e.EQHEQL_BarsConfirmation; candleIndex++ {
-					e.data[candleIndex].EQL = eq_prev_btm
-				}
-			}
-			eq_prev_btm = eq_btm
-			eq_btm_x = i - e.EQHEQL_BarsConfirmation
-		}
-
-		e.data[i].Time = time
-
+		//
+		// Strong High/Weak High/Strong Low/Weak Low
+		//
 		if trend < 0 {
 			e.StrongHigh = SmartMoneyConceptsDataStrongWeak{
 				Time:  e.kline[trail_up_x].Time,
@@ -403,6 +410,8 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 				Value: trail_dn,
 			}
 		}
+
+		e.data[i].Time = time
 	}
 
 	return e
@@ -469,15 +478,24 @@ func (e *SmartMoneyConcepts) swings(highs, lows []float64, lenght, index int, os
 	var upper = ta.Highest(highs, lenght)
 	var lower = ta.Lowest(lows, lenght)
 
+	var h = highs[len(highs)-1]
+	if len(highs)-lenght-1 >= 0 {
+		h = highs[len(highs)-lenght-1]
+	}
+	var l = lows[len(lows)-1]
+	if len(lows)-lenght-1 >= 0 {
+		l = lows[len(lows)-lenght-1]
+	}
+
 	var os, osPrev int
 	if osType == 1 {
 		osPrev = e.os1Prev
 	} else if osType == 2 {
 		osPrev = e.os2Prev
 	}
-	if highs[len(highs)-lenght-1] > upper {
+	if h > upper {
 		os = 0
-	} else if lows[len(lows)-lenght-1] < lower {
+	} else if l < lower {
 		os = 1
 	} else {
 		os = osPrev
@@ -485,11 +503,11 @@ func (e *SmartMoneyConcepts) swings(highs, lows []float64, lenght, index int, os
 
 	var top, btm float64
 	if os == 0 && osPrev != 0 {
-		top = highs[len(highs)-lenght-1]
+		top = h
 	}
 
 	if os == 1 && osPrev != 1 {
-		btm = lows[len(lows)-lenght-1]
+		btm = l
 	}
 
 	if osType == 1 {
