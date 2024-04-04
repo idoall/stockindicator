@@ -29,3 +29,17 @@ func TestToHeikinAshi(t *testing.T) {
 		)
 	}
 }
+
+// RUN
+// go test -v ./utils -run TestSortCandlesByTimestamp
+func TestSortCandlesByTimestamp(t *testing.T) {
+	t.Parallel()
+	list := GetTestKline()
+
+	var formatStr = "2006-01-02 15:04:05"
+	list = list.SortCandlesByTimestamp(false)
+	fmt.Printf("ASC\t%s\t%s\n", list[0].Time.Format(formatStr), list[len(list)-1].Time.Format(formatStr))
+
+	list = list.SortCandlesByTimestamp(true)
+	fmt.Printf("DESC\t%s\t%s\n", list[0].Time.Format(formatStr), list[len(list)-1].Time.Format(formatStr))
+}

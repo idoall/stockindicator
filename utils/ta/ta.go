@@ -196,6 +196,7 @@ func Stochastic(closing, highs, lows []float64, period int) (k, d []float64) {
 	return k, d
 }
 
+// 简单移动均线简写为SMA，有时候也直接记为MA。 移动平均线，SMA(N)它将指定周期内的收盘价格之和除以周期N得到的一个指标
 func Sma(period int, values []float64) []float64 {
 	result := make([]float64, len(values))
 	sum := float64(0)
@@ -304,6 +305,42 @@ func Wma(period int, values []float64) []float64 {
 		outIdx++
 	}
 	return result
+}
+
+// 计算平均偏差
+func meanDeviation(prices []float64, period int, ma []float64) []float64 {
+	md := make([]float64, len(prices))
+	for i := period - 1; i < len(prices); i++ {
+		sum := 0.0
+		for j := i - period + 1; j <= i; j++ {
+			sum += math.Abs(prices[j] - ma[i])
+		}
+		md[i] = sum / float64(period)
+	}
+	return md
+}
+
+// 计算CCI
+func CCI(hlc3 []float64, period, smaPeriod int) []float64 {
+	ccis := make([]float64, len(hlc3))
+
+	// 计算典型价格、移动平均和平均偏差
+	typicalPrices := make([]float64, len(hlc3))
+	for i := 0; i < len(hlc3); i++ {
+		// 计算典型价格
+		typicalPrices[i] = hlc3[i]
+	}
+	ma := Sma(smaPeriod, typicalPrices)
+	md := meanDeviation(typicalPrices, period, ma)
+
+	// 计算CCI值
+	for i := period - 1; i < len(hlc3); i++ {
+		typicalPrice := typicalPrices[i]
+		cci := (typicalPrice - ma[i]) / (0.015 * md[i])
+		ccis[i] = cci
+	}
+
+	return ccis
 }
 
 // Atr（真实波动幅度均值）返回真实范围的RMA。

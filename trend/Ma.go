@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // Ma struct
@@ -46,23 +47,16 @@ func (e *Ma) GetData() []MaData {
 
 // Calculation Func
 func (e *Ma) Calculation() *Ma {
-	for i := 0; i < len(e.kline); i++ {
-		if i < e.Period-1 {
-			p := MaData{}
-			p.Time = e.kline[i].Time
-			p.Value = 0.0
-			e.data = append(e.data, p)
-			continue
-		}
-		var sum float64
-		for j := 0; j < e.Period; j++ {
 
-			sum += e.kline[i-j].Close
-		}
+	closes := e.kline.GetOHLC().Close
 
+	// get maData
+	maData := ta.Sma(e.Period, closes)
+
+	for i := 0; i < len(maData); i++ {
 		p := MaData{}
 		p.Time = e.kline[i].Time
-		p.Value = sum / float64(e.Period)
+		p.Value = maData[i]
 		e.data = append(e.data, p)
 	}
 	return e
