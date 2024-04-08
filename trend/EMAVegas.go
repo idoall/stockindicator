@@ -83,31 +83,44 @@ func (e *EMAVegas) AnalysisSide() utils.SideData {
 		e = e.Calculation()
 	}
 
-	for i, v := range e.data {
+	for i := range e.data {
 		if i < 1 {
 			continue
 		}
-		var prevKlineItem = e.kline[i-1]
 		var klineItem = e.kline[i]
-		prevItem := e.data[i-1]
-		// var item = e.data[i]
+		var item = e.data[i]
 
-		// if klineItem.Close > klineItem.Open && ((klineItem.Close > v.Short2Value && prevKlineItem.Close < prevItem.Short2Value) || (klineItem.Close > v.Long2Value && prevKlineItem.Close < prevItem.Short2Value)) {
-		// 	sides[i] = utils.Buy
-		// } else if klineItem.Close < klineItem.Open && ((klineItem.Close < v.Short2Value && prevKlineItem.Close > prevItem.Short2Value) || (klineItem.Close < v.Long2Value && prevKlineItem.Close > prevItem.Short2Value)) {
-		// 	sides[i] = utils.Sell
-		// } else {
-		// 	sides[i] = utils.Hold
-		// }
+		var t1, d1 bool
 
-		// 当前是阳线 并且 收盘价大于 Long2 并且 上一根收盘价小于 Long2
-		if klineItem.Close > klineItem.Open && ((klineItem.Close > v.Long2Value && prevKlineItem.Close < prevItem.Long2Value) || (klineItem.Close > v.Short2Value && prevKlineItem.Close < v.Short2Value && v.Short1Value > v.Long2Value && v.Short2Value > v.Long2Value)) {
+		if (i - 10 - 1) < 0 {
+			continue
+		}
+
+		for k := i - 10; k < i; k++ {
+			data := e.data[k]
+			dataPrev := e.data[k-1]
+			if data.Short2Value > data.Long2Value && dataPrev.Short2Value < dataPrev.Long2Value {
+				t1 = true // 近 10 根有金叉
+			}
+			if data.Short2Value < data.Long2Value && dataPrev.Short2Value > dataPrev.Long2Value {
+				d1 = true // 近 10 根有死叉
+			}
+		}
+
+		if item.Value > item.Short1Value && // ema12>ema144
+			item.Short1Value > item.Long1Value && item.Short1Value > item.Long2Value && // 144<575 && 144 > 676
+			item.Short2Value > item.Long1Value && item.Short2Value > item.Long2Value && //169>575 && 169 > 676
+			klineItem.IsBullMarket && t1 {
 			sides[i] = utils.Buy
-		} else if klineItem.Close < klineItem.Open && klineItem.Close < v.Short2Value && prevKlineItem.Close > prevItem.Short2Value {
+		} else if item.Value < item.Short1Value &&
+			item.Short1Value < item.Long1Value && item.Short1Value < item.Long2Value &&
+			item.Short2Value < item.Long1Value && item.Short2Value < item.Long2Value &&
+			!klineItem.IsBullMarket && d1 {
 			sides[i] = utils.Sell
 		} else {
 			sides[i] = utils.Hold
 		}
+
 	}
 	return utils.SideData{
 		Name: e.Name,
