@@ -233,8 +233,10 @@ func Rma(period int, values []float64) []float64 {
 	sum := float64(0)
 
 	for i, value := range values {
+		if i < 1 {
+			continue
+		}
 		count := i + 1
-
 		if i < period {
 			sum += value
 		} else {
