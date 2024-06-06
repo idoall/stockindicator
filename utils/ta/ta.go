@@ -310,7 +310,7 @@ func Wma(period int, values []float64) []float64 {
 }
 
 // 计算平均偏差
-func meanDeviation(prices []float64, period int, ma []float64) []float64 {
+func MeanDeviation(prices []float64, period int, ma []float64) []float64 {
 	md := make([]float64, len(prices))
 	for i := period - 1; i < len(prices); i++ {
 		sum := 0.0
@@ -333,7 +333,7 @@ func CCI(hlc3 []float64, period, smaPeriod int) []float64 {
 		typicalPrices[i] = hlc3[i]
 	}
 	ma := Sma(smaPeriod, typicalPrices)
-	md := meanDeviation(typicalPrices, period, ma)
+	md := MeanDeviation(typicalPrices, period, ma)
 
 	// 计算CCI值
 	for i := period - 1; i < len(hlc3); i++ {
@@ -751,7 +751,7 @@ func PivotLow(values []float64, left, right int) []float64 {
 func PivotMax(values []float64, index, left, right int) (val float64, position int) {
 	var leftVal, rightVal float64
 
-	val = values[index]
+	// val = values[index]
 	position = index
 
 	var leftPositions = index
@@ -871,8 +871,8 @@ func Abs(values []float64) []float64 {
 	return result
 }
 
-// mean 返回float64值数组的平均值
-func mean(values []float64) float64 {
+// Mean 返回float64值数组的平均值
+func Mean(values []float64) float64 {
 	var total float64 = 0
 	for x := range values {
 		total += values[x]
@@ -881,7 +881,7 @@ func mean(values []float64) float64 {
 }
 
 // trueRange 返回高低闭合的真实范围
-func trueRange(inHigh, inLow, inClose []float64) []float64 {
+func TrueRange(inHigh, inLow, inClose []float64) []float64 {
 	outReal := make([]float64, len(inClose))
 
 	startIdx := 1
@@ -908,8 +908,8 @@ func trueRange(inHigh, inLow, inClose []float64) []float64 {
 	return outReal
 }
 
-// variance 返回给定时间段的方差
-func variance(inReal []float64, inTimePeriod int) []float64 {
+// Variance 返回给定时间段的方差
+func Variance(inReal []float64, inTimePeriod int) []float64 {
 	outReal := make([]float64, len(inReal))
 
 	nbInitialElementNeeded := inTimePeriod - 1
@@ -949,8 +949,8 @@ func variance(inReal []float64, inTimePeriod int) []float64 {
 }
 
 // stdDev - Standard Deviation
-func stdDev(inReal []float64, inTimePeriod int, inNbDev float64) []float64 {
-	outReal := variance(inReal, inTimePeriod)
+func StdDev(inReal []float64, inTimePeriod int, inNbDev float64) []float64 {
+	outReal := Variance(inReal, inTimePeriod)
 
 	if inNbDev != 1.0 {
 		for i := 0; i < len(inReal); i++ {
