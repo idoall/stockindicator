@@ -11,7 +11,7 @@ import (
 // go test -v ./trend -test.run TestKdj
 func TestKdj(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	//计算新的Kdj
 	stock := NewDefaultKdj(list)

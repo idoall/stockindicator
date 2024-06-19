@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -13,7 +13,7 @@ type Rma struct {
 	Name   string
 	Period int //默认13
 	data   []RmaData
-	kline  utils.Klines
+	kline  *klines.Item
 }
 
 type RmaData struct {
@@ -22,17 +22,17 @@ type RmaData struct {
 }
 
 // NewRma new Func
-func NewRma(list utils.Klines, period int) *Rma {
+func NewRma(klineItem *klines.Item, period int) *Rma {
 	m := &Rma{
 		Name:   fmt.Sprintf("Rma%d", period),
-		kline:  list,
+		kline:  klineItem,
 		Period: period,
 	}
 	return m
 }
 
-func NewDefaultRma(list utils.Klines) *Rma {
-	return NewRma(list, 13)
+func NewDefaultRma(klineItem *klines.Item) *Rma {
+	return NewRma(klineItem, 13)
 }
 
 // Calculation Func
@@ -44,7 +44,7 @@ func (e *Rma) Calculation() *Rma {
 	for i, value := range rma {
 
 		e.data = append(e.data, RmaData{
-			Time:  e.kline[i].Time,
+			Time:  e.kline.Candles[i].Time,
 			Value: value,
 		})
 	}

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -13,7 +13,7 @@ type Vwma struct {
 	Name   string
 	Period int //默认计算几天的Vwma
 	data   []VwmaData
-	kline  utils.Klines
+	kline  *klines.Item
 }
 
 // VwmaPoint 计算成交量加权移动平均线 (Vwma)
@@ -29,18 +29,18 @@ type VwmaData struct {
 }
 
 // NewVwma new Func
-func NewVwma(list utils.Klines, period int) *Vwma {
+func NewVwma(klineItem *klines.Item, period int) *Vwma {
 	m := &Vwma{
 		Name:   fmt.Sprintf("Vwma%d", period),
-		kline:  list,
+		kline:  klineItem,
 		Period: period,
 	}
 	return m
 }
 
 // NewDefaultVwma new Func
-func NewDefaultVwma(list utils.Klines) *Vwma {
-	return NewVwma(list, 5)
+func NewDefaultVwma(klineItem *klines.Item) *Vwma {
+	return NewVwma(klineItem, 5)
 }
 
 // Calculation Func
@@ -54,7 +54,7 @@ func (e *Vwma) Calculation() *Vwma {
 
 	for i := 0; i < len(vwmas); i++ {
 		e.data = append(e.data, VwmaData{
-			Time:  e.kline[i].Time,
+			Time:  e.kline.Candles[i].Time,
 			Value: vwmas[i],
 		})
 	}

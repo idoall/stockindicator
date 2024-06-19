@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -13,7 +13,7 @@ type Ma struct {
 	Name   string
 	Period int //默认计算几天的Ma,KDJ一般是9，OBV是10、20、30
 	data   []MaData
-	kline  utils.Klines
+	kline  *klines.Item
 }
 
 type MaData struct {
@@ -22,18 +22,18 @@ type MaData struct {
 }
 
 // NewMa new Func
-func NewMa(list utils.Klines, period int) *Ma {
+func NewMa(klineItem *klines.Item, period int) *Ma {
 	m := &Ma{
 		Name:   fmt.Sprintf("Ma%d", period),
-		kline:  list,
+		kline:  klineItem,
 		Period: period,
 	}
 	return m
 }
 
 // NewDefaultMa new Func
-func NewDefaultMa(list utils.Klines) *Ma {
-	return NewMa(list, 20)
+func NewDefaultMa(klineItem *klines.Item) *Ma {
+	return NewMa(klineItem, 20)
 }
 
 // GetPoints return Point
@@ -55,7 +55,7 @@ func (e *Ma) Calculation() *Ma {
 
 	for i := 0; i < len(maData); i++ {
 		p := MaData{}
-		p.Time = e.kline[i].Time
+		p.Time = e.kline.Candles[i].Time
 		p.Value = maData[i]
 		e.data = append(e.data, p)
 	}

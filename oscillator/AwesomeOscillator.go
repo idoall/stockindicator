@@ -3,8 +3,8 @@ package oscillator
 import (
 	"time"
 
-	"github.com/idoall/stockindicator/trend"
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -12,7 +12,7 @@ import (
 type AwesomeOscillator struct {
 	Name  string
 	data  []AwesomeOscillatorData
-	kline utils.Klines
+	kline *klines.Item
 }
 
 // Awesome Oscillator.动量震荡（Awesome Oscillator）是一个用于很累市场动量的指标。
@@ -27,8 +27,8 @@ type AwesomeOscillatorData struct {
 }
 
 // NewAwesomeOscillator new Func
-func NewAwesomeOscillator(list utils.Klines) *AwesomeOscillator {
-	m := &AwesomeOscillator{Name: "AwesomeOscillator", kline: list}
+func NewAwesomeOscillator(klineItem *klines.Item) *AwesomeOscillator {
+	m := &AwesomeOscillator{Name: "AwesomeOscillator", kline: klineItem}
 	return m
 }
 
@@ -40,13 +40,13 @@ func (e *AwesomeOscillator) Calculation() *AwesomeOscillator {
 	var low = ohlc.Low
 
 	medianPrice := ta.DivideBy(ta.Add(low, high), float64(2))
-	sma5 := trend.NewEma(utils.CloseArrayToKline(medianPrice), 5).GetValues()
-	sma34 := trend.NewEma(utils.CloseArrayToKline(medianPrice), 34).GetValues()
+	sma5 := ta.Ema(5, medianPrice)
+	sma34 := ta.Ema(34, medianPrice)
 	ao := ta.Subtract(sma5, sma34)
 
 	for i := 0; i < len(ao); i++ {
 		e.data = append(e.data, AwesomeOscillatorData{
-			Time:  e.kline[i].Time,
+			Time:  e.kline.Candles[i].Time,
 			Value: ao[i],
 		})
 	}
@@ -55,7 +55,7 @@ func (e *AwesomeOscillator) Calculation() *AwesomeOscillator {
 
 // AnalysisSide Func
 func (e *AwesomeOscillator) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline))
+	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()

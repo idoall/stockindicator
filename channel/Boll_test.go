@@ -11,7 +11,7 @@ import (
 // go test -v ./channel -run TestBoll
 func TestBoll(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 	//计算新的BOLL
 	stock := NewDefaultBoll(list)
 

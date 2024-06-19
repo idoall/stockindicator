@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/idoall/stockindicator/trend"
-	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -21,7 +20,7 @@ type UlcerIndex struct {
 	Name   string
 	Period int
 	data   []UlcerIndexData
-	kline  utils.Klines
+	kline  *klines.Item
 }
 
 // UlcerIndexData
@@ -31,18 +30,18 @@ type UlcerIndexData struct {
 }
 
 // NewUlcerIndex new Func
-func NewUlcerIndex(list utils.Klines, period int) *UlcerIndex {
+func NewUlcerIndex(klineItem *klines.Item, period int) *UlcerIndex {
 	m := &UlcerIndex{
 		Name:   fmt.Sprintf("UlcerIndex%d", period),
-		kline:  list,
+		kline:  klineItem,
 		Period: period,
 	}
 	return m
 }
 
 // NewDefaultUlcerIndex new Func
-func NewDefaultUlcerIndex(list utils.Klines) *UlcerIndex {
-	return NewUlcerIndex(list, 14)
+func NewDefaultUlcerIndex(klineItem *klines.Item) *UlcerIndex {
+	return NewUlcerIndex(klineItem, 14)
 }
 
 // Calculation Func
@@ -54,13 +53,13 @@ func (e *UlcerIndex) Calculation() *UlcerIndex {
 
 	highClosing := ta.Max(period, closing)
 	percentageDrawdown := ta.MultiplyBy(ta.Divide(ta.Subtract(closing, highClosing), highClosing), 100)
-	squaredAverage := trend.NewEma(utils.CloseArrayToKline(ta.Multiply(percentageDrawdown, percentageDrawdown)), period).GetValues()
+	squaredAverage := ta.Ema(period, ta.Multiply(percentageDrawdown, percentageDrawdown))
 
 	ui := ta.Sqrt(squaredAverage)
 
 	for i := 0; i < len(ui); i++ {
 		e.data = append(e.data, UlcerIndexData{
-			Time:  e.kline[i].Time,
+			Time:  e.kline.Candles[i].Time,
 			Value: ui[i],
 		})
 	}

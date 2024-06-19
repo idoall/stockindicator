@@ -11,7 +11,7 @@ import (
 // go test -v ./trend -run TestTraderXO
 func TestTraderXO(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	stock := NewDefaultTraderXO(list)
 

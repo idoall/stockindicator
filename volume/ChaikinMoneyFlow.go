@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -24,7 +24,7 @@ type ChaikinMoneyFlow struct {
 	Name   string
 	Period int
 	data   []ChaikinMoneyFlowData
-	kline  utils.Klines
+	kline  *klines.Item
 }
 
 // ChaikinMoneyFlowData
@@ -34,18 +34,18 @@ type ChaikinMoneyFlowData struct {
 }
 
 // NewChaikinMoneyFlow new Func
-func NewChaikinMoneyFlow(list utils.Klines, period int) *ChaikinMoneyFlow {
+func NewChaikinMoneyFlow(klineItem *klines.Item, period int) *ChaikinMoneyFlow {
 	m := &ChaikinMoneyFlow{
 		Name:   fmt.Sprintf("ChaikinMoneyFlow%d", period),
-		kline:  list,
+		kline:  klineItem,
 		Period: period,
 	}
 	return m
 }
 
 // NewDefaultChaikinMoneyFlow new Func
-func NewDefaultChaikinMoneyFlow(list utils.Klines) *ChaikinMoneyFlow {
-	return NewChaikinMoneyFlow(list, 20)
+func NewDefaultChaikinMoneyFlow(klineItem *klines.Item) *ChaikinMoneyFlow {
+	return NewChaikinMoneyFlow(klineItem, 20)
 }
 
 // Calculation Func
@@ -70,7 +70,7 @@ func (e *ChaikinMoneyFlow) Calculation() *ChaikinMoneyFlow {
 
 	for i := 0; i < len(cmf); i++ {
 		e.data = append(e.data, ChaikinMoneyFlowData{
-			Time:  e.kline[i].Time,
+			Time:  e.kline.Candles[i].Time,
 			Value: cmf[i],
 		})
 	}
@@ -80,7 +80,7 @@ func (e *ChaikinMoneyFlow) Calculation() *ChaikinMoneyFlow {
 
 // AnalysisSide Func
 // func (e *ChaikinMoneyFlow) AnalysisSide() utils.SideData {
-// 	sides := make([]utils.Side, len(e.kline))
+// 	sides := make([]utils.Side, len(e.kline.Candles))
 
 // 	if len(e.data) == 0 {
 // 		e = e.Calculation()

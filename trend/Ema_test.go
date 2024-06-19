@@ -11,7 +11,7 @@ import (
 // go test -v ./trend -run TestEma
 func TestEma(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 	//计算新的EMA
 	// stock := NewDefaultEma(list)
 	stock := NewEma(list, 200)

@@ -11,7 +11,7 @@ import (
 // go test -v ./oscillator -run TestVolumeOscillator
 func TestVolumeOscillator(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	stock := NewDefaultVolumeOscillator(list)
 

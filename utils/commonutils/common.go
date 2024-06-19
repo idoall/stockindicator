@@ -8,8 +8,21 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/shopspring/decimal"
+)
+
+var (
+	zeroValueUnix = time.Unix(0, 0)
+	// ErrDateUnset is an error for start end check calculations
+	ErrDateUnset = errors.New("date unset")
+	// ErrStartAfterEnd is an error for start end check calculations
+	ErrStartAfterEnd = errors.New("start date after end date")
+	// ErrStartEqualsEnd is an error for start end check calculations
+	ErrStartEqualsEnd = errors.New("start date equals end date")
+	// ErrStartAfterTimeNow is an error for start end check calculations
+	ErrStartAfterTimeNow = errors.New("start date is after current time")
 )
 
 // FloatFromString format
@@ -66,4 +79,26 @@ func JSONDecode(data []byte, to interface{}) error {
 		return errors.New("json decode error - memory address not supplied")
 	}
 	return json.Unmarshal(data, to)
+}
+
+// StartEndTimeCheck provides some basic checks which occur
+// frequently in the codebase
+func StartEndTimeCheck(start, end time.Time) error {
+	if start.IsZero() || start.Equal(zeroValueUnix) {
+		return fmt.Errorf("start %w", ErrDateUnset)
+	}
+	if end.IsZero() || end.Equal(zeroValueUnix) {
+		return fmt.Errorf("end %w", ErrDateUnset)
+	}
+	if start.After(end) {
+		return ErrStartAfterEnd
+	}
+	if start.Equal(end) {
+		return ErrStartEqualsEnd
+	}
+	if start.After(time.Now()) {
+		return ErrStartAfterTimeNow
+	}
+
+	return nil
 }

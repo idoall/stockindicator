@@ -5,7 +5,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 )
 
 // Vortex struct
@@ -13,7 +13,7 @@ type Vortex struct {
 	Name   string
 	Period int //默认一般是13
 	data   []VortexData
-	kline  utils.Klines
+	kline  *klines.Item
 }
 
 type VortexData struct {
@@ -23,18 +23,18 @@ type VortexData struct {
 }
 
 // NewVortex new Func
-func NewVortex(list utils.Klines, period int) *Vortex {
+func NewVortex(klineItem *klines.Item, period int) *Vortex {
 	m := &Vortex{
 		Name:   fmt.Sprintf("Vortex%d", period),
-		kline:  list,
+		kline:  klineItem,
 		Period: period,
 	}
 	return m
 }
 
 // NewDefaultVortex new Func
-func NewDefaultVortex(list utils.Klines) *Vortex {
-	return NewVortex(list, 9)
+func NewDefaultVortex(klineItem *klines.Item) *Vortex {
+	return NewVortex(klineItem, 9)
 }
 
 // Calculation Func
@@ -81,7 +81,7 @@ func (e *Vortex) Calculation() *Vortex {
 
 	for i := 0; i < len(plusVi); i++ {
 		e.data = append(e.data, VortexData{
-			Time:    e.kline[i].Time,
+			Time:    e.kline.Candles[i].Time,
 			MinusVi: minusVi[i],
 			PlusVi:  plusVi[i],
 		})

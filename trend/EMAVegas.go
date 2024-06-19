@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -17,7 +18,7 @@ type EMAVegas struct {
 	PeriodLong1  int
 	PeriodLong2  int
 	data         []EMAVegasData
-	kline        utils.Klines
+	kline        *klines.Item
 }
 
 // EMAVegasData EMAVegas
@@ -31,10 +32,10 @@ type EMAVegasData struct {
 }
 
 // NewEMAVegas new Func
-func NewEMAVegas(list utils.Klines, period, periodShort1, periodShort2, periodLong1, periodLong2 int) *EMAVegas {
+func NewEMAVegas(klineItem *klines.Item, period, periodShort1, periodShort2, periodLong1, periodLong2 int) *EMAVegas {
 	m := &EMAVegas{
 		Name:         fmt.Sprintf("EMAVegas%d-%d-%d-%d", periodShort1, periodShort2, periodLong1, periodLong2),
-		kline:        list,
+		kline:        klineItem,
 		Period:       period,
 		PeriodShort1: periodShort1,
 		PeriodShort2: periodShort2,
@@ -45,14 +46,14 @@ func NewEMAVegas(list utils.Klines, period, periodShort1, periodShort2, periodLo
 }
 
 // NewDefaultEMAVegas new Func
-func NewDefaultEMAVegas(list utils.Klines) *EMAVegas {
-	return NewEMAVegas(list, 12, 144, 169, 575, 676)
+func NewDefaultEMAVegas(klineItem *klines.Item) *EMAVegas {
+	return NewEMAVegas(klineItem, 12, 144, 169, 575, 676)
 }
 
 // Calculation Func
 func (e *EMAVegas) Calculation() *EMAVegas {
 
-	e.data = make([]EMAVegasData, len(e.kline))
+	e.data = make([]EMAVegasData, len(e.kline.Candles))
 
 	var closeing = e.kline.GetOHLC().Close
 
@@ -64,7 +65,7 @@ func (e *EMAVegas) Calculation() *EMAVegas {
 
 	for i := 0; i < len(emaShort1); i++ {
 		e.data[i] = EMAVegasData{
-			Time:        e.kline[i].Time,
+			Time:        e.kline.Candles[i].Time,
 			Value:       ema[i],
 			Short1Value: emaShort1[i],
 			Short2Value: emaShort2[i],
@@ -77,7 +78,7 @@ func (e *EMAVegas) Calculation() *EMAVegas {
 
 // AnalysisSide Func
 func (e *EMAVegas) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline))
+	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()
@@ -87,7 +88,7 @@ func (e *EMAVegas) AnalysisSide() utils.SideData {
 		if i < 1 {
 			continue
 		}
-		var klineItem = e.kline[i]
+		var klineItem = e.kline.Candles[i]
 		var item = e.data[i]
 
 		var t1, d1 bool

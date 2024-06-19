@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -13,7 +13,7 @@ type Sma struct {
 	Name   string
 	Period int //默认计算几天的MA,KDJ一般是9，OBV是10、20、30
 	data   []SmaData
-	kline  utils.Klines
+	kline  *klines.Item
 }
 
 type SmaData struct {
@@ -22,18 +22,18 @@ type SmaData struct {
 }
 
 // NewSma new Func
-func NewSma(list utils.Klines, period int) *Sma {
+func NewSma(klineItem *klines.Item, period int) *Sma {
 	m := &Sma{
 		Name:   fmt.Sprintf("Sma%d", period),
-		kline:  list,
+		kline:  klineItem,
 		Period: period,
 	}
 	return m
 }
 
 // NewDefaultSma new Func
-func NewDefaultSma(list utils.Klines) *Sma {
-	return NewSma(list, 9)
+func NewDefaultSma(klineItem *klines.Item) *Sma {
+	return NewSma(klineItem, 9)
 }
 
 // Calculation Func
@@ -42,11 +42,11 @@ func (e *Sma) Calculation() *Sma {
 	var period = e.Period
 
 	smas := ta.Sma(period, e.kline.GetOHLC().Close)
-	e.data = make([]SmaData, len(e.kline))
+	e.data = make([]SmaData, len(e.kline.Candles))
 
 	for i, sma := range smas {
 		e.data[i] = SmaData{
-			Time:  e.kline[i].Time,
+			Time:  e.kline.Candles[i].Time,
 			Value: sma,
 		}
 	}

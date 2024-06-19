@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -16,7 +17,7 @@ type UTBot struct {
 	AtrPeriod int
 	Name      string
 	data      []UTBotData
-	kline     utils.Klines
+	kline     *klines.Item
 }
 
 type UTBotData struct {
@@ -26,10 +27,10 @@ type UTBotData struct {
 }
 
 // NewUTBot new Func
-func NewUTBot(list utils.Klines, period, atrPeriod int) *UTBot {
+func NewUTBot(klineItem *klines.Item, period, atrPeriod int) *UTBot {
 	m := &UTBot{
 		Name:      fmt.Sprintf("UTBot%d", period),
-		kline:     list,
+		kline:     klineItem,
 		Period:    period,
 		AtrPeriod: atrPeriod,
 	}
@@ -37,14 +38,14 @@ func NewUTBot(list utils.Klines, period, atrPeriod int) *UTBot {
 }
 
 // NewUTBot new Func
-func NewDefaultUTBot(list utils.Klines) *UTBot {
-	return NewUTBot(list, 2, 1)
+func NewDefaultUTBot(klineItem *klines.Item) *UTBot {
+	return NewUTBot(klineItem, 2, 1)
 }
 
 // Calculation Func
 func (e *UTBot) Calculation() *UTBot {
 
-	var xATRTrailingStop = make([]float64, len(e.kline))
+	var xATRTrailingStop = make([]float64, len(e.kline.Candles))
 
 	var ohlc = e.kline.GetOHLC()
 
@@ -58,7 +59,7 @@ func (e *UTBot) Calculation() *UTBot {
 		closeing = nil
 	}()
 
-	e.data = make([]UTBotData, len(e.kline))
+	e.data = make([]UTBotData, len(e.kline.Candles))
 	for i, close := range closeing {
 		if i == 0 {
 			continue
@@ -77,9 +78,9 @@ func (e *UTBot) Calculation() *UTBot {
 			xATRTrailingStop[i] = close + nLoss
 		}
 
-		// fmt.Printf("[%s]%f\t%f\tatr:%f\txATRTrailingStop:%f\tBuy:%+v\tSell:%+v\n", e.kline[i].Time.Format("2006-01-02 15:04:05"), close-nLoss, close+nLoss, atr[i], xATRTrailingStop[i], buy, sell)
+		// fmt.Printf("[%s]%f\t%f\tatr:%f\txATRTrailingStop:%f\tBuy:%+v\tSell:%+v\n", e.kline.Candles[i].Time.Format("2006-01-02 15:04:05"), close-nLoss, close+nLoss, atr[i], xATRTrailingStop[i], buy, sell)
 		e.data[i] = UTBotData{
-			Time:  e.kline[i].Time,
+			Time:  e.kline.Candles[i].Time,
 			Close: close,
 			Value: xATRTrailingStop[i],
 		}
@@ -90,7 +91,7 @@ func (e *UTBot) Calculation() *UTBot {
 
 // AnalysisSide Func
 func (e *UTBot) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline))
+	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()

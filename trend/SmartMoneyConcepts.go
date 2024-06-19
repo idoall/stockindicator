@@ -5,8 +5,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/idoall/stockindicator/utils"
 	"github.com/idoall/stockindicator/utils/commonutils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -33,7 +33,7 @@ type SmartMoneyConcepts struct {
 
 	Name  string
 	data  []SmartMoneyConceptsData
-	kline utils.Klines
+	kline *klines.Item
 	// Order Blocks Number
 	OrderBlockNumber  int
 	OrderBlockBullish SmartMoneyConceptsDataOrderBlockList
@@ -77,10 +77,10 @@ type SmartMoneyConceptsData struct {
 }
 
 // NewSmartMoneyConcepts new Func
-func NewSmartMoneyConcepts(list utils.Klines, swingLenght int, eqheql_BarsConfirmation, eqheql_Threshold int) *SmartMoneyConcepts {
+func NewSmartMoneyConcepts(klineItem *klines.Item, swingLenght int, eqheql_BarsConfirmation, eqheql_Threshold int) *SmartMoneyConcepts {
 	m := &SmartMoneyConcepts{
 		Name:                    fmt.Sprintf("SmartMoneyConcepts%d-%d-%d", swingLenght, eqheql_BarsConfirmation, eqheql_Threshold),
-		kline:                   list,
+		kline:                   klineItem,
 		SwingLenght:             swingLenght,
 		EQHEQL_BarsConfirmation: eqheql_BarsConfirmation,
 		EQHEQL_Threshold:        eqheql_Threshold,
@@ -92,8 +92,8 @@ func NewSmartMoneyConcepts(list utils.Klines, swingLenght int, eqheql_BarsConfir
 }
 
 // NewSmartMoneyConcepts new Func
-func NewDefaultSmartMoneyConcepts(list utils.Klines) *SmartMoneyConcepts {
-	return NewSmartMoneyConcepts(list, 50, 3, 1)
+func NewDefaultSmartMoneyConcepts(klineItem *klines.Item) *SmartMoneyConcepts {
+	return NewSmartMoneyConcepts(klineItem, 50, 3, 1)
 }
 
 func (e *SmartMoneyConcepts) Clear() {
@@ -110,10 +110,11 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 	var closes = ohlc.Close
 	var highs = ohlc.High
 	var lows = ohlc.Low
+	var times = ohlc.Time
 
 	var atr = ta.Atr(highs, lows, closes, 200)
 
-	e.data = make([]SmartMoneyConceptsData, len(e.kline))
+	e.data = make([]SmartMoneyConceptsData, len(e.kline.Candles))
 
 	var trend = 0
 	var itrend = 0
@@ -150,12 +151,12 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 		lows = nil
 	}()
 
-	for i := 1; i < len(e.kline); i++ {
+	for i := 1; i < len(e.kline.Candles); i++ {
 
 		var close = closes[i]
 		var high = highs[i]
 		var low = lows[i]
-		var time = e.kline[i].Time
+		var time = times[i]
 
 		if trail_up == 0.0 {
 			trail_up = high
@@ -389,24 +390,24 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 		//
 		if trend < 0 {
 			e.StrongHigh = SmartMoneyConceptsDataStrongWeak{
-				Time:  e.kline[trail_up_x].Time,
+				Time:  times[trail_up_x],
 				Value: trail_up,
 			}
 		} else {
 			e.WeakHigh = SmartMoneyConceptsDataStrongWeak{
-				Time:  e.kline[trail_up_x].Time,
+				Time:  times[trail_up_x],
 				Value: trail_up,
 			}
 		}
 
 		if trend > 0 {
 			e.StrongLow = SmartMoneyConceptsDataStrongWeak{
-				Time:  e.kline[trail_dn_x].Time,
+				Time:  times[trail_dn_x],
 				Value: trail_dn,
 			}
 		} else {
 			e.WeakLow = SmartMoneyConceptsDataStrongWeak{
-				Time:  e.kline[trail_dn_x].Time,
+				Time:  times[trail_dn_x],
 				Value: trail_dn,
 			}
 		}
@@ -467,7 +468,7 @@ func (e *SmartMoneyConcepts) obCoord(useMax bool, index, loc int, highs, lows, a
 
 	list = list.Add(SmartMoneyConceptsDataOrderBlock{
 		IsTop: useMax,
-		Kline: e.kline[idx],
+		Kline: e.kline.Candles[idx],
 	})
 	return list
 
@@ -529,7 +530,7 @@ func (e *SmartMoneyConcepts) GetData() []SmartMoneyConceptsData {
 
 // AnalysisSide Func
 // func (e *SmartMoneyConcepts) AnalysisSide() utils.SideData {
-// 	sides := make([]utils.Side, len(e.kline))
+// 	sides := make([]utils.Side, len(e.kline.Candles))
 
 // 	if len(e.data) == 0 {
 // 		e = e.Calculation()

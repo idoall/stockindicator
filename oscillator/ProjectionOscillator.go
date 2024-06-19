@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/idoall/stockindicator/trend"
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -18,7 +18,7 @@ type ProjectionOscillator struct {
 	Period int //默认一般是50
 	Smooth int // 默认一般是1
 	data   []ProjectionOscillatorData
-	kline  utils.Klines
+	kline  *klines.Item
 }
 
 // ProjectionOscillatorData 投影振荡器策略
@@ -30,10 +30,10 @@ type ProjectionOscillatorData struct {
 }
 
 // NewProjectionOscillator new Func
-func NewProjectionOscillator(list utils.Klines, period, smooth int) *ProjectionOscillator {
+func NewProjectionOscillator(klineItem *klines.Item, period, smooth int) *ProjectionOscillator {
 	m := &ProjectionOscillator{
 		Name:   fmt.Sprintf("ProjectionOscillator%d-%d", period, smooth),
-		kline:  list,
+		kline:  klineItem,
 		Period: period,
 		Smooth: smooth,
 	}
@@ -41,8 +41,8 @@ func NewProjectionOscillator(list utils.Klines, period, smooth int) *ProjectionO
 }
 
 // NewProjectionOscillator new Func
-func NewDefaultProjectionOscillator(list utils.Klines) *ProjectionOscillator {
-	return NewProjectionOscillator(list, 13, 3)
+func NewDefaultProjectionOscillator(klineItem *klines.Item) *ProjectionOscillator {
+	return NewProjectionOscillator(klineItem, 13, 3)
 }
 
 // Calculation Func
@@ -66,10 +66,10 @@ func (e *ProjectionOscillator) Calculation() *ProjectionOscillator {
 	pl := ta.Min(period, vLow)
 
 	po := ta.Divide(ta.MultiplyBy(ta.Subtract(closing, pl), 100), ta.Subtract(pu, pl))
-	spo := trend.NewEma(utils.CloseArrayToKline(po), smooth).GetValues()
+	spo := ta.Ema(smooth, po)
 	for i := 0; i < len(po); i++ {
 		e.data = append(e.data, ProjectionOscillatorData{
-			Time: e.kline[i].Time,
+			Time: e.kline.Candles[i].Time,
 			Po:   po[i],
 			Spo:  spo[i],
 		})
@@ -79,7 +79,7 @@ func (e *ProjectionOscillator) Calculation() *ProjectionOscillator {
 
 // AnalysisSide Func
 func (e *ProjectionOscillator) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline))
+	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()

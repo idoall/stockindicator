@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 	"github.com/idoall/stockindicator/utils/types"
 )
@@ -19,7 +20,7 @@ type StochasticHeat struct {
 	PlotNum    int
 	MATypes    types.MATypes
 	data       []StochasticHeatData
-	kline      utils.Klines
+	kline      *klines.Item
 }
 
 type StochasticHeatData struct {
@@ -37,10 +38,10 @@ type StochasticHeatData struct {
 //		smoothSlow Smooth Slow
 //		plotNum 1-28
 //		maTypes Only "SMA","EMA","WMA"
-func NewStochasticHeat(list utils.Klines, inc, smoothFast, smoothSlow, plotNum int, maTypes types.MATypes) *StochasticHeat {
+func NewStochasticHeat(klineItem *klines.Item, inc, smoothFast, smoothSlow, plotNum int, maTypes types.MATypes) *StochasticHeat {
 	m := &StochasticHeat{
 		Name:       fmt.Sprintf("StochasticHeat%d-%d-%d-%d-%d", inc, smoothFast, smoothSlow, plotNum, maTypes),
-		kline:      list,
+		kline:      klineItem,
 		Increment:  inc,
 		SmoothFast: smoothFast,
 		SmoothSlow: smoothSlow,
@@ -50,8 +51,8 @@ func NewStochasticHeat(list utils.Klines, inc, smoothFast, smoothSlow, plotNum i
 	return m
 }
 
-func NewDefaultStochasticHeat(list utils.Klines) *StochasticHeat {
-	return NewStochasticHeat(list, 8, 7, 26, 25, types.WMA)
+func NewDefaultStochasticHeat(klineItem *klines.Item) *StochasticHeat {
+	return NewStochasticHeat(klineItem, 8, 7, 26, 25, types.WMA)
 }
 
 // Calculation Func
@@ -98,10 +99,10 @@ func (e *StochasticHeat) Calculation() *StochasticHeat {
 	var stoch27 = e.getStoch(27, closing, highs, lows)
 	var stoch28 = e.getStoch(28, closing, highs, lows)
 
-	var fast = make([]float64, len(e.kline))
-	var slow = make([]float64, len(e.kline))
+	var fast = make([]float64, len(e.kline.Candles))
+	var slow = make([]float64, len(e.kline.Candles))
 
-	for i := range e.kline {
+	for i := range e.kline.Candles {
 		var getAverage = (stoch1[i] + stoch2[i] + stoch3[i] + stoch4[i] + stoch5[i] + stoch6[i] + stoch7[i] + stoch8[i] + stoch9[i] + stoch10[i] + stoch11[i] + stoch12[i] + stoch13[i] + stoch14[i] + stoch15[i] + stoch16[i] + stoch17[i] + stoch18[i] + stoch19[i] + stoch20[i] + stoch21[i] + stoch22[i] + stoch23[i] + stoch24[i] + stoch25[i] + stoch26[i] + stoch27[i] + stoch28[i]) / float64(e.PlotNum)
 		fast[i] = ((getAverage / 100) * float64(e.PlotNum))
 
@@ -113,9 +114,9 @@ func (e *StochasticHeat) Calculation() *StochasticHeat {
 			slow = ta.Wma(e.SmoothSlow, fast)
 		}
 	}
-	for i := 0; i < len(e.kline); i++ {
+	for i := 0; i < len(e.kline.Candles); i++ {
 		e.data = append(e.data, StochasticHeatData{
-			Time: e.kline[i].Time,
+			Time: e.kline.Candles[i].Time,
 			Fast: fast[i],
 			Slow: slow[i],
 		})
@@ -180,7 +181,7 @@ func (e *StochasticHeat) getStoch(i int, closing, highs, lows []float64) []float
 
 // AnalysisSide Func
 func (e *StochasticHeat) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline))
+	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()

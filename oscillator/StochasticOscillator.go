@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -20,7 +21,7 @@ type StochasticOscillator struct {
 	Name   string
 	Period int
 	data   []StochasticOscillatorData
-	kline  utils.Klines
+	kline  *klines.Item
 }
 
 // StochasticOscillatorData
@@ -31,18 +32,18 @@ type StochasticOscillatorData struct {
 }
 
 // NewStochasticOscillator new Func
-func NewStochasticOscillator(list utils.Klines, period int) *StochasticOscillator {
+func NewStochasticOscillator(klineItem *klines.Item, period int) *StochasticOscillator {
 	m := &StochasticOscillator{
 		Name:   fmt.Sprintf("StochasticOscillator%d", period),
-		kline:  list,
+		kline:  klineItem,
 		Period: period,
 	}
 	return m
 }
 
 // NewDefaultStochasticOscillator new Func
-func NewDefaultStochasticOscillator(list utils.Klines) *StochasticOscillator {
-	return NewStochasticOscillator(list, 14)
+func NewDefaultStochasticOscillator(klineItem *klines.Item) *StochasticOscillator {
+	return NewStochasticOscillator(klineItem, 14)
 }
 
 // Calculation Func
@@ -67,7 +68,7 @@ func (e *StochasticOscillator) Calculation() *StochasticOscillator {
 
 	for i := 0; i < len(k); i++ {
 		e.data = append(e.data, StochasticOscillatorData{
-			Time: e.kline[i].Time,
+			Time: e.kline.Candles[i].Time,
 			K:    k[i],
 			D:    d[i],
 		})
@@ -85,7 +86,7 @@ func (e *StochasticOscillator) Calculation() *StochasticOscillator {
 // 当指标处在高位（超买区域），并形成依次向下的波峰，而此时价格形成依次向上的波峰，这叫顶背离，是很好的做空（卖出）信号。
 // 当指标处在低位（超卖区域），并形成依次向上的波谷，而此时价格形成依次向下的波谷，这叫底背离，是很好的做多（买入）信号。
 func (e *StochasticOscillator) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline))
+	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()

@@ -12,14 +12,14 @@ import (
 // go test -v ./trend -run TestSmartMoneyConcepts
 func TestSmartMoneyConcepts(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	loc, _ := time.LoadLocation("Local")
 	startTime, err := time.ParseInLocation("2006-01-02 15:04:05", "2023-05-01 00:00:00", loc)
 	if err != nil {
 		panic(err)
 	}
-	list = list.RemoveOutsideRange(startTime, time.Now())
+	list.RemoveOutsideRange(startTime, time.Now())
 
 	stock := NewDefaultSmartMoneyConcepts(list)
 
@@ -58,7 +58,7 @@ func TestSmartMoneyConcepts(t *testing.T) {
 		stock.StrongLow.Value,
 		stock.WeakLow.Time.Format("2006-01-02 15:04:05"),
 		stock.WeakLow.Value,
-		list[len(list)-1].Close,
+		list.Candles[len(list.Candles)-1].Close,
 	)
 	fmt.Printf("OrderBlockBullish:%d\n", len(stock.OrderBlockBullish))
 	for i, v := range stock.OrderBlockBullish {

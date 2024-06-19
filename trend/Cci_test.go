@@ -11,7 +11,7 @@ import (
 // go test -v ./trend -run TestCci
 func TestCci(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 	//计算新的OBV
 	stock := NewDefaultCci(list)
 

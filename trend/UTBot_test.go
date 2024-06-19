@@ -11,7 +11,7 @@ import (
 // go test -v ./trend -run TestUTBot
 func TestUTBot(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	stock := NewDefaultUTBot(list)
 

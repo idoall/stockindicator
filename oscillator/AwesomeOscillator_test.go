@@ -11,7 +11,7 @@ import (
 // go test -v ./oscillator -run TestAwesomeOscillator
 func TestAwesomeOscillator(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	stock := NewAwesomeOscillator(list)
 

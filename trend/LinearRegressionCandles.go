@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -15,7 +15,7 @@ type LinearRegressionCandles struct {
 	LinearRegressionLength int
 	Name                   string
 	data                   []LinearRegressionCandlesData
-	kline                  utils.Klines
+	kline                  *klines.Item
 }
 
 type LinearRegressionCandlesData struct {
@@ -28,10 +28,10 @@ type LinearRegressionCandlesData struct {
 }
 
 // NewLinearRegressionCandles new Func
-func NewLinearRegressionCandles(list utils.Klines, signalSmoothing, linearRegressionLength int, smaSignal bool) *LinearRegressionCandles {
+func NewLinearRegressionCandles(klineItem *klines.Item, signalSmoothing, linearRegressionLength int, smaSignal bool) *LinearRegressionCandles {
 	m := &LinearRegressionCandles{
 		Name:                   fmt.Sprintf("LinearRegressionCandles%d-%d", signalSmoothing, linearRegressionLength),
-		kline:                  list,
+		kline:                  klineItem,
 		SignalSmoothing:        signalSmoothing,
 		LinearRegressionLength: linearRegressionLength,
 		SMASignal:              smaSignal,
@@ -40,14 +40,15 @@ func NewLinearRegressionCandles(list utils.Klines, signalSmoothing, linearRegres
 }
 
 // NewLinearRegressionCandles new Func
-func NewDefaultLinearRegressionCandles(list utils.Klines) *LinearRegressionCandles {
-	return NewLinearRegressionCandles(list, 7, 11, true)
+func NewDefaultLinearRegressionCandles(klineItem *klines.Item) *LinearRegressionCandles {
+	return NewLinearRegressionCandles(klineItem, 7, 11, true)
 }
 
 // Calculation Func
 func (e *LinearRegressionCandles) Calculation() *LinearRegressionCandles {
 
 	var ohlc = e.kline.GetOHLC()
+	var times = ohlc.Time
 	var bopen = ta.LinearReg(ohlc.Open, e.LinearRegressionLength)
 	var bhigh = ta.LinearReg(ohlc.High, e.LinearRegressionLength)
 	var blow = ta.LinearReg(ohlc.Low, e.LinearRegressionLength)
@@ -61,17 +62,16 @@ func (e *LinearRegressionCandles) Calculation() *LinearRegressionCandles {
 	}
 	// ? sma(bclose, signal_length) : ema(bclose, signal_length)
 
-	e.data = make([]LinearRegressionCandlesData, len(e.kline))
+	e.data = make([]LinearRegressionCandlesData, len(e.kline.Candles))
 
-	for i := 0; i < len(e.kline); i++ {
-		klineItem := e.kline[i]
+	for i := 0; i < len(e.kline.Candles); i++ {
 		e.data[i] = LinearRegressionCandlesData{
 			Open:   bopen[i],
 			Close:  bclose[i],
 			High:   bhigh[i],
 			Low:    blow[i],
 			Signal: signal[i],
-			Time:   klineItem.Time,
+			Time:   times[i],
 		}
 
 	}

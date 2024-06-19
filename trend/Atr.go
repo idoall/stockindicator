@@ -5,7 +5,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -14,7 +14,7 @@ type Atr struct {
 	Period int //默认一般是13
 	Name   string
 	data   []AtrData
-	kline  utils.Klines
+	kline  *klines.Item
 }
 
 type AtrData struct {
@@ -24,41 +24,47 @@ type AtrData struct {
 }
 
 // NewAtr new Func
-func NewAtr(list utils.Klines, period int) *Atr {
+func NewAtr(klineItem *klines.Item, period int) *Atr {
 	m := &Atr{
 		Name:   fmt.Sprintf("Atr%d", period),
-		kline:  list,
+		kline:  klineItem,
 		Period: period,
 	}
 	return m
 }
 
 // NewAtr new Func
-func NewDefaultAtr(list utils.Klines) *Atr {
-	return NewAtr(list, 14)
+func NewDefaultAtr(klineItem *klines.Item) *Atr {
+	return NewAtr(klineItem, 14)
 }
 
 // Calculation Func
 func (e *Atr) Calculation() *Atr {
 
-	var tr = make([]float64, len(e.kline))
-	for i := 0; i < len(e.kline); i++ {
-		klineItem := e.kline[i]
+	var tr = make([]float64, len(e.kline.Candles))
+
+	var ohlc = e.kline.GetOHLC()
+	var closes = ohlc.Close
+	var highs = ohlc.High
+	var lows = ohlc.Low
+
+	for i := 0; i < len(e.kline.Candles); i++ {
+		// klineItem := e.kline[i]
 		var AtrPointStruct AtrData
 		// TR= | 最高价 - 最低价 | 和 | 最高价 - 昨日收盘价 | 和 | 昨日收盘价 - 最低价 | 的最大值
 		var prevClose float64
 		if i != 0 {
-			prevClose = e.kline[i-1].Close
+			prevClose = closes[i-1]
 		}
-		tr[i] = math.Max(klineItem.High-klineItem.Low, math.Max(klineItem.High-prevClose, klineItem.Low-prevClose))
-		AtrPointStruct.Time = e.kline[i].Time
+		tr[i] = math.Max(highs[i]-lows[i], math.Max(highs[i]-prevClose, lows[i]-prevClose))
+		AtrPointStruct.Time = e.kline.Candles[i].Time
 	}
 	var atr = ta.Rma(e.Period, tr)
 
-	e.data = make([]AtrData, len(e.kline))
+	e.data = make([]AtrData, len(e.kline.Candles))
 	for i, v := range atr {
 		e.data[i] = AtrData{
-			Time: e.kline[i].Time,
+			Time: e.kline.Candles[i].Time,
 			TR:   tr[i],
 			Atr:  v,
 		}

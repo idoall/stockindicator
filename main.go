@@ -11,7 +11,7 @@ import (
 
 func main() {
 
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	strategiesSides := utils.RunStrategies(
 		trend.NewDefaultMacd(list),
@@ -27,7 +27,7 @@ func main() {
 		oscillator.NewDefaultWilliamsR(list),
 	)
 
-	for i, v := range list {
+	for i, v := range list.Candles {
 		var strategiesSidesMessages []string
 		for _, sideMessage := range strategiesSides {
 			strategiesSidesMessages = append(strategiesSidesMessages, fmt.Sprintf("%s:%s",

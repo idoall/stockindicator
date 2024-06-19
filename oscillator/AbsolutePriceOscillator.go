@@ -3,8 +3,8 @@ package oscillator
 import (
 	"time"
 
-	"github.com/idoall/stockindicator/trend"
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -14,7 +14,7 @@ type AbsolutePriceOscillator struct {
 	FastPeriod int // 默认一般是14
 	SlowPeriod int // 默认一般是30
 	data       []AbsolutePriceOscillatorData
-	kline      utils.Klines
+	kline      *klines.Item
 }
 
 // AbsolutePriceOscillatorPoint 绝对价格震荡指标 (APO)
@@ -25,8 +25,8 @@ type AbsolutePriceOscillatorData struct {
 }
 
 // NewAbsolutePriceOscillator new Func
-func NewAbsolutePriceOscillator(list utils.Klines) *AbsolutePriceOscillator {
-	m := &AbsolutePriceOscillator{Name: "AbsolutePriceOscillator", kline: list, FastPeriod: 14, SlowPeriod: 30}
+func NewAbsolutePriceOscillator(klineItem *klines.Item) *AbsolutePriceOscillator {
+	m := &AbsolutePriceOscillator{Name: "AbsolutePriceOscillator", kline: klineItem, FastPeriod: 14, SlowPeriod: 30}
 	return m
 }
 
@@ -35,22 +35,24 @@ func (e *AbsolutePriceOscillator) Calculation() *AbsolutePriceOscillator {
 
 	var closing = e.kline.GetOHLC().Close
 
-	fast := trend.NewEma(utils.CloseArrayToKline(closing), e.FastPeriod).GetValues()
-	slow := trend.NewEma(utils.CloseArrayToKline(closing), e.SlowPeriod).GetValues()
+	fast := ta.Ema(e.FastPeriod, closing)
+	slow := ta.Ema(e.SlowPeriod, closing)
 	apo := ta.Subtract(fast, slow)
 
+	var data = make([]AbsolutePriceOscillatorData, len(apo))
 	for i := 0; i < len(apo); i++ {
-		e.data = append(e.data, AbsolutePriceOscillatorData{
-			Time:  e.kline[i].Time,
+		data[i] = AbsolutePriceOscillatorData{
+			Time:  e.kline.Candles[i].Time,
 			Value: apo[i],
-		})
+		}
 	}
+	e.data = data
 	return e
 }
 
 // AnalysisSide Func
 func (e *AbsolutePriceOscillator) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline))
+	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()

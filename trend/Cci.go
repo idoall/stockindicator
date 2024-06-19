@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -40,7 +41,7 @@ type Cci struct {
 	SMAPeriod int     //默认计算几天的
 	factor    float64 //计算系数
 	data      []CciData
-	kline     utils.Klines
+	kline     *klines.Item
 }
 
 type CciData struct {
@@ -49,10 +50,10 @@ type CciData struct {
 }
 
 // NewCci new Func
-func NewCci(list utils.Klines, period, smaPeriod int) *Cci {
+func NewCci(klineItem *klines.Item, period, smaPeriod int) *Cci {
 	m := &Cci{
 		Name:      fmt.Sprintf("CCI%d-SMA%d", period, smaPeriod),
-		kline:     list,
+		kline:     klineItem,
 		Period:    period,
 		SMAPeriod: smaPeriod,
 		factor:    0.015,
@@ -61,8 +62,8 @@ func NewCci(list utils.Klines, period, smaPeriod int) *Cci {
 }
 
 // NewDefaultCci new Func
-func NewDefaultCci(list utils.Klines) *Cci {
-	return NewCci(list, 20, 20)
+func NewDefaultCci(klineItem *klines.Item) *Cci {
+	return NewCci(klineItem, 20, 20)
 }
 
 // Calculation Func
@@ -75,7 +76,7 @@ func (e *Cci) Calculation() *Cci {
 	//计算 Cci
 	for i := 0; i < len(ccis); i++ {
 		e.data = append(e.data, CciData{
-			Time:  e.kline[i].Time,
+			Time:  e.kline.Candles[i].Time,
 			Value: ccis[i],
 		})
 	}
@@ -86,7 +87,7 @@ func (e *Cci) Calculation() *Cci {
 
 // 	// 计算TYP
 // 	// TYP:=(HIGH+LOW+CLOSE)/3;
-// 	for i := 0; i < len(e.kline); i++ {
+// 	for i := 0; i < len(e.kline.Candles); i++ {
 // 		item := e.kline[i]
 // 		typicalPrice := (item.High + item.Low + item.Close) / 3.0
 // 		e.typicalPrice = append(e.typicalPrice, typicalPrice)
@@ -95,14 +96,14 @@ func (e *Cci) Calculation() *Cci {
 // 	// 计算MA
 // 	// MA = MA(TYP,N)
 // 	// var closeArray []float64
-// 	// for _, v := range e.kline {
+// 	// for _, v := range e.kline.Candles {
 // 	// 	closeArray = append(closeArray, v.Close)
 // 	// }
-// 	var tempKlineArray utils.Klines
+// 	var tempKlineArray *klines.Item
 // 	for i := 0; i < len(e.typicalPrice); i++ {
 // 		tempKlineArray = append(tempKlineArray, utils.Kline{
 // 			Close: e.typicalPrice[i],
-// 			Time:  e.kline[i].Time,
+// 			Time:  e.kline.Candles[i].Time,
 // 		})
 // 	}
 // 	maPoints := NewMa(tempKlineArray, e.Period).GetData()
@@ -132,7 +133,7 @@ func (e *Cci) Calculation() *Cci {
 // 	// cci =（典型价格 - tp的20周期平均值）/（.015 x平均偏差）
 // 	for i := 0; i < len(e.maPrice); i++ {
 // 		var p CciData
-// 		p.Time = e.kline[i].Time
+// 		p.Time = e.kline.Candles[i].Time
 // 		if i < e.Period-1 {
 // 			p.Value = 0
 // 			e.data = append(e.data, p)
@@ -147,7 +148,7 @@ func (e *Cci) Calculation() *Cci {
 
 // AnalysisSide Func
 func (e *Cci) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline))
+	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()

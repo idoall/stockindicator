@@ -11,7 +11,7 @@ import (
 // go test -v ./trend -run TestVortex
 func TestVortex(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	stock := NewDefaultVortex(list)
 
@@ -26,7 +26,7 @@ func TestVortex(t *testing.T) {
 		fmt.Printf("\t[%d]Time:%s\tPrice:%f\tPlusVi:%f\tMinusVi:%f\n",
 			i,
 			v.Time.Format("2006-01-02 15:04:05"),
-			list[i].Close,
+			list.Candles[i].Close,
 			v.PlusVi,
 			v.MinusVi,
 		)

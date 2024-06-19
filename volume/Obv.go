@@ -3,7 +3,7 @@ package volume
 import (
 	"time"
 
-	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 )
 
 // Obv计算方法：
@@ -17,7 +17,7 @@ import (
 type Obv struct {
 	Name  string
 	data  []ObvData
-	kline utils.Klines
+	kline *klines.Item
 }
 
 type ObvData struct {
@@ -26,15 +26,21 @@ type ObvData struct {
 }
 
 // NewObv new Obv
-func NewObv(list utils.Klines) *Obv {
-	m := &Obv{Name: "Obv", kline: list}
+func NewObv(klineItem *klines.Item) *Obv {
+	m := &Obv{Name: "Obv", kline: klineItem}
 	return m
 }
 
 // Calculation Func
 func (e *Obv) Calculation() *Obv {
-	for i := 0; i < len(e.kline); i++ {
-		item := e.kline[i]
+
+	var ohlc = e.kline.GetOHLC()
+	var closes = ohlc.Close
+	var volumes = ohlc.Volume
+	var times = ohlc.Time
+
+	for i := 0; i < len(e.kline.Candles); i++ {
+
 		var value float64
 
 		//由于Obv的计算方法过于简单化，所以容易受到偶然因素的影响，为了提高Obv的准确性，可以采取多空比率净额法对其进行修正。
@@ -43,16 +49,16 @@ func (e *Obv) Calculation() *Obv {
 
 		if i-1 == -1 {
 			value = 0
-		} else if item.Close > e.kline[i-1].Close {
-			value = e.data[i-1].Value + item.Volume
-		} else if item.Close < e.kline[i-1].Close {
-			value = e.data[i-1].Value - item.Volume
-		} else if item.Close == e.kline[i-1].Close {
+		} else if closes[i] > closes[i-1] {
+			value = e.data[i-1].Value + volumes[i]
+		} else if closes[i] < closes[i-1] {
+			value = e.data[i-1].Value - volumes[i]
+		} else if closes[i] == closes[i-1] {
 			value = e.data[i-1].Value
 		}
 		var p ObvData
 		p.Value = value
-		p.Time = item.Time
+		p.Time = times[i]
 		e.data = append(e.data, p)
 	}
 	return e

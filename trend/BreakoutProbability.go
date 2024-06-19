@@ -5,8 +5,8 @@ import (
 	"math"
 	"time"
 
-	"github.com/idoall/stockindicator/utils"
 	"github.com/idoall/stockindicator/utils/commonutils"
+	"github.com/idoall/stockindicator/utils/klines"
 )
 
 // BreakoutProbability 超级趋势 struct
@@ -15,7 +15,7 @@ type BreakoutProbability struct {
 	NumberOfLines  int
 	Name           string
 	data           []BreakoutProbabilityData
-	kline          utils.Klines
+	kline          *klines.Item
 }
 
 type BreakoutProbabilityData struct {
@@ -37,7 +37,7 @@ type BreakoutProbabilityDataItem struct {
 //	Args:
 //		percentageStep 级别之间的间距可以通过百分比步长进行调整。1% 表示每个级别位于前一个级别之上/之下 1%
 //		numberOfLines 设置要计算的级别数量，最小1，最大5
-func NewBreakoutProbability(list utils.Klines, percentageStep float64, numberOfLines int) *BreakoutProbability {
+func NewBreakoutProbability(klineItem *klines.Item, percentageStep float64, numberOfLines int) *BreakoutProbability {
 
 	if numberOfLines < 1 {
 		numberOfLines = 1
@@ -47,7 +47,7 @@ func NewBreakoutProbability(list utils.Klines, percentageStep float64, numberOfL
 	}
 	m := &BreakoutProbability{
 		Name:           fmt.Sprintf("BreakoutProbability%.2f-%d", percentageStep, numberOfLines),
-		kline:          list,
+		kline:          klineItem,
 		PercentageStep: percentageStep,
 		NumberOfLines:  numberOfLines,
 	}
@@ -55,8 +55,8 @@ func NewBreakoutProbability(list utils.Klines, percentageStep float64, numberOfL
 }
 
 // NewDefaultBreakoutProbability new Func
-func NewDefaultBreakoutProbability(list utils.Klines) *BreakoutProbability {
-	return NewBreakoutProbability(list, 1.2, 5)
+func NewDefaultBreakoutProbability(klineItem *klines.Item) *BreakoutProbability {
+	return NewBreakoutProbability(klineItem, 1.2, 5)
 }
 
 // Calculation Func
@@ -89,8 +89,8 @@ func (e *BreakoutProbability) Calculation() *BreakoutProbability {
 		vals = nil
 	}()
 
-	e.data = make([]BreakoutProbabilityData, len(e.kline))
-	for klineIndex, row := range e.kline {
+	e.data = make([]BreakoutProbabilityData, len(e.kline.Candles))
+	for klineIndex, row := range e.kline.Candles {
 		if klineIndex == 0 {
 			continue
 		}

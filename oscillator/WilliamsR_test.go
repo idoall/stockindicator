@@ -11,7 +11,7 @@ import (
 // go test -v ./oscillator -run TestWilliamsR
 func TestWilliamsR(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	stock := NewDefaultWilliamsR(list)
 

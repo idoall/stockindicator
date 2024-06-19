@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -19,7 +20,7 @@ type SuperTrend struct {
 	ChangeAtr bool
 	Name      string
 	data      []SuperTrendData
-	kline     utils.Klines
+	kline     *klines.Item
 }
 
 type SuperTrendData struct {
@@ -31,10 +32,10 @@ type SuperTrendData struct {
 }
 
 // NewSuperTrend new Func
-func NewSuperTrend(list utils.Klines, atrPeriod, atrMultiplier int, changeAtr bool) *SuperTrend {
+func NewSuperTrend(klineItem *klines.Item, atrPeriod, atrMultiplier int, changeAtr bool) *SuperTrend {
 	m := &SuperTrend{
 		Name:          fmt.Sprintf("SuperTrend%d-%d", atrPeriod, atrMultiplier),
-		kline:         list,
+		kline:         klineItem,
 		AtrPeriod:     atrPeriod,
 		AtrMultiplier: atrMultiplier,
 		ChangeAtr:     changeAtr,
@@ -43,21 +44,21 @@ func NewSuperTrend(list utils.Klines, atrPeriod, atrMultiplier int, changeAtr bo
 }
 
 // NewSuperTrend new Func
-func NewDefaultSuperTrend(list utils.Klines) *SuperTrend {
-	return NewSuperTrend(list, 10, 3, true)
+func NewDefaultSuperTrend(klineItem *klines.Item) *SuperTrend {
+	return NewSuperTrend(klineItem, 10, 3, true)
 }
 
 // Calculation Func
 func (e *SuperTrend) Calculation() *SuperTrend {
 
-	var up = make([]float64, len(e.kline))
-	var upb = make([]float64, len(e.kline))
-	var up1 = make([]float64, len(e.kline))
-	var dn = make([]float64, len(e.kline))
-	var dnb = make([]float64, len(e.kline))
-	var dn1 = make([]float64, len(e.kline))
-	var trend = make([]float64, len(e.kline))
-	var atr = make([]float64, len(e.kline))
+	var up = make([]float64, len(e.kline.Candles))
+	var upb = make([]float64, len(e.kline.Candles))
+	var up1 = make([]float64, len(e.kline.Candles))
+	var dn = make([]float64, len(e.kline.Candles))
+	var dnb = make([]float64, len(e.kline.Candles))
+	var dn1 = make([]float64, len(e.kline.Candles))
+	var trend = make([]float64, len(e.kline.Candles))
+	var atr = make([]float64, len(e.kline.Candles))
 
 	var src = e.kline.HL2()
 	var close = e.kline.GetOHLC().Close
@@ -118,8 +119,8 @@ func (e *SuperTrend) Calculation() *SuperTrend {
 		}
 	}
 
-	e.data = make([]SuperTrendData, len(e.kline))
-	for i, v := range e.kline {
+	e.data = make([]SuperTrendData, len(e.kline.Candles))
+	for i, v := range e.kline.Candles {
 		e.data[i] = SuperTrendData{
 			Time:           v.Time,
 			UpTrend:        up[i],
@@ -154,7 +155,7 @@ func (e *SuperTrend) GetData() []SuperTrendData {
 
 // AnalysisSide Func
 func (e *SuperTrend) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline))
+	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()

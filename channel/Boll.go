@@ -21,6 +21,7 @@ import (
 
 	"github.com/idoall/stockindicator/trend"
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -49,7 +50,7 @@ type Boll struct {
 	PeriodN int //计算周期
 	PeriodK int //带宽
 	data    []BollData
-	kline   utils.Klines
+	kline   *klines.Item
 }
 
 type BollData struct {
@@ -61,27 +62,27 @@ type BollData struct {
 
 // NewBoll Func
 // 使用方法，先添加最早日期的数据,最后一条应该是当前日期的数据，结果与 AICoin 对比完全一致
-func NewBoll(list utils.Klines, periodN, periodK int) *Boll {
-	return &Boll{Name: fmt.Sprintf("Boll%d-%d", periodN, periodK), PeriodN: periodN, PeriodK: periodK, kline: list}
+func NewBoll(klineItem *klines.Item, periodN, periodK int) *Boll {
+	return &Boll{Name: fmt.Sprintf("Boll%d-%d", periodN, periodK), PeriodN: periodN, PeriodK: periodK, kline: klineItem}
 }
 
 // NewDefaultBoll Func
-func NewDefaultBoll(list utils.Klines) *Boll {
-	return NewBoll(list, 20, 2.0)
+func NewDefaultBoll(klineItem *klines.Item) *Boll {
+	return NewBoll(klineItem, 20, 2.0)
 }
 
 // dma MD=平方根N日的（C－MA）的两次方之和除以N
 func (e *Boll) dma(sma []float64) []float64 {
-	result := make([]float64, len(e.kline))
+	result := make([]float64, len(e.kline.Candles))
 	period := e.PeriodN
 	sum2 := 0.0
-	for i, v := range e.kline {
+	for i, v := range e.kline.Candles {
 		sum2 += v.Close * v.Close
 		if i < period-1 {
 			result[i] = 0.0
 		} else {
 			result[i] = math.Sqrt(sum2/float64(period) - sma[i]*sma[i])
-			w := e.kline[i-(period-1)].Close
+			w := e.kline.Candles[i-(period-1)].Close
 			sum2 -= w * w
 		}
 	}
@@ -91,7 +92,7 @@ func (e *Boll) dma(sma []float64) []float64 {
 
 // Calculation Func
 func (e *Boll) Calculation() *Boll {
-	l := len(e.kline)
+	l := len(e.kline.Candles)
 
 	e.data = make([]BollData, l)
 
@@ -102,7 +103,7 @@ func (e *Boll) Calculation() *Boll {
 
 	for i, _ := range middle {
 		e.data[i] = BollData{
-			Time:   e.kline[i].Time,
+			Time:   e.kline.Candles[i].Time,
 			Middle: middle[i],
 			Upper:  upper[i],
 			Lower:  lower[i],
@@ -115,11 +116,14 @@ func (e *Boll) Calculation() *Boll {
 // 收盘价高于 upperBand 时提供卖出操作
 // 收盘价低于 lowerBand 值时提供买入操作。
 func (e *Boll) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline))
+	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()
 	}
+
+	var ohlc = e.kline.GetOHLC()
+	var closes = ohlc.Close
 
 	for i, v := range e.data {
 		if i < 1 {
@@ -127,8 +131,8 @@ func (e *Boll) AnalysisSide() utils.SideData {
 		}
 
 		var prevItem = e.data[i-1]
-		var price = e.kline[i].Close
-		var prevPrice = e.kline[i-1].Close
+		var price = closes[i]
+		var prevPrice = closes[i-1]
 
 		if price > v.Upper && prevPrice < prevItem.Upper {
 			sides[i] = utils.Buy

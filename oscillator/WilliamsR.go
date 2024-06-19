@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -19,7 +20,7 @@ type WilliamsR struct {
 	Name   string
 	Period int
 	data   []WilliamsRData
-	kline  utils.Klines
+	kline  *klines.Item
 }
 
 // WilliamsRData
@@ -29,18 +30,18 @@ type WilliamsRData struct {
 }
 
 // NewWilliamsR new Func
-func NewWilliamsR(list utils.Klines, period int) *WilliamsR {
+func NewWilliamsR(klineItem *klines.Item, period int) *WilliamsR {
 	m := &WilliamsR{
 		Name:   fmt.Sprintf("WilliamsR%d", period),
-		kline:  list,
+		kline:  klineItem,
 		Period: period,
 	}
 	return m
 }
 
 // NewDefaultWilliamsR new Func
-func NewDefaultWilliamsR(list utils.Klines) *WilliamsR {
-	return NewWilliamsR(list, 14)
+func NewDefaultWilliamsR(klineItem *klines.Item) *WilliamsR {
+	return NewWilliamsR(klineItem, 14)
 }
 
 // Calculation Func
@@ -64,7 +65,7 @@ func (e *WilliamsR) Calculation() *WilliamsR {
 
 	for i := 0; i < len(result); i++ {
 		e.data = append(e.data, WilliamsRData{
-			Time:  e.kline[i].Time,
+			Time:  e.kline.Candles[i].Time,
 			Value: result[i],
 		})
 	}
@@ -75,7 +76,7 @@ func (e *WilliamsR) Calculation() *WilliamsR {
 // 1、当%R指标指标小于-80时，说明市场进入了超卖区域，如果此后%R指标从-80下方回头向上穿越-80时，可以参考买入信号。
 // 2、当%R指标指标大于-20时，说明市场进入了超买区域，如果此后%R指标从-20上方回头向下穿过-20时，可以参考卖出信号。
 func (e *WilliamsR) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline))
+	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()

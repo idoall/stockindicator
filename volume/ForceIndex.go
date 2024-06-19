@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/idoall/stockindicator/trend"
-	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -17,7 +16,7 @@ type ForceIndex struct {
 	Name   string
 	Period int
 	data   []ForceIndexData
-	kline  utils.Klines
+	kline  *klines.Item
 }
 
 // ForceIndexData
@@ -27,18 +26,18 @@ type ForceIndexData struct {
 }
 
 // NewForceIndex new Func
-func NewForceIndex(list utils.Klines, period int) *ForceIndex {
+func NewForceIndex(klineItem *klines.Item, period int) *ForceIndex {
 	m := &ForceIndex{
 		Name:   fmt.Sprintf("ForceIndex%d", period),
-		kline:  list,
+		kline:  klineItem,
 		Period: period,
 	}
 	return m
 }
 
 // NewDefaultForceIndex new Func
-func NewDefaultForceIndex(list utils.Klines) *ForceIndex {
-	return NewForceIndex(list, 13)
+func NewDefaultForceIndex(klineItem *klines.Item) *ForceIndex {
+	return NewForceIndex(klineItem, 13)
 }
 
 // Calculation Func
@@ -49,11 +48,11 @@ func (e *ForceIndex) Calculation() *ForceIndex {
 	var closing = ohlc.Close
 	var volume = ohlc.Volume
 
-	var vals = trend.NewEma(utils.CloseArrayToKline(ta.Multiply(ta.Diff(closing, 1), volume)), period).GetValues()
+	var vals = ta.Ema(period, ta.Multiply(ta.Diff(closing, 1), volume))
 
 	for i := 0; i < len(vals); i++ {
 		e.data = append(e.data, ForceIndexData{
-			Time:  e.kline[i].Time,
+			Time:  e.kline.Candles[i].Time,
 			Value: vals[i],
 		})
 	}
@@ -70,7 +69,7 @@ func (e *ForceIndex) Calculation() *ForceIndex {
 // 　　当强力指数指标在下降趋势的时间段内变为正值时，是卖出的信号
 // 　　如果价格的变化不与相对应的成交量变化相关联，强力指数指标仍旧保持在一个水平上，意味着趋势很快发生变化。
 // func (e *ForceIndex) AnalysisSide() utils.SideData {
-// 	sides := make([]utils.Side, len(e.kline))
+// 	sides := make([]utils.Side, len(e.kline.Candles))
 
 // 	if len(e.data) == 0 {
 // 		e = e.Calculation()

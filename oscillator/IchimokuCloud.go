@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -26,7 +27,7 @@ type IchimokuCloud struct {
 	LaggingLinePeriod  int
 	Smooth             int // 默认一般是1
 	data               []IchimokuCloudData
-	kline              utils.Klines
+	kline              *klines.Item
 }
 
 // IchimokuCloudData
@@ -40,10 +41,10 @@ type IchimokuCloudData struct {
 }
 
 // NewIchimokuCloud new Func
-func NewIchimokuCloud(list utils.Klines, conversionPeriod, leadingSpanBPeriod, laggingLinePeriod int) *IchimokuCloud {
+func NewIchimokuCloud(klineItem *klines.Item, conversionPeriod, leadingSpanBPeriod, laggingLinePeriod int) *IchimokuCloud {
 	m := &IchimokuCloud{
 		Name:               fmt.Sprintf("IchimokuCloud%d-%d-%d", conversionPeriod, leadingSpanBPeriod, laggingLinePeriod),
-		kline:              list,
+		kline:              klineItem,
 		ConversionPeriod:   conversionPeriod,
 		LeadingSpanBPeriod: leadingSpanBPeriod,
 		LaggingLinePeriod:  laggingLinePeriod,
@@ -52,8 +53,8 @@ func NewIchimokuCloud(list utils.Klines, conversionPeriod, leadingSpanBPeriod, l
 }
 
 // NewDefaultIchimokuCloud new Func
-func NewDefaultIchimokuCloud(list utils.Klines) *IchimokuCloud {
-	return NewIchimokuCloud(list, 20, 60, 120)
+func NewDefaultIchimokuCloud(klineItem *klines.Item) *IchimokuCloud {
+	return NewIchimokuCloud(klineItem, 20, 60, 120)
 }
 
 // Calculation Func
@@ -80,7 +81,7 @@ func (e *IchimokuCloud) Calculation() *IchimokuCloud {
 
 	for i := 0; i < len(conversionLine); i++ {
 		e.data = append(e.data, IchimokuCloudData{
-			Time:           e.kline[i].Time,
+			Time:           e.kline.Candles[i].Time,
 			ConversionLine: conversionLine[i],
 			BaseLine:       baseLine[i],
 			LeadingSpanA:   leadingSpanA[i],
@@ -107,20 +108,23 @@ func (e *IchimokuCloud) Calculation() *IchimokuCloud {
 //	云带颜色从红色变为绿色（看涨），从绿色变为红色（看跌）。
 //	迟行带高于市场价格（看涨），低于市场价格（看跌）。
 func (e *IchimokuCloud) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline))
+	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()
 	}
+
+	var ohlc = e.kline.GetOHLC()
+	var closes = ohlc.Close
 
 	for i, v := range e.data {
 		if i < e.ConversionPeriod {
 			continue
 		}
 
-		var close = e.kline[i].Close
+		var close = closes[i]
 		var prevItem = e.data[i-1]
-		var prevClose = e.kline[i-1].Close
+		var prevClose = closes[i-1]
 		// 市场价格高于云带（看涨），低于云带（看跌）。
 		if close > v.LeadingSpanA && close > v.LeadingSpanB && prevClose < prevItem.LeadingSpanA && prevClose < prevItem.LeadingSpanB {
 			sides[i] = utils.Buy

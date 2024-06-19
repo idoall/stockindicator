@@ -11,7 +11,7 @@ import (
 // go test -v ./oscillator -run TestAbsolutePriceOscillator
 func TestAbsolutePriceOscillator(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	stock := NewAbsolutePriceOscillator(list)
 

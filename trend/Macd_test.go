@@ -11,7 +11,7 @@ import (
 // go test -v ./trend -run TestMacd
 func TestMacd(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	//计算新的Macd
 	stock := NewDefaultMacd(list)

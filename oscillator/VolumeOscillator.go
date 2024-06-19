@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/idoall/stockindicator/trend"
-	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -17,7 +16,7 @@ type VolumeOscillator struct {
 	ShortLength int
 	LongLength  int
 	data        []VolumeOscillatorData
-	kline       utils.Klines
+	kline       *klines.Item
 }
 
 // VolumeOscillatorData
@@ -27,10 +26,10 @@ type VolumeOscillatorData struct {
 }
 
 // NewVolumeOscillator new Func
-func NewVolumeOscillator(list utils.Klines, shortLength, longLength int) *VolumeOscillator {
+func NewVolumeOscillator(klineItem *klines.Item, shortLength, longLength int) *VolumeOscillator {
 	m := &VolumeOscillator{
 		Name:        fmt.Sprintf("VolumeOscillator%d-%d", shortLength, longLength),
-		kline:       list,
+		kline:       klineItem,
 		ShortLength: shortLength,
 		LongLength:  longLength,
 	}
@@ -38,8 +37,8 @@ func NewVolumeOscillator(list utils.Klines, shortLength, longLength int) *Volume
 }
 
 // NewDefaultVolumeOscillator new Func
-func NewDefaultVolumeOscillator(list utils.Klines) *VolumeOscillator {
-	return NewVolumeOscillator(list, 5, 10)
+func NewDefaultVolumeOscillator(klineItem *klines.Item) *VolumeOscillator {
+	return NewVolumeOscillator(klineItem, 5, 10)
 }
 
 func (e *VolumeOscillator) Clear() {
@@ -52,15 +51,15 @@ func (e *VolumeOscillator) Calculation() *VolumeOscillator {
 
 	var volumes = ta.Nzs(e.kline.GetOHLC().Volume, 0)
 
-	short := trend.NewEma(utils.CloseArrayToKline(volumes), e.ShortLength).GetValues()
-	long := trend.NewEma(utils.CloseArrayToKline(volumes), e.LongLength).GetValues()
+	short := ta.Ema(e.ShortLength, volumes)
+	long := ta.Ema(e.LongLength, volumes)
 
 	oscs := ta.MultiplyBy(ta.Divide(ta.Subtract(short, long), long), 100.0)
 
 	e.data = make([]VolumeOscillatorData, len(oscs))
 	for i := 0; i < len(oscs); i++ {
 		e.data[i] = VolumeOscillatorData{
-			Time:  e.kline[i].Time,
+			Time:  e.kline.Candles[i].Time,
 			Value: oscs[i],
 		}
 	}

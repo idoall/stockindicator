@@ -11,7 +11,7 @@ import (
 // go test -v ./oscillator -run TestIchimokuCloud
 func TestIchimokuCloud(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	stock := NewDefaultIchimokuCloud(list)
 

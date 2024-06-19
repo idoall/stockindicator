@@ -11,7 +11,7 @@ import (
 // go test -v ./trend -run TestEmaVegas
 func TestEmaVegas(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	stock := NewDefaultEMAVegas(list)
 
@@ -25,7 +25,7 @@ func TestEmaVegas(t *testing.T) {
 			break
 		}
 		var v = dataList[i]
-		var klineItem = list[i]
+		var klineItem = list.Candles[i]
 		fmt.Printf("\t[%d]Time:%s\tClose:%f\tOpen:%f\tShort1Value:%f\tShort2Value:%f\tLong1Value:%f\tLong2Value:%f\tSide:%s\n", i, v.Time.Format("2006-01-02 15:04:05"), klineItem.Close, klineItem.Open, v.Short1Value, v.Short2Value, v.Long1Value, v.Long2Value, side.Data[i].String())
 	}
 

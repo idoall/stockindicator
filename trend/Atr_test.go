@@ -11,7 +11,7 @@ import (
 // go test -v ./trend -run TestAtr
 func TestAtr(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	stock := NewDefaultAtr(list)
 
@@ -28,7 +28,7 @@ func TestAtr(t *testing.T) {
 		fmt.Printf("\t[%d]Time:%s\tPrice:%f\tATR:%f\tLong:%f\tShort:%f\n",
 			i,
 			v.Time.Format("2006-01-02 15:04:05"),
-			list[i].Close,
+			list.Candles[i].Close,
 			v.Atr,
 			long[i],
 			short[i],

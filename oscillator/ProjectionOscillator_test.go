@@ -11,7 +11,7 @@ import (
 // go test -v ./oscillator -run TestProjectionOscillator
 func TestProjectionOscillator(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	stock := NewDefaultProjectionOscillator(list)
 

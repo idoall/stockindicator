@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/idoall/stockindicator/trend"
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 	"github.com/idoall/stockindicator/volume"
 )
@@ -21,7 +21,7 @@ type ChaikinOscillator struct {
 	FastPeriod int
 	SlowPeriod int
 	data       []ChaikinOscillatorData
-	kline      utils.Klines
+	kline      *klines.Item
 }
 
 // ChaikinOscillatorData.
@@ -32,10 +32,10 @@ type ChaikinOscillatorData struct {
 }
 
 // NewChaikinOscillator new Func
-func NewChaikinOscillator(list utils.Klines, fastPeriod, slowPeriod int) *ChaikinOscillator {
+func NewChaikinOscillator(klineItem *klines.Item, fastPeriod, slowPeriod int) *ChaikinOscillator {
 	m := &ChaikinOscillator{
 		Name:       fmt.Sprintf("ChaikinOscillator%d-%d", fastPeriod, slowPeriod),
-		kline:      list,
+		kline:      klineItem,
 		FastPeriod: fastPeriod,
 		SlowPeriod: slowPeriod,
 	}
@@ -43,23 +43,24 @@ func NewChaikinOscillator(list utils.Klines, fastPeriod, slowPeriod int) *Chaiki
 }
 
 // NewDefaultChaikinOscillator new Func
-func NewDefaultChaikinOscillator(list utils.Klines) *ChaikinOscillator {
-	return NewChaikinOscillator(list, 3, 10)
+func NewDefaultChaikinOscillator(klineItem *klines.Item) *ChaikinOscillator {
+	return NewChaikinOscillator(klineItem, 3, 10)
 }
 
 // Calculation Func
 func (e *ChaikinOscillator) Calculation() *ChaikinOscillator {
 
 	ad := volume.NewAccumulationDistribution(e.kline).GetValues()
-	fastEMA := trend.NewEma(utils.CloseArrayToKline(ad), e.FastPeriod).GetValues()
-	slowEMA := trend.NewEma(utils.CloseArrayToKline(ad), e.SlowPeriod).GetValues()
+
+	fastEMA := ta.Ema(e.FastPeriod, ad)
+	slowEMA := ta.Ema(e.SlowPeriod, ad)
 	co := ta.Subtract(fastEMA, slowEMA)
 
 	// var co, ad = trend.ChaikinOscillator(e.FastPeriod, e.SlowPeriod, low, high, closing, volume)
 
 	for i := 0; i < len(co); i++ {
 		e.data = append(e.data, ChaikinOscillatorData{
-			Time:  e.kline[i].Time,
+			Time:  e.kline.Candles[i].Time,
 			Value: co[i],
 			AD:    ad[i],
 		})
@@ -69,7 +70,7 @@ func (e *ChaikinOscillator) Calculation() *ChaikinOscillator {
 
 // AnalysisSide Func
 func (e *ChaikinOscillator) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline))
+	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()

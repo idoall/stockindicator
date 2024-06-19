@@ -6,6 +6,7 @@ import (
 
 	"github.com/idoall/stockindicator/trend"
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -21,7 +22,7 @@ type KeltnerChannel struct {
 	Name   string
 	Period int
 	data   []KeltnerChannelData
-	kline  utils.Klines
+	kline  *klines.Item
 }
 
 // KeltnerChannelData
@@ -33,18 +34,18 @@ type KeltnerChannelData struct {
 }
 
 // NewKeltnerChannel new Func
-func NewKeltnerChannel(list utils.Klines, period int) *KeltnerChannel {
+func NewKeltnerChannel(klineItem *klines.Item, period int) *KeltnerChannel {
 	m := &KeltnerChannel{
 		Name:   fmt.Sprintf("KeltnerChannel%d", period),
-		kline:  list,
+		kline:  klineItem,
 		Period: period,
 	}
 	return m
 }
 
 // NewDefaultKeltnerChannel new Func
-func NewDefaultKeltnerChannel(list utils.Klines) *KeltnerChannel {
-	return NewKeltnerChannel(list, 20)
+func NewDefaultKeltnerChannel(klineItem *klines.Item) *KeltnerChannel {
+	return NewKeltnerChannel(klineItem, 20)
 }
 
 // Calculation Func
@@ -62,7 +63,7 @@ func (e *KeltnerChannel) Calculation() *KeltnerChannel {
 
 	for i := 0; i < len(middleLine); i++ {
 		e.data = append(e.data, KeltnerChannelData{
-			Time:   e.kline[i].Time,
+			Time:   e.kline.Candles[i].Time,
 			Upper:  upperBand[i],
 			Middle: middleLine[i],
 			Lower:  lowerBand[i],
@@ -77,11 +78,14 @@ func (e *KeltnerChannel) Calculation() *KeltnerChannel {
 //
 // 更多使用方法：https://www.oanda.com/bvi-ft/lab-education/technical_analysis/average-candlestick-chart-keltner-channel/
 func (e *KeltnerChannel) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline))
+	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()
 	}
+
+	var ohlc = e.kline.GetOHLC()
+	var closes = ohlc.Close
 
 	for i, v := range e.data {
 		if i < 1 {
@@ -89,8 +93,8 @@ func (e *KeltnerChannel) AnalysisSide() utils.SideData {
 		}
 
 		var prevItem = e.data[i-1]
-		var prevPrice = e.kline[i-1].Close
-		var price = e.kline[i].Close
+		var price = closes[i]
+		var prevPrice = closes[i-1]
 
 		if price > v.Middle && prevPrice < prevItem.Middle {
 			sides[i] = utils.Buy

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -13,7 +13,7 @@ type Ema struct {
 	Name   string
 	Period int //默认计算几天的Ema
 	data   []EmaData
-	kline  utils.Klines
+	kline  *klines.Item
 }
 
 type EmaData struct {
@@ -22,18 +22,18 @@ type EmaData struct {
 }
 
 // NewEma new Func
-func NewEma(list utils.Klines, period int) *Ema {
+func NewEma(klineItem *klines.Item, period int) *Ema {
 	m := &Ema{
 		Name:   fmt.Sprintf("Ema%d", period),
-		kline:  list,
+		kline:  klineItem,
 		Period: period,
 	}
 	return m
 }
 
 // NewEma new Func
-func NewDefaultEma(list utils.Klines) *Ema {
-	return NewEma(list, 5)
+func NewDefaultEma(klineItem *klines.Item) *Ema {
+	return NewEma(klineItem, 5)
 }
 
 // Calculation Func
@@ -45,7 +45,7 @@ func (e *Ema) Calculation() *Ema {
 	}()
 
 	e.data = make([]EmaData, len(vals))
-	for i, v := range e.kline {
+	for i, v := range e.kline.Candles {
 		e.data[i] = EmaData{
 			Time:  v.Time,
 			Value: vals[i],

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/idoall/stockindicator/trend"
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -23,7 +23,7 @@ type PercentagePriceOscillator struct {
 	SlowPeriod   int
 	SignalPeriod int
 	data         []PercentagePriceOscillatorData
-	kline        utils.Klines
+	kline        *klines.Item
 }
 
 // PercentagePriceOscillatorData
@@ -35,10 +35,10 @@ type PercentagePriceOscillatorData struct {
 }
 
 // NewPercentagePriceOscillator new Func
-func NewPercentagePriceOscillator(list utils.Klines, fastPeriod, slowPeriod, signalPeriod int) *PercentagePriceOscillator {
+func NewPercentagePriceOscillator(klineItem *klines.Item, fastPeriod, slowPeriod, signalPeriod int) *PercentagePriceOscillator {
 	m := &PercentagePriceOscillator{
 		Name:         fmt.Sprintf("PercentagePriceOscillator%d-%d-%d", fastPeriod, slowPeriod, signalPeriod),
-		kline:        list,
+		kline:        klineItem,
 		FastPeriod:   fastPeriod,
 		SlowPeriod:   slowPeriod,
 		SignalPeriod: signalPeriod,
@@ -47,8 +47,8 @@ func NewPercentagePriceOscillator(list utils.Klines, fastPeriod, slowPeriod, sig
 }
 
 // NewDefaultPercentagePriceOscillator new Func
-func NewDefaultPercentagePriceOscillator(list utils.Klines) *PercentagePriceOscillator {
-	return NewPercentagePriceOscillator(list, 12, 26, 9)
+func NewDefaultPercentagePriceOscillator(klineItem *klines.Item) *PercentagePriceOscillator {
+	return NewPercentagePriceOscillator(klineItem, 12, 26, 9)
 }
 
 // Calculation Func
@@ -60,16 +60,16 @@ func (e *PercentagePriceOscillator) Calculation() *PercentagePriceOscillator {
 
 	var closing = e.kline.GetOHLC().Close
 
-	fastEma := trend.NewEma(utils.CloseArrayToKline(closing), fastPeriod).GetValues()
-	slowEma := trend.NewEma(utils.CloseArrayToKline(closing), slowPeriod).GetValues()
+	fastEma := ta.Ema(fastPeriod, closing)
+	slowEma := ta.Ema(slowPeriod, closing)
 
 	ppo := ta.MultiplyBy(ta.Divide(ta.Subtract(fastEma, slowEma), slowEma), 100)
-	signal := trend.NewEma(utils.CloseArrayToKline(ppo), signalPeriod).GetValues()
+	signal := ta.Ema(signalPeriod, ppo)
 	histogram := ta.Subtract(ppo, signal)
 
 	for i := 0; i < len(ppo); i++ {
 		e.data = append(e.data, PercentagePriceOscillatorData{
-			Time:      e.kline[i].Time,
+			Time:      e.kline.Candles[i].Time,
 			PPO:       ppo[i],
 			Signal:    signal[i],
 			Histogram: histogram[i],
@@ -82,7 +82,7 @@ func (e *PercentagePriceOscillator) Calculation() *PercentagePriceOscillator {
 // 正 PPO 线表示看涨趋势, 而负 PPO 线表示看跌趋势.
 // 还可以根据 PPO 线和信号线的交互方式确定动量. 每当 PPO 线越过信号线上方时，动量是看涨的, 当PPPO线越过信号线下方时，看跌.
 func (e *PercentagePriceOscillator) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline))
+	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()

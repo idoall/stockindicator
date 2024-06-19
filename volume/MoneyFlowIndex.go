@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -22,7 +23,7 @@ type MoneyFlowIndex struct {
 	Name   string
 	Period int
 	data   []MoneyFlowIndexData
-	kline  utils.Klines
+	kline  *klines.Item
 }
 
 // MoneyFlowIndexData
@@ -32,18 +33,18 @@ type MoneyFlowIndexData struct {
 }
 
 // NewMoneyFlowIndex new Func
-func NewMoneyFlowIndex(list utils.Klines, period int) *MoneyFlowIndex {
+func NewMoneyFlowIndex(klineItem *klines.Item, period int) *MoneyFlowIndex {
 	m := &MoneyFlowIndex{
 		Name:   fmt.Sprintf("MoneyFlowIndex%d", period),
-		kline:  list,
+		kline:  klineItem,
 		Period: period,
 	}
 	return m
 }
 
 // NewDefaultMoneyFlowIndex new Func
-func NewDefaultMoneyFlowIndex(list utils.Klines) *MoneyFlowIndex {
-	return NewMoneyFlowIndex(list, 14)
+func NewDefaultMoneyFlowIndex(klineItem *klines.Item) *MoneyFlowIndex {
+	return NewMoneyFlowIndex(klineItem, 14)
 }
 
 // Calculation Func
@@ -76,7 +77,7 @@ func (e *MoneyFlowIndex) Calculation() *MoneyFlowIndex {
 
 	for i := 0; i < len(moneyFlowIndex); i++ {
 		e.data = append(e.data, MoneyFlowIndexData{
-			Time:  e.kline[i].Time,
+			Time:  e.kline.Candles[i].Time,
 			Value: moneyFlowIndex[i],
 		})
 	}
@@ -89,7 +90,7 @@ func (e *MoneyFlowIndex) Calculation() *MoneyFlowIndex {
 // 趋势转向：股票价格仍在上升，但是资金流量指标却向下穿过80线，说明股价向上的趋势快要结束，需要注意股价下跌风险。或者股票价格仍在下跌，但是资金流量指标向上穿过20线，说明股价向下的趋势快要结束，可以考虑买入做多。
 // 底/顶背离：股价创新高(当前价格高于近期最高点)，但是资金流量指标却没有创新高，说明股价的新高缺乏支撑，存在下跌风险。
 func (e *MoneyFlowIndex) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline))
+	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()

@@ -11,7 +11,7 @@ import (
 // go test -v ./oscillator -run TestPercentagePriceOscillator
 func TestPercentagePriceOscillator(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	stock := NewDefaultPercentagePriceOscillator(list)
 

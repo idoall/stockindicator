@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -16,7 +16,7 @@ type VolumePriceTrend struct {
 	Name   string
 	Period int
 	data   []VolumePriceTrendData
-	kline  utils.Klines
+	kline  *klines.Item
 }
 
 // VolumePriceTrendData
@@ -26,18 +26,18 @@ type VolumePriceTrendData struct {
 }
 
 // NewVolumePriceTrend new Func
-func NewVolumePriceTrend(list utils.Klines, period int) *VolumePriceTrend {
+func NewVolumePriceTrend(klineItem *klines.Item, period int) *VolumePriceTrend {
 	m := &VolumePriceTrend{
 		Name:   fmt.Sprintf("VolumePriceTrend%d", period),
-		kline:  list,
+		kline:  klineItem,
 		Period: period,
 	}
 	return m
 }
 
 // NewDefaultVolumePriceTrend new Func
-func NewDefaultVolumePriceTrend(list utils.Klines) *VolumePriceTrend {
-	return NewVolumePriceTrend(list, 14)
+func NewDefaultVolumePriceTrend(klineItem *klines.Item) *VolumePriceTrend {
+	return NewVolumePriceTrend(klineItem, 14)
 }
 
 // Calculation Func
@@ -54,7 +54,7 @@ func (e *VolumePriceTrend) Calculation() *VolumePriceTrend {
 
 	for i := 0; i < len(vals); i++ {
 		e.data = append(e.data, VolumePriceTrendData{
-			Time:  e.kline[i].Time,
+			Time:  e.kline.Candles[i].Time,
 			Value: vals[i],
 		})
 	}
@@ -64,7 +64,7 @@ func (e *VolumePriceTrend) Calculation() *VolumePriceTrend {
 
 // AnalysisSide Func
 // func (e *VolumePriceTrend) AnalysisSide() utils.SideData {
-// 	sides := make([]utils.Side, len(e.kline))
+// 	sides := make([]utils.Side, len(e.kline.Candles))
 
 // 	if len(e.data) == 0 {
 // 		e = e.Calculation()

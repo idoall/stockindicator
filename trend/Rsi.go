@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 )
 
 // Rsi is the main object
@@ -12,7 +13,7 @@ type Rsi struct {
 	Name   string
 	Period int //默认计算几天的
 	data   []RsiData
-	kline  utils.Klines
+	kline  *klines.Item
 }
 
 type RsiData struct {
@@ -22,17 +23,17 @@ type RsiData struct {
 
 // NewRsi new Func
 // 使用方法，先添加最早日期的数据,最后一条应该是当前日期的数据，结果与 AICoin 对比完全一致
-func NewRsi(list utils.Klines, period int) *Rsi {
+func NewRsi(klineItem *klines.Item, period int) *Rsi {
 	m := &Rsi{
 		Name:   fmt.Sprintf("Rsi%d", period),
-		kline:  list,
+		kline:  klineItem,
 		Period: period,
 	}
 	return m
 }
 
-func NewDefaultRsi(list utils.Klines) *Rsi {
-	return NewRsi(list, 14)
+func NewDefaultRsi(klineItem *klines.Item) *Rsi {
+	return NewRsi(klineItem, 14)
 }
 
 // Calculation Func
@@ -43,7 +44,7 @@ func (e *Rsi) Calculation() *Rsi {
 	rsiArrayLen := len(rsiArray)
 	for i := 0; i <= (rsiArrayLen - 1); i++ {
 		var p RsiData
-		p.Time = e.kline[i].Time
+		p.Time = e.kline.Candles[i].Time
 		p.Value = rsiArray[i]
 		e.data = append(e.data, p)
 	}
@@ -52,7 +53,7 @@ func (e *Rsi) Calculation() *Rsi {
 
 // AnalysisSide Func
 func (e *Rsi) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline))
+	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()

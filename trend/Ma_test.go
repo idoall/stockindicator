@@ -11,7 +11,7 @@ import (
 // go test -v ./trend -run TestMa
 func TestMa(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	stock := NewDefaultMa(list)
 

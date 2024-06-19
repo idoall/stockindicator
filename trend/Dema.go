@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -13,7 +13,7 @@ type Dema struct {
 	Name   string
 	Period int //默认计算几天的Dema
 	data   []DemaData
-	kline  utils.Klines
+	kline  *klines.Item
 }
 
 // DemaData Dema函数计算给定期间的双指数移动平均线 (Dema)。
@@ -25,18 +25,18 @@ type DemaData struct {
 }
 
 // NewDema new Func
-func NewDema(list utils.Klines, period int) *Dema {
+func NewDema(klineItem *klines.Item, period int) *Dema {
 	m := &Dema{
 		Name:   fmt.Sprintf("Dema%d", period),
-		kline:  list,
+		kline:  klineItem,
 		Period: period,
 	}
 	return m
 }
 
 // NewDefaultDema new Func
-func NewDefaultDema(list utils.Klines) *Dema {
-	return NewDema(list, 20)
+func NewDefaultDema(klineItem *klines.Item) *Dema {
+	return NewDema(klineItem, 20)
 }
 
 // Calculation Func
@@ -44,7 +44,7 @@ func (e *Dema) Calculation() *Dema {
 
 	period := e.Period
 
-	e.data = make([]DemaData, len(e.kline))
+	e.data = make([]DemaData, len(e.kline.Candles))
 
 	var close = e.kline.GetOHLC().Close
 	var ema1 = ta.Ema(period, close)
@@ -55,7 +55,7 @@ func (e *Dema) Calculation() *Dema {
 
 	for i := 0; i < len(demas); i++ {
 		e.data[i] = DemaData{
-			Time:  e.kline[i].Time,
+			Time:  e.kline.Candles[i].Time,
 			Value: demas[i],
 		}
 	}

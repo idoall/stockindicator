@@ -11,7 +11,7 @@ import (
 // go test -v ./channel -run TestKeltnerChannel
 func TestKeltnerChannel(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	stock := NewDefaultKeltnerChannel(list)
 

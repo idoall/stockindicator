@@ -11,7 +11,7 @@ import (
 // go test -v ./trend -run TestPivotPointSuperTrend
 func TestPivotPointSuperTrend(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	stock := NewDefaultPivotPointSuperTrend(list)
 

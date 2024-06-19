@@ -11,7 +11,7 @@ import (
 // go test -v ./channel -run TestDonchianChannel
 func TestDonchianChannel(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	stock := NewDefaultDonchianChannel(list)
 

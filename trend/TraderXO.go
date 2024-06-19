@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 )
 
 // TraderXO struct
@@ -13,7 +14,7 @@ type TraderXO struct {
 	SlowPeriod int
 	Name       string
 	data       []TraderXOData
-	kline      utils.Klines
+	kline      *klines.Item
 }
 
 type TraderXOData struct {
@@ -23,10 +24,10 @@ type TraderXOData struct {
 }
 
 // NewTraderXO new Func
-func NewTraderXO(list utils.Klines, fastPeriod, slowPeriod int) *TraderXO {
+func NewTraderXO(klineItem *klines.Item, fastPeriod, slowPeriod int) *TraderXO {
 	m := &TraderXO{
 		Name:       fmt.Sprintf("TraderXO%d-%d", fastPeriod, slowPeriod),
-		kline:      list,
+		kline:      klineItem,
 		FastPeriod: fastPeriod,
 		SlowPeriod: slowPeriod,
 	}
@@ -34,8 +35,8 @@ func NewTraderXO(list utils.Klines, fastPeriod, slowPeriod int) *TraderXO {
 }
 
 // NewTraderXO new Func
-func NewDefaultTraderXO(list utils.Klines) *TraderXO {
-	return NewTraderXO(list, 12, 25)
+func NewDefaultTraderXO(klineItem *klines.Item) *TraderXO {
+	return NewTraderXO(klineItem, 12, 25)
 }
 
 // Calculation Func
@@ -50,11 +51,11 @@ func (e *TraderXO) Calculation() *TraderXO {
 		v_slowEMAList = nil
 	}()
 
-	e.data = make([]TraderXOData, len(e.kline))
-	for i := 0; i < len(e.kline); i++ {
+	e.data = make([]TraderXOData, len(e.kline.Candles))
+	for i := 0; i < len(e.kline.Candles); i++ {
 
 		e.data[i] = TraderXOData{
-			Time: e.kline[i].Time,
+			Time: e.kline.Candles[i].Time,
 			Fast: v_fastEMAList[i],
 			Slow: v_slowEMAList[i],
 		}
@@ -86,13 +87,13 @@ func (e *TraderXO) GetData() []TraderXOData {
 
 // AnalysisSide Func
 func (e *TraderXO) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline))
+	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()
 	}
 
-	// sides := make([]utils.Side, len(e.kline))
+	// sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()

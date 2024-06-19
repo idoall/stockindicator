@@ -11,7 +11,7 @@ import (
 // go test -v ./trend -run TestStochRsi
 func TestStochRsi(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	stock := NewDefaultStochRsi(list)
 

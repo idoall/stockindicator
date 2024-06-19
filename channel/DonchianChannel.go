@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -20,7 +21,7 @@ type DonchianChannel struct {
 	Name   string
 	Period int
 	data   []DonchianChannelData
-	kline  utils.Klines
+	kline  *klines.Item
 }
 
 // DonchianChannelData
@@ -32,18 +33,18 @@ type DonchianChannelData struct {
 }
 
 // NewDonchianChannel new Func
-func NewDonchianChannel(list utils.Klines, period int) *DonchianChannel {
+func NewDonchianChannel(klineItem *klines.Item, period int) *DonchianChannel {
 	m := &DonchianChannel{
 		Name:   fmt.Sprintf("DonchianChannel%d", period),
-		kline:  list,
+		kline:  klineItem,
 		Period: period,
 	}
 	return m
 }
 
 // NewDefaultDonchianChannel new Func
-func NewDefaultDonchianChannel(list utils.Klines) *DonchianChannel {
-	return NewDonchianChannel(list, 20)
+func NewDefaultDonchianChannel(klineItem *klines.Item) *DonchianChannel {
+	return NewDonchianChannel(klineItem, 20)
 }
 
 // Calculation Func
@@ -59,7 +60,7 @@ func (e *DonchianChannel) Calculation() *DonchianChannel {
 
 	for i := 0; i < len(middleChannel); i++ {
 		e.data = append(e.data, DonchianChannelData{
-			Time:   e.kline[i].Time,
+			Time:   e.kline.Candles[i].Time,
 			Upper:  upperChannel[i],
 			Middle: middleChannel[i],
 			Lower:  lowerChannel[i],
@@ -72,11 +73,14 @@ func (e *DonchianChannel) Calculation() *DonchianChannel {
 // 当价格冲破上下轨道时，冲入上轨是就是可能的买的信号;
 // 反之，冲破下轨时就是可能的卖的信号
 func (e *DonchianChannel) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline))
+	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()
 	}
+
+	var ohlc = e.kline.GetOHLC()
+	var closes = ohlc.Close
 
 	for i, v := range e.data {
 		if i < 1 {
@@ -84,8 +88,8 @@ func (e *DonchianChannel) AnalysisSide() utils.SideData {
 		}
 
 		var prevItem = e.data[i-1]
-		var prevPrice = e.kline[i-1].Close
-		var price = e.kline[i].Close
+		var price = closes[i]
+		var prevPrice = closes[i-1]
 
 		if price > v.Middle && prevPrice < prevItem.Middle {
 			sides[i] = utils.Buy

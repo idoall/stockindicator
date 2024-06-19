@@ -11,7 +11,7 @@ import (
 // go test -v ./trend -run TestStochasticHeat
 func TestStochasticHeat(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	stock := NewDefaultStochasticHeat(list)
 

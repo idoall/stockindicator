@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -30,7 +31,7 @@ type Macd struct {
 	PeriodSignal int //信号长度默认9
 	PeriodLong   int //默认26
 	data         []MacdData
-	kline        utils.Klines
+	kline        *klines.Item
 }
 
 type MacdData struct {
@@ -43,37 +44,38 @@ type MacdData struct {
 
 // NewMacd new Func
 // 使用方法，先添加最早日期的数据,最后一条应该是当前日期的数据，结果与 AICoin 对比完全一致
-func NewMacd(list utils.Klines, short, signal, long int) *Macd {
+func NewMacd(klineItem *klines.Item, short, signal, long int) *Macd {
 	m := &Macd{
 		Name:         fmt.Sprintf("Macd%d-%d-%d", short, signal, long),
 		PeriodShort:  short,
 		PeriodSignal: signal,
 		PeriodLong:   long,
-		kline:        list,
+		kline:        klineItem,
 	}
 	return m
 }
 
 // NewDefaultMacd new Func
-func NewDefaultMacd(list utils.Klines) *Macd {
-	return NewMacd(list, 12, 9, 26)
+func NewDefaultMacd(klineItem *klines.Item) *Macd {
+	return NewMacd(klineItem, 12, 9, 26)
 }
 
 // Calculation Func
 func (e *Macd) Calculation() *Macd {
 
+	closes := e.kline.GetOHLC().Close
 	// 计算DIF
 	difs := ta.Subtract(
-		NewEma(e.kline, e.PeriodShort).Calculation().GetValues(),
-		NewEma(e.kline, e.PeriodLong).Calculation().GetValues(),
+		ta.Ema(e.PeriodShort, closes),
+		ta.Ema(e.PeriodLong, closes),
 	)
 	// 计算DEA
-	deas := NewEma(utils.CloseArrayToKline(difs), e.PeriodSignal).GetValues()
+	deas := ta.Ema(e.PeriodSignal, difs)
 
-	e.data = make([]MacdData, len(e.kline))
+	e.data = make([]MacdData, len(e.kline.Candles))
 	for i, dif := range difs {
 		e.data[i] = MacdData{
-			Time: e.kline[i].Time,
+			Time: e.kline.Candles[i].Time,
 			DIF:  dif,
 			DEA:  deas[i],
 			Macd: (dif - deas[i]) * 2,
@@ -86,7 +88,7 @@ func (e *Macd) Calculation() *Macd {
 
 // AnalysisSide Func
 func (e *Macd) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline))
+	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()

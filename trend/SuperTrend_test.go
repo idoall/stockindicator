@@ -11,7 +11,7 @@ import (
 // go test -v ./trend -run TestSuperTrend
 func TestSuperTrend(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	stock := NewSuperTrend(list, 34, 3, true)
 

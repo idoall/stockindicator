@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -18,7 +19,7 @@ type StochRsi struct {
 	// 随机指标长度
 	StochLength int
 	data        []StochRsiData
-	kline       utils.Klines
+	kline       *klines.Item
 }
 
 type StochRsiData struct {
@@ -28,10 +29,10 @@ type StochRsiData struct {
 }
 
 // NewStochRsi new Func
-func NewStochRsi(list utils.Klines, smoothK, smoothD, rsiLength, stochLength int) *StochRsi {
+func NewStochRsi(klineItem *klines.Item, smoothK, smoothD, rsiLength, stochLength int) *StochRsi {
 	m := &StochRsi{
 		Name:        fmt.Sprintf("StochRsi%d-%d-%d-%d", smoothK, smoothD, rsiLength, stochLength),
-		kline:       list,
+		kline:       klineItem,
 		SmoothK:     smoothK,
 		SmoothD:     smoothD,
 		RsiLength:   rsiLength,
@@ -40,8 +41,8 @@ func NewStochRsi(list utils.Klines, smoothK, smoothD, rsiLength, stochLength int
 	return m
 }
 
-func NewDefaultStochRsi(list utils.Klines) *StochRsi {
-	return NewStochRsi(list, 3, 3, 14, 14)
+func NewDefaultStochRsi(klineItem *klines.Item) *StochRsi {
+	return NewStochRsi(klineItem, 3, 3, 14, 14)
 }
 
 // Calculation Func
@@ -52,12 +53,12 @@ func (e *StochRsi) Calculation() *StochRsi {
 	highestHigh := ta.Max(e.StochLength, rsi)
 	lowestLow := ta.Min(e.StochLength, rsi)
 
-	k := NewSma(utils.CloseArrayToKline(ta.MultiplyBy(ta.Divide(ta.Subtract(rsi, lowestLow), ta.Subtract(highestHigh, lowestLow)), float64(100))), e.SmoothK).GetValues()
-	d := NewSma(utils.CloseArrayToKline(k), e.SmoothD).GetValues()
+	k := ta.Ema(e.SmoothK, ta.MultiplyBy(ta.Divide(ta.Subtract(rsi, lowestLow), ta.Subtract(highestHigh, lowestLow)), float64(100)))
+	d := ta.Ema(e.SmoothD, k)
 
 	for i := 0; i < len(k); i++ {
 		e.data = append(e.data, StochRsiData{
-			Time: e.kline[i].Time,
+			Time: e.kline.Candles[i].Time,
 			K:    k[i],
 			D:    d[i],
 		})
@@ -67,7 +68,7 @@ func (e *StochRsi) Calculation() *StochRsi {
 
 // AnalysisSide Func
 func (e *StochRsi) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline))
+	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()

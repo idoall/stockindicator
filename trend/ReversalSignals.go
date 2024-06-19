@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/types"
 )
 
@@ -17,7 +18,7 @@ type ReversalSignals struct {
 	PlotNum    int
 	MATypes    types.MATypes
 	data       []ReversalSignalsData
-	kline      utils.Klines
+	kline      *klines.Item
 }
 
 type ReversalSignalsData struct {
@@ -29,10 +30,10 @@ type ReversalSignalsData struct {
 //
 //	Args:
 //		list K线
-func NewReversalSignals(list utils.Klines) *ReversalSignals {
+func NewReversalSignals(klineItem *klines.Item) *ReversalSignals {
 	m := &ReversalSignals{
 		Name:  "ReversalSignals",
-		kline: list,
+		kline: klineItem,
 	}
 	return m
 }
@@ -59,13 +60,13 @@ func (e *ReversalSignals) Calculation() *ReversalSignals {
 
 	var bullishCount, bearishCount int
 
-	e.data = make([]ReversalSignalsData, len(e.kline))
+	e.data = make([]ReversalSignalsData, len(e.kline.Candles))
 
-	for i := range e.kline {
+	for i := range e.kline.Candles {
 		var close = closes[i]
 		var high = highs[i]
 		var low = lows[i]
-		var time = e.kline[i].Time
+		var time = e.kline.Candles[i].Time
 
 		e.data[i].Side = utils.Hold
 		e.data[i].Time = time

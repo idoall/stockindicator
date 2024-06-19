@@ -11,7 +11,7 @@ import (
 // go test -v ./volume -run TestNegativeVolumeIndex
 func TestNegativeVolumeIndex(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	stock := NewDefaultNegativeVolumeIndex(list)
 
@@ -26,7 +26,7 @@ func TestNegativeVolumeIndex(t *testing.T) {
 		fmt.Printf("\t[%d]Time:%s\tPrice:%f\tValue:%f\n",
 			i,
 			v.Time.Format("2006-01-02 15:04:05"),
-			list[i].Close,
+			list.Candles[i].Close,
 			v.Value,
 		)
 	}

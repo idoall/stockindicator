@@ -3,7 +3,7 @@ package volume
 import (
 	"time"
 
-	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 )
 
 // The Negative Volume Index (NVI) is a cumulative indicator using
@@ -19,7 +19,7 @@ import (
 type NegativeVolumeIndex struct {
 	Name  string
 	data  []NegativeVolumeIndexData
-	kline utils.Klines
+	kline *klines.Item
 }
 
 // NegativeVolumeIndexData
@@ -29,17 +29,17 @@ type NegativeVolumeIndexData struct {
 }
 
 // NewNegativeVolumeIndex new Func
-func NewNegativeVolumeIndex(list utils.Klines) *NegativeVolumeIndex {
+func NewNegativeVolumeIndex(klineItem *klines.Item) *NegativeVolumeIndex {
 	m := &NegativeVolumeIndex{
 		Name:  "NegativeVolumeIndex",
-		kline: list,
+		kline: klineItem,
 	}
 	return m
 }
 
 // NewDefaultNegativeVolumeIndex new Func
-func NewDefaultNegativeVolumeIndex(list utils.Klines) *NegativeVolumeIndex {
-	return NewNegativeVolumeIndex(list)
+func NewDefaultNegativeVolumeIndex(klineItem *klines.Item) *NegativeVolumeIndex {
+	return NewNegativeVolumeIndex(klineItem)
 }
 
 // Calculation Func
@@ -63,7 +63,7 @@ func (e *NegativeVolumeIndex) Calculation() *NegativeVolumeIndex {
 
 	for i := 0; i < len(nvi); i++ {
 		e.data = append(e.data, NegativeVolumeIndexData{
-			Time:  e.kline[i].Time,
+			Time:  e.kline.Candles[i].Time,
 			Value: nvi[i],
 		})
 	}
@@ -73,7 +73,7 @@ func (e *NegativeVolumeIndex) Calculation() *NegativeVolumeIndex {
 
 // AnalysisSide Func
 // func (e *NegativeVolumeIndex) AnalysisSide() utils.SideData {
-// 	sides := make([]utils.Side, len(e.kline))
+// 	sides := make([]utils.Side, len(e.kline.Candles))
 
 // 	if len(e.data) == 0 {
 // 		e = e.Calculation()

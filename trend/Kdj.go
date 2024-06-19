@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 )
 
 // Kdj is the main object
@@ -12,7 +13,7 @@ type Kdj struct {
 	Name   string
 	Period int //默认计算几天的
 	data   []KdjData
-	kline  utils.Klines
+	kline  *klines.Item
 }
 
 type KdjData struct {
@@ -27,18 +28,18 @@ type KdjData struct {
 // 超短线选择：K线：9（部分人选择设置为6）；D线：3；J线：3；
 // 短线选择：K线：18；D线：3；J线：3；
 // 中线选择：；K线：24；D线：3；J线：3。
-func NewKdj(list utils.Klines, period int) *Kdj {
+func NewKdj(klineItem *klines.Item, period int) *Kdj {
 	m := &Kdj{
 		Name:   fmt.Sprintf("Kdj%d", period),
-		kline:  list,
+		kline:  klineItem,
 		Period: period,
 	}
 	return m
 }
 
 // NewDefaultKdj new Func
-func NewDefaultKdj(list utils.Klines) *Kdj {
-	return NewKdj(list, 9)
+func NewDefaultKdj(klineItem *klines.Item) *Kdj {
+	return NewKdj(klineItem, 9)
 }
 
 // Calculation Func
@@ -53,7 +54,7 @@ func (e *Kdj) Calculation() *Kdj {
 			RSV:  rsv[i],
 			K:    k[i],
 			D:    d[i],
-			Time: e.kline[i].Time,
+			Time: e.kline.Candles[i].Time,
 		}
 	}
 	j := e.calculationJ()
@@ -66,7 +67,7 @@ func (e *Kdj) Calculation() *Kdj {
 // AnalysisCrossSide Func
 // 分析金、死叉买卖方向
 func (e *Kdj) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline))
+	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()
@@ -129,10 +130,16 @@ func (e *Kdj) GetListJ() []float64 {
 }
 
 // calculationKD 计算出kd值
-func (e *Kdj) calculationKD(records utils.Klines) (rsv, k, d []float64) {
+func (e *Kdj) calculationKD(records *klines.Item) (rsv, k, d []float64) {
 
 	var periodLowArr, periodHighArr []float64
-	length := len(records)
+
+	var ohlc = records.GetOHLC()
+	var lows = ohlc.Low
+	var highs = ohlc.High
+	var closes = ohlc.Close
+
+	length := len(lows)
 	rsv = make([]float64, length)
 	k = make([]float64, length)
 	d = make([]float64, length)
@@ -140,8 +147,8 @@ func (e *Kdj) calculationKD(records utils.Klines) (rsv, k, d []float64) {
 	// Loop through the entire array.
 	for i := 0; i < length; i++ {
 		// add points to the array.
-		periodLowArr = append(periodLowArr, records[i].Low)
-		periodHighArr = append(periodHighArr, records[i].High)
+		periodLowArr = append(periodLowArr, lows[i])
+		periodHighArr = append(periodHighArr, highs[i])
 
 		// 1: Check if array is "filled" else create null point in line.
 		// 2: Calculate average.
@@ -154,7 +161,7 @@ func (e *Kdj) calculationKD(records utils.Klines) (rsv, k, d []float64) {
 			if highest-lowest < 0.000001 {
 				rsv[i] = 100
 			} else {
-				rsv[i] = (records[i].Close - lowest) / (highest - lowest) * 100
+				rsv[i] = (closes[i] - lowest) / (highest - lowest) * 100
 			}
 
 			k[i] = (2.0/3)*k[i-1] + 1.0/3*rsv[i]

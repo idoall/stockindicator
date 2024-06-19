@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/idoall/stockindicator/trend"
-	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
@@ -21,7 +20,7 @@ type EaseOfMovement struct {
 	Name   string
 	Period int
 	data   []EaseOfMovementData
-	kline  utils.Klines
+	kline  *klines.Item
 }
 
 // EaseOfMovementData
@@ -31,18 +30,18 @@ type EaseOfMovementData struct {
 }
 
 // NewEaseOfMovement new Func
-func NewEaseOfMovement(list utils.Klines, period int) *EaseOfMovement {
+func NewEaseOfMovement(klineItem *klines.Item, period int) *EaseOfMovement {
 	m := &EaseOfMovement{
 		Name:   fmt.Sprintf("EaseOfMovement%d", period),
-		kline:  list,
+		kline:  klineItem,
 		Period: period,
 	}
 	return m
 }
 
 // NewDefaultEaseOfMovement new Func
-func NewDefaultEaseOfMovement(list utils.Klines) *EaseOfMovement {
-	return NewEaseOfMovement(list, 14)
+func NewDefaultEaseOfMovement(klineItem *klines.Item) *EaseOfMovement {
+	return NewEaseOfMovement(klineItem, 14)
 }
 
 // Calculation Func
@@ -57,11 +56,11 @@ func (e *EaseOfMovement) Calculation() *EaseOfMovement {
 	distanceMoved := ta.Diff(ta.DivideBy(ta.Add(high, low), 2), 1)
 	boxRatio := ta.Divide(ta.DivideBy(volume, float64(100000000)), ta.Subtract(high, low))
 
-	emv := trend.NewSma(utils.CloseArrayToKline(ta.Divide(distanceMoved, boxRatio)), period).GetValues()
+	emv := ta.Sma(period, ta.Divide(distanceMoved, boxRatio))
 
 	for i := 0; i < len(emv); i++ {
 		e.data = append(e.data, EaseOfMovementData{
-			Time:  e.kline[i].Time,
+			Time:  e.kline.Candles[i].Time,
 			Value: emv[i],
 		})
 	}
@@ -74,7 +73,7 @@ func (e *EaseOfMovement) Calculation() *EaseOfMovement {
 // 1、当EMV由下往上穿越0轴时，买进。
 // 2、当EMV由上往下穿越0轴时，卖出。
 // func (e *EaseOfMovement) AnalysisSide() utils.SideData {
-// 	sides := make([]utils.Side, len(e.kline))
+// 	sides := make([]utils.Side, len(e.kline.Candles))
 
 // 	if len(e.data) == 0 {
 // 		e = e.Calculation()

@@ -4,7 +4,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/idoall/stockindicator/utils"
+	"github.com/idoall/stockindicator/utils/klines"
 )
 
 // Accumulation/Distribution Indicator (A/D). 累积/分配指标 (A/D)。 累计指标
@@ -20,7 +20,7 @@ import (
 type AccumulationDistribution struct {
 	Name  string
 	data  []AccumulationDistributionData
-	kline utils.Klines
+	kline *klines.Item
 }
 
 // AccumulationDistributionData
@@ -30,17 +30,17 @@ type AccumulationDistributionData struct {
 }
 
 // NewAccumulationDistribution new Func
-func NewAccumulationDistribution(list utils.Klines) *AccumulationDistribution {
+func NewAccumulationDistribution(klineItem *klines.Item) *AccumulationDistribution {
 	m := &AccumulationDistribution{
 		Name:  "AccumulationDistribution",
-		kline: list,
+		kline: klineItem,
 	}
 	return m
 }
 
 // NewDefaultAccumulationDistribution new Func
-func NewDefaultAccumulationDistribution(list utils.Klines) *AccumulationDistribution {
-	return NewAccumulationDistribution(list)
+func NewDefaultAccumulationDistribution(klineItem *klines.Item) *AccumulationDistribution {
+	return NewAccumulationDistribution(klineItem)
 }
 
 // Calculation Func
@@ -68,7 +68,7 @@ func (e *AccumulationDistribution) Calculation() *AccumulationDistribution {
 		}
 
 		e.data = append(e.data, AccumulationDistributionData{
-			Time:  e.kline[i].Time,
+			Time:  e.kline.Candles[i].Time,
 			Value: ad[i],
 		})
 	}

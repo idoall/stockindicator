@@ -11,7 +11,7 @@ import (
 // go test -v ./trend -run TestDema
 func TestDema(t *testing.T) {
 	t.Parallel()
-	list := utils.GetTestKline()
+	list := utils.GetTestKlineItem()
 
 	stock := NewDefaultDema(list)
 

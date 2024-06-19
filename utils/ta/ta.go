@@ -948,7 +948,7 @@ func Variance(inReal []float64, inTimePeriod int) []float64 {
 	return outReal
 }
 
-// stdDev - Standard Deviation
+// stdDev - 标准差
 func StdDev(inReal []float64, inTimePeriod int, inNbDev float64) []float64 {
 	outReal := Variance(inReal, inTimePeriod)
 
