@@ -71,7 +71,7 @@ func (e *Item) ConvertToNewInterval(newInterval Interval) (*Item, error) {
 	}
 
 	// 有的时候不取整，重新计算开始、结束时间
-	newIntervalRangeHolder, err := CalculateCandleDateRanges(start, end, newInterval, 1000)
+	newIntervalRangeHolder, err := CalculateCandleDateRanges(start, end, newInterval, 100000)
 	if err != nil {
 		panic(err)
 	}
@@ -81,6 +81,9 @@ func (e *Item) ConvertToNewInterval(newInterval Interval) (*Item, error) {
 	// 对要返回的数据时间先赋值，后面好计算
 	for _, rangeHolder := range newIntervalRangeHolder.Ranges {
 		for _, intervalsData := range rangeHolder.Intervals {
+			if target >= len(candles) {
+				break
+			}
 			candles[target] = &Candle{
 				Time: intervalsData.Start.Time,
 			}
