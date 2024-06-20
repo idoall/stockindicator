@@ -12,7 +12,7 @@ import (
 type Dema struct {
 	Name   string
 	Period int //默认计算几天的Dema
-	data   []DemaData
+	data   []*DemaData
 	kline  *klines.Item
 }
 
@@ -44,7 +44,7 @@ func (e *Dema) Calculation() *Dema {
 
 	period := e.Period
 
-	e.data = make([]DemaData, len(e.kline.Candles))
+	e.data = make([]*DemaData, len(e.kline.Candles))
 
 	var close = e.kline.GetOHLC().Close
 	var ema1 = ta.Ema(period, close)
@@ -54,7 +54,7 @@ func (e *Dema) Calculation() *Dema {
 	demas := ta.Subtract(ta.MultiplyBy(ema1, 2), ema2)
 
 	for i := 0; i < len(demas); i++ {
-		e.data[i] = DemaData{
+		e.data[i] = &DemaData{
 			Time:  e.kline.Candles[i].Time,
 			Value: demas[i],
 		}
@@ -63,7 +63,7 @@ func (e *Dema) Calculation() *Dema {
 }
 
 // GetData return Point
-func (e *Dema) GetData() []DemaData {
+func (e *Dema) GetData() []*DemaData {
 	if len(e.data) == 0 {
 		e = e.Calculation()
 	}

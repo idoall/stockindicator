@@ -73,6 +73,12 @@ func (e *EMAVegas) Calculation() *EMAVegas {
 			Long2Value:  emaLong2[i],
 		}
 	}
+	clear(closeing)
+	clear(ema)
+	clear(emaShort1)
+	clear(emaShort2)
+	clear(emaLong1)
+	clear(emaLong2)
 	return e
 }
 
