@@ -59,7 +59,7 @@ func (e *UTBot) Calculation() *UTBot {
 	var ohlc = e.ohlc
 
 	var closes = ohlc.Close
-	var times = ohlc.Time
+	var times = ohlc.TimeUnix
 
 	var atr = ta.Atr(ohlc.High, ohlc.Low, closes, e.AtrPeriod)
 
@@ -91,7 +91,7 @@ func (e *UTBot) Calculation() *UTBot {
 
 		// fmt.Printf("[%s]%f\t%f\tatr:%f\txATRTrailingStop:%f\tBuy:%+v\tSell:%+v\n", e.kline.Candles[i].Time.Format("2006-01-02 15:04:05"), close-nLoss, close+nLoss, atr[i], xATRTrailingStop[i], buy, sell)
 		e.data[i] = UTBotData{
-			Time:  times[i],
+			Time:  time.Unix(times[i], 0),
 			Close: close,
 			Value: xATRTrailingStop[i],
 		}

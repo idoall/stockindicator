@@ -68,7 +68,7 @@ func (e *SuperTrend) Calculation() *SuperTrend {
 	var closes = e.ohlc.Close
 	var highs = e.ohlc.High
 	var lows = e.ohlc.Low
-	var times = e.ohlc.Time
+	var times = e.ohlc.TimeUnix
 
 	var up = make([]float64, len(closes))
 	var upb = make([]float64, len(closes))
@@ -137,7 +137,7 @@ func (e *SuperTrend) Calculation() *SuperTrend {
 	e.data = make([]SuperTrendData, len(closes))
 	for i := 0; i < len(closes); i++ {
 		e.data[i] = SuperTrendData{
-			Time:           times[i],
+			Time:           time.Unix(times[i], 0),
 			UpTrend:        up[i],
 			UpTrendBegin:   upb[i],
 			DownTrend:      dn[i],

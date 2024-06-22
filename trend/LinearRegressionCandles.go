@@ -59,7 +59,7 @@ func NewDefaultLinearRegressionCandles(klineItem *klines.Item) *LinearRegression
 func (e *LinearRegressionCandles) Calculation() *LinearRegressionCandles {
 
 	var ohlc = e.ohlc
-	var times = ohlc.Time
+	var times = ohlc.TimeUnix
 	var closes = ohlc.Close
 	var bopen = ta.LinearReg(ohlc.Open, e.LinearRegressionLength)
 	var bhigh = ta.LinearReg(ohlc.High, e.LinearRegressionLength)
@@ -83,7 +83,7 @@ func (e *LinearRegressionCandles) Calculation() *LinearRegressionCandles {
 			High:   bhigh[i],
 			Low:    blow[i],
 			Signal: signal[i],
-			Time:   times[i],
+			Time:   time.Unix(times[i], 0),
 		}
 
 	}

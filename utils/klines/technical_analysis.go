@@ -1,8 +1,6 @@
 package klines
 
 import (
-	"time"
-
 	"github.com/idoall/stockindicator/container/bst"
 )
 
@@ -14,7 +12,7 @@ type OHLC struct {
 	Close      []float64
 	Volume     []float64
 	BullMarket []bool
-	Time       []time.Time
+	TimeUnix   []int64
 }
 
 // GetOHLC returns the entire subset of candles as a friendly type for gct
@@ -27,7 +25,7 @@ func (e *Item) GetOHLC() *OHLC {
 		Close:      make([]float64, len(e.Candles)),
 		Volume:     make([]float64, len(e.Candles)),
 		BullMarket: make([]bool, len(e.Candles)),
-		Time:       make([]time.Time, len(e.Candles)),
+		TimeUnix:   make([]int64, len(e.Candles)),
 	}
 	for x := range e.Candles {
 		ohlc.Open[x] = e.Candles[x].Open
@@ -36,7 +34,7 @@ func (e *Item) GetOHLC() *OHLC {
 		ohlc.Close[x] = e.Candles[x].Close
 		ohlc.Volume[x] = e.Candles[x].Volume
 		ohlc.BullMarket[x] = e.Candles[x].IsBullMarket
-		ohlc.Time[x] = e.Candles[x].Time
+		ohlc.TimeUnix[x] = e.Candles[x].Time.Unix()
 	}
 	return ohlc
 }

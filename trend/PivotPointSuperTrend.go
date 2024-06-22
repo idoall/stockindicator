@@ -67,7 +67,7 @@ func (e *PivotPointSuperTrend) Calculation() *PivotPointSuperTrend {
 	var closes = e.ohlc.Close
 	var highs = e.ohlc.High
 	var lows = e.ohlc.Low
-	var times = e.ohlc.Time
+	var times = e.ohlc.TimeUnix
 
 	var ph = ta.PivotHigh(highs, e.Period, e.Period)
 	var pl = ta.PivotLow(lows, e.Period, e.Period)
@@ -118,7 +118,7 @@ func (e *PivotPointSuperTrend) Calculation() *PivotPointSuperTrend {
 		var trailingsl = commonutils.If(trend[i] == 1, tUP[i], tDown[i]).(float64)
 
 		e.data[i] = PivotPointSuperTrendData{
-			Time:           times[i],
+			Time:           time.Unix(times[i], 0),
 			UpTrend:        commonutils.If(trend[i] == 1 && trend[i-1] == 1, trailingsl, 0.0).(float64),
 			UpTrendBegin:   commonutils.If(trend[i] == 1 && trend[i-1] == -1, trailingsl, 0.0).(float64),
 			DownTrend:      commonutils.If(trend[i] == -1 && trend[i-1] == -1, trailingsl, 0.0).(float64),

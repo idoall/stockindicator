@@ -91,7 +91,7 @@ func NewSmartMoneyConcepts(klineItem *klines.Item, swingLenght int, eqheql_BarsC
 }
 
 // NewSmartMoneyConcepts new Func
-func NewSmartMoneyConceptsOHLC(opens, highs, lows, closes []float64, times []time.Time, swingLenght int, eqheql_BarsConfirmation, eqheql_Threshold int) *SmartMoneyConcepts {
+func NewSmartMoneyConceptsOHLC(opens, highs, lows, closes []float64, times []int64, swingLenght int, eqheql_BarsConfirmation, eqheql_Threshold int) *SmartMoneyConcepts {
 	m := &SmartMoneyConcepts{
 		Name:                    fmt.Sprintf("SmartMoneyConcepts%d-%d-%d", swingLenght, eqheql_BarsConfirmation, eqheql_Threshold),
 		SwingLenght:             swingLenght,
@@ -101,11 +101,11 @@ func NewSmartMoneyConceptsOHLC(opens, highs, lows, closes []float64, times []tim
 		OrderBlockNumber: 5,
 	}
 	m.ohlc = &klines.OHLC{
-		Open:  opens,
-		High:  highs,
-		Low:   lows,
-		Close: closes,
-		Time:  times,
+		Open:     opens,
+		High:     highs,
+		Low:      lows,
+		Close:    closes,
+		TimeUnix: times,
 	}
 
 	return m
@@ -129,7 +129,7 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 	var closes = ohlc.Close
 	var highs = ohlc.High
 	var lows = ohlc.Low
-	var times = ohlc.Time
+	var times = ohlc.TimeUnix
 
 	var atr = ta.Atr(highs, lows, closes, 200)
 
@@ -175,7 +175,7 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 		var close = closes[i]
 		var high = highs[i]
 		var low = lows[i]
-		var time = times[i]
+		var timeUnix = times[i]
 
 		if trail_up == 0.0 {
 			trail_up = high
@@ -409,29 +409,29 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 		//
 		if trend < 0 {
 			e.StrongHigh = SmartMoneyConceptsDataStrongWeak{
-				Time:  times[trail_up_x],
+				Time:  time.Unix(times[trail_up_x], 0),
 				Value: trail_up,
 			}
 		} else {
 			e.WeakHigh = SmartMoneyConceptsDataStrongWeak{
-				Time:  times[trail_up_x],
+				Time:  time.Unix(times[trail_up_x], 0),
 				Value: trail_up,
 			}
 		}
 
 		if trend > 0 {
 			e.StrongLow = SmartMoneyConceptsDataStrongWeak{
-				Time:  times[trail_dn_x],
+				Time:  time.Unix(times[trail_dn_x], 0),
 				Value: trail_dn,
 			}
 		} else {
 			e.WeakLow = SmartMoneyConceptsDataStrongWeak{
-				Time:  times[trail_dn_x],
+				Time:  time.Unix(times[trail_dn_x], 0),
 				Value: trail_dn,
 			}
 		}
 
-		e.data[i].Time = time
+		e.data[i].Time = time.Unix(timeUnix, 0)
 	}
 
 	return e
@@ -485,12 +485,12 @@ func (e *SmartMoneyConcepts) obCoord(useMax bool, index, loc int, highs, lows, a
 		}
 	}
 
-	var times = e.ohlc.Time
+	var times = e.ohlc.TimeUnix
 	var closes = e.ohlc.Close
 	var opens = e.ohlc.Open
 	list = list.Add(SmartMoneyConceptsDataOrderBlock{
 		IsTop: useMax,
-		Time:  times[idx],
+		Time:  time.Unix(times[idx], 0),
 		Open:  opens[idx],
 		Close: closes[idx],
 		High:  highs[idx],

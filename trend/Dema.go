@@ -54,7 +54,7 @@ func (e *Dema) Calculation() *Dema {
 
 	period := e.Period
 	var close = e.ohlc.Close
-	var times = e.ohlc.Time
+	var times = e.ohlc.TimeUnix
 
 	e.data = make([]*DemaData, len(close))
 
@@ -62,7 +62,7 @@ func (e *Dema) Calculation() *Dema {
 
 	for i := 0; i < len(demas); i++ {
 		e.data[i] = &DemaData{
-			Time:  times[i],
+			Time:  time.Unix(times[i], 0),
 			Value: demas[i],
 		}
 	}

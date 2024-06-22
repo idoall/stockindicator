@@ -68,7 +68,7 @@ func NewDefaultEMAVegas(klineItem *klines.Item) *EMAVegas {
 func (e *EMAVegas) Calculation() *EMAVegas {
 
 	var closeing = e.ohlc.Close
-	var times = e.ohlc.Time
+	var times = e.ohlc.TimeUnix
 
 	e.data = make([]EMAVegasData, len(closeing))
 
@@ -80,7 +80,7 @@ func (e *EMAVegas) Calculation() *EMAVegas {
 
 	for i := 0; i < len(emaShort1); i++ {
 		e.data[i] = EMAVegasData{
-			Time:        times[i],
+			Time:        time.Unix(times[i], 0),
 			Value:       ema[i],
 			Short1Value: emaShort1[i],
 			Short2Value: emaShort2[i],

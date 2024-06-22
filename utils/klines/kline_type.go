@@ -71,18 +71,19 @@ type Interval time.Duration
 
 // Candle struct
 type Candle struct {
-	Amount float64 // 成交额
-	Count  int64   // 成交笔数
-	Open   float64 // 开盘价
-	Close  float64 // 收盘价, 当K线为最晚的一根时, 时最新成交价
-	Low    float64 // 最低价
-	High   float64 // 最高价
-	Volume float64 // 成交量
+	Amount float64 `json:"Amount,omitempty"` // 成交额
+	Count  int64   `json:"Count,omitempty"`  // 成交笔数
+	Open   float64 `json:"Open,omitempty"`   // 开盘价
+	Close  float64 `json:"Close,omitempty"`  // 收盘价, 当K线为最晚的一根时, 时最新成交价
+	Low    float64 `json:"Low,omitempty"`    // 最低价
+	High   float64 `json:"High,omitempty"`   // 最高价
+	Volume float64 `json:"Volume,omitempty"` // 成交量
 	// 涨跌幅
-	ChangePercent float64
+	ChangePercent float64 `json:"ChangePercent,omitempty"`
 	// 是否阳线上涨
-	IsBullMarket bool
-	Time         time.Time // k线时间
+	IsBullMarket bool      `json:"IsBullMarket,omitempty"`
+	Time         time.Time `json:"Time,omitempty"` // k线时间
+	TimeUnix     int64     `json:"TimeUnix,omitempty"`
 }
 
 func (e *Candle) String() string {

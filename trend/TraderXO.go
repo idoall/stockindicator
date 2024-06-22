@@ -55,7 +55,7 @@ func NewDefaultTraderXO(klineItem *klines.Item) *TraderXO {
 func (e *TraderXO) Calculation() *TraderXO {
 
 	var closes = e.ohlc.Close
-	var times = e.ohlc.Time
+	var times = e.ohlc.TimeUnix
 	// Define EMAs
 	v_fastEMAList := ta.Ema(e.FastPeriod, closes)
 	v_slowEMAList := ta.Ema(e.SlowPeriod, closes)
@@ -69,7 +69,7 @@ func (e *TraderXO) Calculation() *TraderXO {
 	for i := 0; i < len(closes); i++ {
 
 		e.data[i] = TraderXOData{
-			Time: times[i],
+			Time: time.Unix(times[i], 0),
 			Fast: v_fastEMAList[i],
 			Slow: v_slowEMAList[i],
 		}

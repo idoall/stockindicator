@@ -37,7 +37,7 @@ func (e *Obv) Calculation() *Obv {
 	var ohlc = e.kline.GetOHLC()
 	var closes = ohlc.Close
 	var volumes = ohlc.Volume
-	var times = ohlc.Time
+	var times = ohlc.TimeUnix
 
 	for i := 0; i < len(e.kline.Candles); i++ {
 
@@ -58,7 +58,7 @@ func (e *Obv) Calculation() *Obv {
 		}
 		var p ObvData
 		p.Value = value
-		p.Time = times[i]
+		p.Time = time.Unix(times[i], 0)
 		e.data = append(e.data, p)
 	}
 	return e

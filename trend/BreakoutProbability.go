@@ -88,7 +88,7 @@ func (e *BreakoutProbability) Calculation() *BreakoutProbability {
 	var lows = e.ohlc.Low
 	var opens = e.ohlc.Open
 	var closes = e.ohlc.Close
-	var times = e.ohlc.Time
+	var times = e.ohlc.TimeUnix
 
 	//第1、2行是up；
 	// 3、4行是down;
@@ -112,7 +112,7 @@ func (e *BreakoutProbability) Calculation() *BreakoutProbability {
 	for i := 1; i < len(closes); i++ {
 
 		var dataItem = BreakoutProbabilityData{
-			Time: times[i],
+			Time: time.Unix(times[i], 0),
 		}
 
 		dataItem.List = make([]BreakoutProbabilityDataItem, 10)
