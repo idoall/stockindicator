@@ -68,7 +68,7 @@ func (e *AccumulationDistribution) Calculation() *AccumulationDistribution {
 		}
 
 		e.data = append(e.data, AccumulationDistributionData{
-			Time:  e.kline.Candles[i].Time,
+			Time:  time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			Value: ad[i],
 		})
 	}

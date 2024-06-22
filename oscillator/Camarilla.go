@@ -70,7 +70,7 @@ func (e *Camarilla) Calculation() *Camarilla {
 		var close = closes[i]
 
 		camarillaData := e.getCamarilla(high, low, close)
-		camarillaData.Time = e.kline.Candles[i].Time
+		camarillaData.Time = time.Unix(e.kline.Candles[i].TimeUnix, 0)
 		camarillaData.EMA = emas[i]
 		camarillaData.Pivot = hlc3[i]
 

@@ -103,7 +103,7 @@ func (e *Boll) Calculation() *Boll {
 
 	for i, _ := range middle {
 		e.data[i] = BollData{
-			Time:   e.kline.Candles[i].Time,
+			Time:   time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			Middle: middle[i],
 			Upper:  upper[i],
 			Lower:  lower[i],

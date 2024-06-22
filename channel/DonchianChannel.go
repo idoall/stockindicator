@@ -60,7 +60,7 @@ func (e *DonchianChannel) Calculation() *DonchianChannel {
 
 	for i := 0; i < len(middleChannel); i++ {
 		e.data = append(e.data, DonchianChannelData{
-			Time:   e.kline.Candles[i].Time,
+			Time:   time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			Upper:  upperChannel[i],
 			Middle: middleChannel[i],
 			Lower:  lowerChannel[i],

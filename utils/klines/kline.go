@@ -45,8 +45,8 @@ func (e *Item) ConvertToNewInterval(newInterval Interval) (*Item, error) {
 			newInterval)
 	}
 
-	start := e.Candles[0].Time
-	end := e.Candles[len(e.Candles)-1].Time.Add(e.Interval.Duration())
+	start := time.Unix(e.Candles[0].TimeUnix, 0)
+	end := time.Unix(e.Candles[len(e.Candles)-1].TimeUnix, 0).Add(e.Interval.Duration())
 
 	var window time.Duration
 	if start.Before(end) {
@@ -85,7 +85,7 @@ func (e *Item) ConvertToNewInterval(newInterval Interval) (*Item, error) {
 				break
 			}
 			candles[target] = &Candle{
-				Time: intervalsData.Start.Time,
+				TimeUnix: intervalsData.Start.Time.Unix(),
 			}
 			target++
 		}
@@ -94,22 +94,22 @@ func (e *Item) ConvertToNewInterval(newInterval Interval) (*Item, error) {
 	target = 0
 	for x := range e.Candles {
 
-		if e.Candles[x].Time.Equal(candles[target].Time) && candles[target].Open == 0 {
+		if e.Candles[x].TimeUnix == candles[target].TimeUnix && candles[target].Open == 0 {
 			candles[target].Open = e.Candles[x].Open
 		}
 
-		if e.Candles[x].Time.Equal(candles[target].Time) || e.Candles[x].Time.After(candles[target].Time) && e.Candles[x].High > candles[target].High {
+		if e.Candles[x].TimeUnix == candles[target].TimeUnix || e.Candles[x].TimeUnix > candles[target].TimeUnix && e.Candles[x].High > candles[target].High {
 			candles[target].High = e.Candles[x].High
 		}
 
-		if e.Candles[x].Time.Equal(candles[target].Time) || e.Candles[x].Time.After(candles[target].Time) && (candles[target].Low == 0 || e.Candles[x].Low < candles[target].Low) {
+		if e.Candles[x].TimeUnix == candles[target].TimeUnix || e.Candles[x].TimeUnix > candles[target].TimeUnix && (candles[target].Low == 0 || e.Candles[x].Low < candles[target].Low) {
 			candles[target].Low = e.Candles[x].Low
 		}
 
-		if e.Candles[x].Time.Equal(candles[target].Time) || (e.Candles[x].Time.After(candles[target].Time) && e.Candles[x].Time.Before(candles[target].Time.Add(newInterval.Duration()))) {
+		if e.Candles[x].TimeUnix == candles[target].TimeUnix || (e.Candles[x].TimeUnix > candles[target].TimeUnix && e.Candles[x].TimeUnix < (candles[target].TimeUnix+int64(newInterval.Duration().Seconds()))) {
 			candles[target].Volume += e.Candles[x].Volume
 		}
-		if e.Candles[x].Time.Add(e.Interval.Duration()).Equal(candles[target].Time.Add(newInterval.Duration())) {
+		if (e.Candles[x].TimeUnix + int64(e.Interval.Duration().Seconds())) == (candles[target].TimeUnix + int64(newInterval.Duration().Seconds())) {
 			candles[target].Close = e.Candles[x].Close
 			candles[target].ChangePercent = (candles[target].Close - candles[target].Open) / candles[target].Open
 			if candles[target].Close > candles[target].Open {
@@ -117,7 +117,7 @@ func (e *Item) ConvertToNewInterval(newInterval Interval) (*Item, error) {
 			}
 		}
 
-		if x < len(e.Candles)-1 && target < len(candles)-1 && e.Candles[x+1].Time.Equal(candles[target+1].Time) {
+		if x < len(e.Candles)-1 && target < len(candles)-1 && e.Candles[x+1].TimeUnix == candles[target+1].TimeUnix {
 			// 注意：下面检查了后续切片的长度，因此如果我们无法制作完整的蜡烛，我们可以
 			// 立即中断。例如，一小时蜡烛中有 60 分钟
 			// 蜡烛，我们还剩下 59 分钟蜡烛。
@@ -159,7 +159,7 @@ func (e *Item) RemoveOutsideRangeCopy(start, end time.Time) *Item {
 func (e *Item) RemoveOutsideRange(start, end time.Time) {
 	target := 0
 	for _, keep := range e.Candles {
-		if keep.Time.Equal(start) || (keep.Time.After(start) && keep.Time.Before(end)) {
+		if keep.TimeUnix == start.Unix() || (keep.TimeUnix > start.Unix() && keep.TimeUnix < end.Unix()) {
 			e.Candles[target] = keep
 			target++
 		}
@@ -173,7 +173,7 @@ func (e *Item) RemoveDuplicates() {
 	target := 0
 	for _, keep := range e.Candles {
 		// 如果时间不存在
-		if key := keep.Time.Unix(); !lookup[key] {
+		if key := keep.TimeUnix; !lookup[key] {
 			// 添加时间
 			lookup[key] = true
 			// 重新设置索引
@@ -187,10 +187,10 @@ func (e *Item) RemoveDuplicates() {
 // SortCandlesByTimestamp sorts candles by timestamp
 func (e *Item) SortCandlesByTimestamp(desc bool) {
 	if desc {
-		sort.Slice(e.Candles, func(i, j int) bool { return e.Candles[i].Time.Before(e.Candles[j].Time) })
+		sort.Slice(e.Candles, func(i, j int) bool { return e.Candles[i].TimeUnix < e.Candles[j].TimeUnix })
 		return
 	}
-	sort.Slice(e.Candles, func(i, j int) bool { return e.Candles[i].Time.After(e.Candles[j].Time) })
+	sort.Slice(e.Candles, func(i, j int) bool { return e.Candles[i].TimeUnix > e.Candles[j].TimeUnix })
 }
 
 // addPadding 插入填充时间对齐，当交易所不提供所有数据时
@@ -212,21 +212,25 @@ func (e *Item) addPadding(start, exclusiveEnd time.Time, purgeOnPartial bool) er
 	if window <= 0 {
 		return errCannotEstablishTimeWindow
 	}
-
 	padded := make([]*Candle, int(window/e.Interval.Duration()))
+
 	var target int
 	for x := range padded {
 		switch {
 		case target >= len(e.Candles):
-			padded[x].Time = start
-		case !e.Candles[target].Time.Equal(start):
-			if e.Candles[target].Time.Before(start) {
+			padded[x] = &Candle{
+				TimeUnix: start.Unix(),
+			}
+		case e.Candles[target].TimeUnix != start.Unix():
+			if e.Candles[target].TimeUnix < start.Unix() {
 				return fmt.Errorf("%w when it should be %s truncated at a %s interval",
 					errCandleOpenTimeIsNotUTCAligned,
 					start.Add(e.Interval.Duration()),
 					e.Interval)
 			}
-			padded[x].Time = start
+			padded[x] = &Candle{
+				TimeUnix: start.Unix(),
+			}
 		default:
 			padded[x] = e.Candles[target]
 			target++

@@ -69,7 +69,7 @@ func (e *ProjectionOscillator) Calculation() *ProjectionOscillator {
 	spo := ta.Ema(smooth, po)
 	for i := 0; i < len(po); i++ {
 		e.data = append(e.data, ProjectionOscillatorData{
-			Time: e.kline.Candles[i].Time,
+			Time: time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			Po:   po[i],
 			Spo:  spo[i],
 		})

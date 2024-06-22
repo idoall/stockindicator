@@ -66,7 +66,7 @@ func (e *ReversalSignals) Calculation() *ReversalSignals {
 		var close = closes[i]
 		var high = highs[i]
 		var low = lows[i]
-		var time = e.kline.Candles[i].Time
+		var time = time.Unix(e.kline.Candles[i].TimeUnix, 0)
 
 		e.data[i].Side = utils.Hold
 		e.data[i].Time = time

@@ -34,7 +34,7 @@ func (e *Item) GetOHLC() *OHLC {
 		ohlc.Close[x] = e.Candles[x].Close
 		ohlc.Volume[x] = e.Candles[x].Volume
 		ohlc.BullMarket[x] = e.Candles[x].IsBullMarket
-		ohlc.TimeUnix[x] = e.Candles[x].Time.Unix()
+		ohlc.TimeUnix[x] = e.Candles[x].TimeUnix
 	}
 	return ohlc
 }
@@ -56,11 +56,11 @@ func (e *Item) ToHeikinAshi() *Item {
 		}
 
 		var heikinAshiCandle = &Candle{
-			Open:  open,
-			Close: (candle.Open + candle.High + candle.Low + candle.Close) / 4,
-			High:  bst.New().Inserts([]float64{candle.High, candle.Open, candle.Close}).Max().(float64),
-			Low:   bst.New().Inserts([]float64{candle.Close, candle.Open, candle.Close}).Min().(float64),
-			Time:  candle.Time,
+			Open:     open,
+			Close:    (candle.Open + candle.High + candle.Low + candle.Close) / 4,
+			High:     bst.New().Inserts([]float64{candle.High, candle.Open, candle.Close}).Max().(float64),
+			Low:      bst.New().Inserts([]float64{candle.Close, candle.Open, candle.Close}).Min().(float64),
+			TimeUnix: candle.TimeUnix,
 		}
 		heikinAshiCandle.ChangePercent = (candle.Close - candle.Open) / candle.Open
 		if candle.Close > candle.Open {

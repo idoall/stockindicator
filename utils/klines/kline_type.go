@@ -81,13 +81,13 @@ type Candle struct {
 	// 涨跌幅
 	ChangePercent float64 `json:"ChangePercent,omitempty"`
 	// 是否阳线上涨
-	IsBullMarket bool      `json:"IsBullMarket,omitempty"`
-	Time         time.Time `json:"Time,omitempty"` // k线时间
-	TimeUnix     int64     `json:"TimeUnix,omitempty"`
+	IsBullMarket bool `json:"IsBullMarket,omitempty"`
+	// Time         time.Time `json:"Time,omitempty"`
+	TimeUnix int64 `json:"TimeUnix,omitempty"` // k线时间
 }
 
 func (e *Candle) String() string {
-	return fmt.Sprintf("%s Open:%f High:%f Low:%f Close:%f Volume:%f Bull:%+v ChangePercent:%.4f%%", e.Time.Format("2006-01-02 15:04:05"), e.Open, e.High, e.Low, e.Close, e.Volume, e.IsBullMarket, e.ChangePercent*100)
+	return fmt.Sprintf("%s Open:%f High:%f Low:%f Close:%f Volume:%f Bull:%+v ChangePercent:%.4f%%", time.Unix(e.TimeUnix, 0).Format("2006-01-02 15:04:05"), e.Open, e.High, e.Low, e.Close, e.Volume, e.IsBullMarket, e.ChangePercent*100)
 }
 
 // IntervalRangeHolder 保存整个间隔范围

@@ -76,7 +76,7 @@ func (e *Cci) Calculation() *Cci {
 	//计算 Cci
 	for i := 0; i < len(ccis); i++ {
 		e.data = append(e.data, CciData{
-			Time:  e.kline.Candles[i].Time,
+			Time:  time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			Value: ccis[i],
 		})
 	}
@@ -103,7 +103,7 @@ func (e *Cci) Calculation() *Cci {
 // 	for i := 0; i < len(e.typicalPrice); i++ {
 // 		tempKlineArray = append(tempKlineArray, utils.Kline{
 // 			Close: e.typicalPrice[i],
-// 			Time:  e.kline.Candles[i].Time,
+// 			Time:  time.Unix(e.kline.Candles[i].TimeUnix,0),
 // 		})
 // 	}
 // 	maPoints := NewMa(tempKlineArray, e.Period).GetData()

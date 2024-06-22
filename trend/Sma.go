@@ -46,7 +46,7 @@ func (e *Sma) Calculation() *Sma {
 
 	for i, sma := range smas {
 		e.data[i] = SmaData{
-			Time:  e.kline.Candles[i].Time,
+			Time:  time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			Value: sma,
 		}
 	}

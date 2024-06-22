@@ -59,7 +59,7 @@ func (e *UlcerIndex) Calculation() *UlcerIndex {
 
 	for i := 0; i < len(ui); i++ {
 		e.data = append(e.data, UlcerIndexData{
-			Time:  e.kline.Candles[i].Time,
+			Time:  time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			Value: ui[i],
 		})
 	}

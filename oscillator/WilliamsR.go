@@ -65,7 +65,7 @@ func (e *WilliamsR) Calculation() *WilliamsR {
 
 	for i := 0; i < len(result); i++ {
 		e.data = append(e.data, WilliamsRData{
-			Time:  e.kline.Candles[i].Time,
+			Time:  time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			Value: result[i],
 		})
 	}

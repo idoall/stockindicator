@@ -70,7 +70,7 @@ func (e *ChaikinMoneyFlow) Calculation() *ChaikinMoneyFlow {
 
 	for i := 0; i < len(cmf); i++ {
 		e.data = append(e.data, ChaikinMoneyFlowData{
-			Time:  e.kline.Candles[i].Time,
+			Time:  time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			Value: cmf[i],
 		})
 	}

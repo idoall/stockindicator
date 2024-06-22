@@ -55,7 +55,7 @@ func (e *Ma) Calculation() *Ma {
 
 	for i := 0; i < len(maData); i++ {
 		p := MaData{}
-		p.Time = e.kline.Candles[i].Time
+		p.Time = time.Unix(e.kline.Candles[i].TimeUnix, 0)
 		p.Value = maData[i]
 		e.data = append(e.data, p)
 	}

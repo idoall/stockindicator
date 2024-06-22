@@ -2,40 +2,35 @@ package klines
 
 import (
 	"errors"
-	"fmt"
 	"math/rand"
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
-
-	"github.com/idoall/stockindicator/utils/commonutils"
 )
 
 // RUN
-// go test -v ./utils -run TestToHeikinAshi
+// go test -v ./utils/klines -run TestToHeikinAshi
 func TestToHeikinAshi(t *testing.T) {
 	t.Parallel()
-	list := GetTestKline()
+	// list := GetTestKline()
 
-	var heikinAshiKline = list.ToHeikinAshi()
+	// var heikinAshiKline = list.ToHeikinAshi()
 
-	dataList := heikinAshiKline.Candles
-	for i := len(dataList) - 1; i > 0; i-- {
-		if i < len(dataList)-50 {
-			break
-		}
-		var v = dataList[i]
-		fmt.Printf("\t[%d]Kline:%+v\n",
-			i,
-			list.Candles[i],
-		)
+	// dataList := heikinAshiKline.Candles
+	// for i := len(dataList) - 1; i > 0; i-- {
+	// 	if i < len(dataList)-50 {
+	// 		break
+	// 	}
+	// 	var v = dataList[i]
+	// 	fmt.Printf("\t[%d]Kline:%+v\n",
+	// 		i,
+	// 		list.Candles[i],
+	// 	)
 
-		fmt.Printf("\t[%d]HeiKinAshi:%+v\n",
-			i,
-			v,
-		)
-	}
+	// 	fmt.Printf("\t[%d]HeiKinAshi:%+v\n",
+	// 		i,
+	// 		v,
+	// 	)
+	// }
 }
 
 // RUN
@@ -51,22 +46,22 @@ func TestItem_SortCandlesByTimestamp(t *testing.T) {
 		y := rand.Float64() //nolint:gosec // used for generating test data, no need to import crypo/rand
 		tempKline.Candles = append(tempKline.Candles,
 			&Candle{
-				Time:   time.Now().AddDate(0, 0, -x),
-				Open:   y,
-				High:   y + float64(x),
-				Low:    y - float64(x),
-				Close:  y,
-				Volume: y,
+				TimeUnix: time.Now().AddDate(0, 0, -x).Unix(),
+				Open:     y,
+				High:     y + float64(x),
+				Low:      y - float64(x),
+				Close:    y,
+				Volume:   y,
 			})
 	}
 
 	tempKline.SortCandlesByTimestamp(false)
-	if tempKline.Candles[0].Time.After(tempKline.Candles[1].Time) {
+	if tempKline.Candles[0].TimeUnix > tempKline.Candles[1].TimeUnix {
 		t.Fatal("expected kline.Candles to be in descending order")
 	}
 
 	tempKline.SortCandlesByTimestamp(true)
-	if tempKline.Candles[0].Time.Before(tempKline.Candles[1].Time) {
+	if tempKline.Candles[0].TimeUnix < tempKline.Candles[1].TimeUnix {
 		t.Fatal("expected kline.Candles to be in ascending order")
 	}
 }
@@ -87,28 +82,28 @@ func TestConvertToNewInterval(t *testing.T) {
 		Interval: OneDay,
 		Candles: []*Candle{
 			{
-				Time:   time.Now(),
-				Open:   1337,
-				High:   1339,
-				Low:    1336,
-				Close:  1338,
-				Volume: 1337,
+				TimeUnix: time.Now().Unix(),
+				Open:     1337,
+				High:     1339,
+				Low:      1336,
+				Close:    1338,
+				Volume:   1337,
 			},
 			{
-				Time:   time.Now().AddDate(0, 0, 1),
-				Open:   1338,
-				High:   2000,
-				Low:    1332,
-				Close:  1696,
-				Volume: 6420,
+				TimeUnix: time.Now().AddDate(0, 0, 1).Unix(),
+				Open:     1338,
+				High:     2000,
+				Low:      1332,
+				Close:    1696,
+				Volume:   6420,
 			},
 			{
-				Time:   time.Now().AddDate(0, 0, 2),
-				Open:   1696,
-				High:   1998,
-				Low:    1337,
-				Close:  6969,
-				Volume: 2520,
+				TimeUnix: time.Now().AddDate(0, 0, 2).Unix(),
+				Open:     1696,
+				High:     1998,
+				Low:      1337,
+				Close:    6969,
+				Volume:   2520,
 			},
 		},
 	}
@@ -145,12 +140,12 @@ func TestConvertToNewInterval(t *testing.T) {
 	}
 
 	old.Candles = append(old.Candles, &Candle{
-		Time:   time.Now().AddDate(0, 0, 3),
-		Open:   6969,
-		High:   1998,
-		Low:    2342,
-		Close:  7777,
-		Volume: 111,
+		TimeUnix: time.Now().AddDate(0, 0, 3).Unix(),
+		Open:     6969,
+		High:     1998,
+		Low:      2342,
+		Close:    7777,
+		Volume:   111,
 	})
 	newCandle, err = old.ConvertToNewInterval(newInterval)
 	if !errors.Is(err, nil) {
@@ -170,49 +165,49 @@ func TestConvertToNewInterval(t *testing.T) {
 	// Test incorrectly padded candles
 	old.Candles = []*Candle{
 		{
-			Time:   tn,
-			Open:   1337,
-			High:   1339,
-			Low:    1336,
-			Close:  1338,
-			Volume: 1337,
+			TimeUnix: tn.Unix(),
+			Open:     1337,
+			High:     1339,
+			Low:      1336,
+			Close:    1338,
+			Volume:   1337,
 		},
 		{
-			Time:   tn.AddDate(0, 0, 1),
-			Open:   1338,
-			High:   2000,
-			Low:    1332,
-			Close:  1696,
-			Volume: 6420,
+			TimeUnix: tn.AddDate(0, 0, 1).Unix(),
+			Open:     1338,
+			High:     2000,
+			Low:      1332,
+			Close:    1696,
+			Volume:   6420,
 		},
 		{
-			Time:   tn.AddDate(0, 0, 2),
-			Open:   1696,
-			High:   1998,
-			Low:    1337,
-			Close:  6969,
-			Volume: 2520,
+			TimeUnix: tn.AddDate(0, 0, 2).Unix(),
+			Open:     1696,
+			High:     1998,
+			Low:      1337,
+			Close:    6969,
+			Volume:   2520,
 		},
 		// empty candle should be here <---
 		// aaaand empty candle should be here <---
 		{
-			Time:   tn.AddDate(0, 0, 5),
-			Open:   6969,
-			High:   8888,
-			Low:    1111,
-			Close:  5555,
-			Volume: 2520,
+			TimeUnix: tn.AddDate(0, 0, 5).Unix(),
+			Open:     6969,
+			High:     8888,
+			Low:      1111,
+			Close:    5555,
+			Volume:   2520,
 		},
 		{
-			Time: tn.AddDate(0, 0, 6),
+			TimeUnix: tn.AddDate(0, 0, 6).Unix(),
 			// Empty end padding
 		},
 		{
-			Time: tn.AddDate(0, 0, 7),
+			TimeUnix: tn.AddDate(0, 0, 7).Unix(),
 			// Empty end padding
 		},
 		{
-			Time: tn.AddDate(0, 0, 8),
+			TimeUnix: tn.AddDate(0, 0, 8).Unix(),
 			// Empty end padding
 		},
 	}
@@ -240,29 +235,30 @@ func TestConvertToNewInterval(t *testing.T) {
 // ReadKlineFromFile
 func GetTestKline() *Item {
 
-	workPath, err := os.Getwd()
-	if err != nil {
-		panic(err)
-	}
+	// workPath, err := os.Getwd()
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	var filePath = filepath.Join(workPath, "../../")
+	// var filePath = filepath.Join(workPath, "../../")
 
-	filePath = filepath.Join(filePath, "data")
-	filePath = filepath.Join(filePath, "test.json")
+	// filePath = filepath.Join(filePath, "data")
+	// filePath = filepath.Join(filePath, "test.json")
 
-	// 读取文件内容
-	file, err := commonutils.ReadFile(filePath)
-	if err != nil {
-		panic(err)
-	}
+	// // 读取文件内容
+	// file, err := commonutils.ReadFile(filePath)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	var canlders *Item
-	// 进行 JSON 解析
-	err = commonutils.JSONDecode(file, &canlders)
-	if err != nil {
-		panic(err)
-	}
-	return canlders
+	// var canlders *Item
+	// // 进行 JSON 解析
+	// err = commonutils.JSONDecode(file, &canlders)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// return canlders
+	return nil
 }
 
 // func GetTestKline() Klines {

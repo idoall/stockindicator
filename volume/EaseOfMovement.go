@@ -60,7 +60,7 @@ func (e *EaseOfMovement) Calculation() *EaseOfMovement {
 
 	for i := 0; i < len(emv); i++ {
 		e.data = append(e.data, EaseOfMovementData{
-			Time:  e.kline.Candles[i].Time,
+			Time:  time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			Value: emv[i],
 		})
 	}

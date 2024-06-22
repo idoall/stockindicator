@@ -77,7 +77,7 @@ func (e *MoneyFlowIndex) Calculation() *MoneyFlowIndex {
 
 	for i := 0; i < len(moneyFlowIndex); i++ {
 		e.data = append(e.data, MoneyFlowIndexData{
-			Time:  e.kline.Candles[i].Time,
+			Time:  time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			Value: moneyFlowIndex[i],
 		})
 	}

@@ -116,7 +116,7 @@ func (e *StochasticHeat) Calculation() *StochasticHeat {
 	}
 	for i := 0; i < len(e.kline.Candles); i++ {
 		e.data = append(e.data, StochasticHeatData{
-			Time: e.kline.Candles[i].Time,
+			Time: time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			Fast: fast[i],
 			Slow: slow[i],
 		})

@@ -57,14 +57,14 @@ func (e *Atr) Calculation() *Atr {
 			prevClose = closes[i-1]
 		}
 		tr[i] = math.Max(highs[i]-lows[i], math.Max(highs[i]-prevClose, lows[i]-prevClose))
-		AtrPointStruct.Time = e.kline.Candles[i].Time
+		AtrPointStruct.Time = time.Unix(e.kline.Candles[i].TimeUnix, 0)
 	}
 	var atr = ta.Rma(e.Period, tr)
 
 	e.data = make([]AtrData, len(e.kline.Candles))
 	for i, v := range atr {
 		e.data[i] = AtrData{
-			Time: e.kline.Candles[i].Time,
+			Time: time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			TR:   tr[i],
 			Atr:  v,
 		}

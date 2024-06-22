@@ -60,7 +60,7 @@ func (e *ChaikinOscillator) Calculation() *ChaikinOscillator {
 
 	for i := 0; i < len(co); i++ {
 		e.data = append(e.data, ChaikinOscillatorData{
-			Time:  e.kline.Candles[i].Time,
+			Time:  time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			Value: co[i],
 			AD:    ad[i],
 		})

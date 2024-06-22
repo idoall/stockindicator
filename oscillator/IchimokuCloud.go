@@ -81,7 +81,7 @@ func (e *IchimokuCloud) Calculation() *IchimokuCloud {
 
 	for i := 0; i < len(conversionLine); i++ {
 		e.data = append(e.data, IchimokuCloudData{
-			Time:           e.kline.Candles[i].Time,
+			Time:           time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			ConversionLine: conversionLine[i],
 			BaseLine:       baseLine[i],
 			LeadingSpanA:   leadingSpanA[i],

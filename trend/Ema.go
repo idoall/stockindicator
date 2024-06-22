@@ -47,7 +47,7 @@ func (e *Ema) Calculation() *Ema {
 	e.data = make([]EmaData, len(vals))
 	for i, v := range e.kline.Candles {
 		e.data[i] = EmaData{
-			Time:  v.Time,
+			Time:  time.Unix(v.TimeUnix, 0),
 			Value: vals[i],
 		}
 	}

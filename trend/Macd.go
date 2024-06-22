@@ -75,7 +75,7 @@ func (e *Macd) Calculation() *Macd {
 	e.data = make([]MacdData, len(e.kline.Candles))
 	for i, dif := range difs {
 		e.data[i] = MacdData{
-			Time: e.kline.Candles[i].Time,
+			Time: time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			DIF:  dif,
 			DEA:  deas[i],
 			Macd: (dif - deas[i]) * 2,

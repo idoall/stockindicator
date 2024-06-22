@@ -54,7 +54,7 @@ func (e *Kdj) Calculation() *Kdj {
 			RSV:  rsv[i],
 			K:    k[i],
 			D:    d[i],
-			Time: e.kline.Candles[i].Time,
+			Time: time.Unix(e.kline.Candles[i].TimeUnix, 0),
 		}
 	}
 	j := e.calculationJ()

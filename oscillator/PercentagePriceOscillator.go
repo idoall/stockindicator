@@ -69,7 +69,7 @@ func (e *PercentagePriceOscillator) Calculation() *PercentagePriceOscillator {
 
 	for i := 0; i < len(ppo); i++ {
 		e.data = append(e.data, PercentagePriceOscillatorData{
-			Time:      e.kline.Candles[i].Time,
+			Time:      time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			PPO:       ppo[i],
 			Signal:    signal[i],
 			Histogram: histogram[i],

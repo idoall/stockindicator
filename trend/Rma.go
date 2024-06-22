@@ -44,7 +44,7 @@ func (e *Rma) Calculation() *Rma {
 	for i, value := range rma {
 
 		e.data = append(e.data, RmaData{
-			Time:  e.kline.Candles[i].Time,
+			Time:  time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			Value: value,
 		})
 	}

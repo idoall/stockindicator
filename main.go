@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/idoall/stockindicator/oscillator"
 	"github.com/idoall/stockindicator/trend"
@@ -37,7 +38,7 @@ func main() {
 		}
 		fmt.Printf("[%d]Time:%s\tClose:%.2f\t %s\n",
 			i+1,
-			v.Time.Format("2006-01-02 15:04:05"),
+			time.Unix(v.TimeUnix, 0).Format("2006-01-02 15:04:05"),
 			v.Close,
 			strings.Join(strategiesSidesMessages, "\t"),
 		)

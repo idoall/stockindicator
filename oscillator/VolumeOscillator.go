@@ -59,7 +59,7 @@ func (e *VolumeOscillator) Calculation() *VolumeOscillator {
 	e.data = make([]VolumeOscillatorData, len(oscs))
 	for i := 0; i < len(oscs); i++ {
 		e.data[i] = VolumeOscillatorData{
-			Time:  e.kline.Candles[i].Time,
+			Time:  time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			Value: oscs[i],
 		}
 	}

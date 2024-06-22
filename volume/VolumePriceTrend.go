@@ -54,7 +54,7 @@ func (e *VolumePriceTrend) Calculation() *VolumePriceTrend {
 
 	for i := 0; i < len(vals); i++ {
 		e.data = append(e.data, VolumePriceTrendData{
-			Time:  e.kline.Candles[i].Time,
+			Time:  time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			Value: vals[i],
 		})
 	}

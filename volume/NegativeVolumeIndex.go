@@ -63,7 +63,7 @@ func (e *NegativeVolumeIndex) Calculation() *NegativeVolumeIndex {
 
 	for i := 0; i < len(nvi); i++ {
 		e.data = append(e.data, NegativeVolumeIndexData{
-			Time:  e.kline.Candles[i].Time,
+			Time:  time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			Value: nvi[i],
 		})
 	}

@@ -42,7 +42,7 @@ func (e *AbsolutePriceOscillator) Calculation() *AbsolutePriceOscillator {
 	var data = make([]AbsolutePriceOscillatorData, len(apo))
 	for i := 0; i < len(apo); i++ {
 		data[i] = AbsolutePriceOscillatorData{
-			Time:  e.kline.Candles[i].Time,
+			Time:  time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			Value: apo[i],
 		}
 	}

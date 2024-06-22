@@ -63,7 +63,7 @@ func (e *KeltnerChannel) Calculation() *KeltnerChannel {
 
 	for i := 0; i < len(middleLine); i++ {
 		e.data = append(e.data, KeltnerChannelData{
-			Time:   e.kline.Candles[i].Time,
+			Time:   time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			Upper:  upperBand[i],
 			Middle: middleLine[i],
 			Lower:  lowerBand[i],

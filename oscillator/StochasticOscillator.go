@@ -68,7 +68,7 @@ func (e *StochasticOscillator) Calculation() *StochasticOscillator {
 
 	for i := 0; i < len(k); i++ {
 		e.data = append(e.data, StochasticOscillatorData{
-			Time: e.kline.Candles[i].Time,
+			Time: time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			K:    k[i],
 			D:    d[i],
 		})

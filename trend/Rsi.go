@@ -44,7 +44,7 @@ func (e *Rsi) Calculation() *Rsi {
 	rsiArrayLen := len(rsiArray)
 	for i := 0; i <= (rsiArrayLen - 1); i++ {
 		var p RsiData
-		p.Time = e.kline.Candles[i].Time
+		p.Time = time.Unix(e.kline.Candles[i].TimeUnix, 0)
 		p.Value = rsiArray[i]
 		e.data = append(e.data, p)
 	}
