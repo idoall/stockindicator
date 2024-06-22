@@ -65,13 +65,13 @@ func TestSmartMoneyConcepts(t *testing.T) {
 		if i > 20 {
 			break
 		}
-		fmt.Printf("[%d][%s]\tTop:%+v\tHigh:%.2f\tLow:%.2f\n", i, v.Kline.Time.Format("2006-01-02 15:04:05"), v.IsTop, v.Kline.High, v.Kline.Low)
+		fmt.Printf("[%d][%s]\tTop:%+v\tHigh:%.2f\tLow:%.2f\n", i, v.Time.Format("2006-01-02 15:04:05"), v.IsTop, v.High, v.Low)
 	}
 	fmt.Printf("OrderBlockBearish:%d\n", len(stock.OrderBlockBearish))
 	for i, v := range stock.OrderBlockBearish {
 		if i > 20 {
 			break
 		}
-		fmt.Printf("[%d][%s]\tTop:%+v\tHigh:%.2f\tLow:%.2f\n", i, v.Kline.Time.Format("2006-01-02 15:04:05"), v.IsTop, v.Kline.High, v.Kline.Low)
+		fmt.Printf("[%d][%s]\tTop:%+v\tHigh:%.2f\tLow:%.2f\n", i, v.Time.Format("2006-01-02 15:04:05"), v.IsTop, v.High, v.Low)
 	}
 }

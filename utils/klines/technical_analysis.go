@@ -8,24 +8,26 @@ import (
 
 // OHLC is a connector for technical analysis usage
 type OHLC struct {
-	Open   []float64
-	High   []float64
-	Low    []float64
-	Close  []float64
-	Volume []float64
-	Time   []time.Time
+	Open       []float64
+	High       []float64
+	Low        []float64
+	Close      []float64
+	Volume     []float64
+	BullMarket []bool
+	Time       []time.Time
 }
 
 // GetOHLC returns the entire subset of candles as a friendly type for gct
 // technical analysis usage.
 func (e *Item) GetOHLC() *OHLC {
 	ohlc := &OHLC{
-		Open:   make([]float64, len(e.Candles)),
-		High:   make([]float64, len(e.Candles)),
-		Low:    make([]float64, len(e.Candles)),
-		Close:  make([]float64, len(e.Candles)),
-		Volume: make([]float64, len(e.Candles)),
-		Time:   make([]time.Time, len(e.Candles)),
+		Open:       make([]float64, len(e.Candles)),
+		High:       make([]float64, len(e.Candles)),
+		Low:        make([]float64, len(e.Candles)),
+		Close:      make([]float64, len(e.Candles)),
+		Volume:     make([]float64, len(e.Candles)),
+		BullMarket: make([]bool, len(e.Candles)),
+		Time:       make([]time.Time, len(e.Candles)),
 	}
 	for x := range e.Candles {
 		ohlc.Open[x] = e.Candles[x].Open
@@ -33,6 +35,7 @@ func (e *Item) GetOHLC() *OHLC {
 		ohlc.Low[x] = e.Candles[x].Low
 		ohlc.Close[x] = e.Candles[x].Close
 		ohlc.Volume[x] = e.Candles[x].Volume
+		ohlc.BullMarket[x] = e.Candles[x].IsBullMarket
 		ohlc.Time[x] = e.Candles[x].Time
 	}
 	return ohlc

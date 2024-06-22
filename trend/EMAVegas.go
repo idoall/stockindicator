@@ -18,7 +18,7 @@ type EMAVegas struct {
 	PeriodLong1  int
 	PeriodLong2  int
 	data         []EMAVegasData
-	kline        *klines.Item
+	ohlc         *klines.OHLC
 }
 
 // EMAVegasData EMAVegas
@@ -35,7 +35,21 @@ type EMAVegasData struct {
 func NewEMAVegas(klineItem *klines.Item, period, periodShort1, periodShort2, periodLong1, periodLong2 int) *EMAVegas {
 	m := &EMAVegas{
 		Name:         fmt.Sprintf("EMAVegas%d-%d-%d-%d", periodShort1, periodShort2, periodLong1, periodLong2),
-		kline:        klineItem,
+		Period:       period,
+		PeriodShort1: periodShort1,
+		PeriodShort2: periodShort2,
+		PeriodLong1:  periodLong1,
+		PeriodLong2:  periodLong2,
+	}
+	m.ohlc = klineItem.GetOHLC()
+	return m
+}
+
+// NewEMAVegas new Func
+func NewEMAVegasOHLC(ohlc *klines.OHLC, period, periodShort1, periodShort2, periodLong1, periodLong2 int) *EMAVegas {
+	m := &EMAVegas{
+		Name:         fmt.Sprintf("EMAVegas%d-%d-%d-%d", periodShort1, periodShort2, periodLong1, periodLong2),
+		ohlc:         ohlc,
 		Period:       period,
 		PeriodShort1: periodShort1,
 		PeriodShort2: periodShort2,
@@ -53,9 +67,10 @@ func NewDefaultEMAVegas(klineItem *klines.Item) *EMAVegas {
 // Calculation Func
 func (e *EMAVegas) Calculation() *EMAVegas {
 
-	e.data = make([]EMAVegasData, len(e.kline.Candles))
+	var closeing = e.ohlc.Close
+	var times = e.ohlc.Time
 
-	var closeing = e.kline.GetOHLC().Close
+	e.data = make([]EMAVegasData, len(closeing))
 
 	ema := ta.Ema(e.Period, closeing)
 	emaShort1 := ta.Ema(e.PeriodShort1, closeing)
@@ -65,7 +80,7 @@ func (e *EMAVegas) Calculation() *EMAVegas {
 
 	for i := 0; i < len(emaShort1); i++ {
 		e.data[i] = EMAVegasData{
-			Time:        e.kline.Candles[i].Time,
+			Time:        times[i],
 			Value:       ema[i],
 			Short1Value: emaShort1[i],
 			Short2Value: emaShort2[i],
@@ -73,7 +88,6 @@ func (e *EMAVegas) Calculation() *EMAVegas {
 			Long2Value:  emaLong2[i],
 		}
 	}
-	clear(closeing)
 	clear(ema)
 	clear(emaShort1)
 	clear(emaShort2)
@@ -84,7 +98,9 @@ func (e *EMAVegas) Calculation() *EMAVegas {
 
 // AnalysisSide Func
 func (e *EMAVegas) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline.Candles))
+
+	var bullMarkets = e.ohlc.BullMarket
+	sides := make([]utils.Side, len(bullMarkets))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()
@@ -94,7 +110,6 @@ func (e *EMAVegas) AnalysisSide() utils.SideData {
 		if i < 1 {
 			continue
 		}
-		var klineItem = e.kline.Candles[i]
 		var item = e.data[i]
 
 		var t1, d1 bool
@@ -117,12 +132,12 @@ func (e *EMAVegas) AnalysisSide() utils.SideData {
 		if item.Value > item.Short1Value && // ema12>ema144
 			item.Short1Value > item.Long1Value && item.Short1Value > item.Long2Value && // 144<575 && 144 > 676
 			item.Short2Value > item.Long1Value && item.Short2Value > item.Long2Value && //169>575 && 169 > 676
-			klineItem.IsBullMarket && t1 {
+			bullMarkets[i] && t1 {
 			sides[i] = utils.Buy
 		} else if item.Value < item.Short1Value &&
 			item.Short1Value < item.Long1Value && item.Short1Value < item.Long2Value &&
 			item.Short2Value < item.Long1Value && item.Short2Value < item.Long2Value &&
-			!klineItem.IsBullMarket && d1 {
+			!bullMarkets[i] && d1 {
 			sides[i] = utils.Sell
 		} else {
 			sides[i] = utils.Hold

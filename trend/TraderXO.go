@@ -6,6 +6,7 @@ import (
 
 	"github.com/idoall/stockindicator/utils"
 	"github.com/idoall/stockindicator/utils/klines"
+	"github.com/idoall/stockindicator/utils/ta"
 )
 
 // TraderXO struct
@@ -14,7 +15,7 @@ type TraderXO struct {
 	SlowPeriod int
 	Name       string
 	data       []TraderXOData
-	kline      *klines.Item
+	ohlc       *klines.OHLC
 }
 
 type TraderXOData struct {
@@ -27,7 +28,18 @@ type TraderXOData struct {
 func NewTraderXO(klineItem *klines.Item, fastPeriod, slowPeriod int) *TraderXO {
 	m := &TraderXO{
 		Name:       fmt.Sprintf("TraderXO%d-%d", fastPeriod, slowPeriod),
-		kline:      klineItem,
+		FastPeriod: fastPeriod,
+		SlowPeriod: slowPeriod,
+	}
+	m.ohlc = klineItem.GetOHLC()
+	return m
+}
+
+// NewTraderXO new Func
+func NewTraderXOOHLC(ohlc *klines.OHLC, fastPeriod, slowPeriod int) *TraderXO {
+	m := &TraderXO{
+		Name:       fmt.Sprintf("TraderXO%d-%d", fastPeriod, slowPeriod),
+		ohlc:       ohlc,
 		FastPeriod: fastPeriod,
 		SlowPeriod: slowPeriod,
 	}
@@ -42,20 +54,22 @@ func NewDefaultTraderXO(klineItem *klines.Item) *TraderXO {
 // Calculation Func
 func (e *TraderXO) Calculation() *TraderXO {
 
+	var closes = e.ohlc.Close
+	var times = e.ohlc.Time
 	// Define EMAs
-	v_fastEMAList := NewEma(e.kline, e.FastPeriod).GetValues()
-	v_slowEMAList := NewEma(e.kline, e.SlowPeriod).GetValues()
+	v_fastEMAList := ta.Ema(e.FastPeriod, closes)
+	v_slowEMAList := ta.Ema(e.SlowPeriod, closes)
 
 	defer func() {
 		v_fastEMAList = nil
 		v_slowEMAList = nil
 	}()
 
-	e.data = make([]TraderXOData, len(e.kline.Candles))
-	for i := 0; i < len(e.kline.Candles); i++ {
+	e.data = make([]TraderXOData, len(closes))
+	for i := 0; i < len(closes); i++ {
 
 		e.data[i] = TraderXOData{
-			Time: e.kline.Candles[i].Time,
+			Time: times[i],
 			Fast: v_fastEMAList[i],
 			Slow: v_slowEMAList[i],
 		}
@@ -66,15 +80,17 @@ func (e *TraderXO) Calculation() *TraderXO {
 }
 
 // GetData Func
-func (e *TraderXO) GetValues() (fast []float64, slow []float64) {
+func (e *TraderXO) GetValues() ([]float64, []float64) {
 	if len(e.data) == 0 {
 		e = e.Calculation()
 	}
-	for _, v := range e.data {
-		fast = append(fast, v.Fast)
-		slow = append(slow, v.Slow)
+	var fast = make([]float64, len(e.data))
+	var slow = make([]float64, len(e.data))
+	for i, v := range e.data {
+		fast[i] = v.Fast
+		slow[i] = v.Slow
 	}
-	return
+	return fast, slow
 }
 
 // GetData Func
@@ -87,12 +103,11 @@ func (e *TraderXO) GetData() []TraderXOData {
 
 // AnalysisSide Func
 func (e *TraderXO) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()
 	}
-
+	sides := make([]utils.Side, len(e.data))
 	// sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {

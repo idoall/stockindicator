@@ -31,9 +31,9 @@ type SmartMoneyConcepts struct {
 
 	EQHEQL_Enable bool
 
-	Name  string
-	data  []SmartMoneyConceptsData
-	kline *klines.Item
+	Name string
+	data []SmartMoneyConceptsData
+	ohlc *klines.OHLC
 	// Order Blocks Number
 	OrderBlockNumber  int
 	OrderBlockBullish SmartMoneyConceptsDataOrderBlockList
@@ -80,12 +80,32 @@ type SmartMoneyConceptsData struct {
 func NewSmartMoneyConcepts(klineItem *klines.Item, swingLenght int, eqheql_BarsConfirmation, eqheql_Threshold int) *SmartMoneyConcepts {
 	m := &SmartMoneyConcepts{
 		Name:                    fmt.Sprintf("SmartMoneyConcepts%d-%d-%d", swingLenght, eqheql_BarsConfirmation, eqheql_Threshold),
-		kline:                   klineItem,
 		SwingLenght:             swingLenght,
 		EQHEQL_BarsConfirmation: eqheql_BarsConfirmation,
 		EQHEQL_Threshold:        eqheql_Threshold,
 		// EQHEQL_Enable:           eqheql_enable,
 		OrderBlockNumber: 5,
+	}
+	m.ohlc = klineItem.GetOHLC()
+	return m
+}
+
+// NewSmartMoneyConcepts new Func
+func NewSmartMoneyConceptsOHLC(opens, highs, lows, closes []float64, times []time.Time, swingLenght int, eqheql_BarsConfirmation, eqheql_Threshold int) *SmartMoneyConcepts {
+	m := &SmartMoneyConcepts{
+		Name:                    fmt.Sprintf("SmartMoneyConcepts%d-%d-%d", swingLenght, eqheql_BarsConfirmation, eqheql_Threshold),
+		SwingLenght:             swingLenght,
+		EQHEQL_BarsConfirmation: eqheql_BarsConfirmation,
+		EQHEQL_Threshold:        eqheql_Threshold,
+		// EQHEQL_Enable:           eqheql_enable,
+		OrderBlockNumber: 5,
+	}
+	m.ohlc = &klines.OHLC{
+		Open:  opens,
+		High:  highs,
+		Low:   lows,
+		Close: closes,
+		Time:  times,
 	}
 
 	return m
@@ -100,13 +120,12 @@ func (e *SmartMoneyConcepts) Clear() {
 	e.data = nil
 	e.OrderBlockBearish = nil
 	e.OrderBlockBullish = nil
-	e.kline = nil
 }
 
 // Calculation Func
 func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 
-	var ohlc = e.kline.GetOHLC()
+	var ohlc = e.ohlc
 	var closes = ohlc.Close
 	var highs = ohlc.High
 	var lows = ohlc.Low
@@ -114,7 +133,7 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 
 	var atr = ta.Atr(highs, lows, closes, 200)
 
-	e.data = make([]SmartMoneyConceptsData, len(e.kline.Candles))
+	e.data = make([]SmartMoneyConceptsData, len(closes))
 
 	var trend = 0
 	var itrend = 0
@@ -151,7 +170,7 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 		lows = nil
 	}()
 
-	for i := 1; i < len(e.kline.Candles); i++ {
+	for i := 1; i < len(closes); i++ {
 
 		var close = closes[i]
 		var high = highs[i]
@@ -320,9 +339,9 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 		var orderBlockBullishList = e.OrderBlockBullish
 		var orderBlockBullishRemovelist SmartMoneyConceptsDataOrderBlockList
 		for j, v := range orderBlockBullishList {
-			if close < v.Kline.Close && !v.IsTop {
+			if close < v.Close && !v.IsTop {
 				orderBlockBullishRemovelist = append(orderBlockBullishRemovelist, v)
-			} else if close > v.Kline.High && v.IsTop {
+			} else if close > v.High && v.IsTop {
 				orderBlockBullishRemovelist = append(orderBlockBullishRemovelist, v)
 			}
 			if j > e.OrderBlockNumber && !orderBlockBullishRemovelist.Contains(v) {
@@ -336,9 +355,9 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 		var orderBlockBearishList = e.OrderBlockBearish
 		var orderBlockBearishRemovelist SmartMoneyConceptsDataOrderBlockList
 		for j, v := range orderBlockBearishList {
-			if close < v.Kline.Close && !v.IsTop {
+			if close < v.Close && !v.IsTop {
 				orderBlockBearishRemovelist = append(orderBlockBearishRemovelist, v)
-			} else if close > v.Kline.High && v.IsTop {
+			} else if close > v.High && v.IsTop {
 				orderBlockBearishRemovelist = append(orderBlockBearishRemovelist, v)
 			}
 			if j > e.OrderBlockNumber && !orderBlockBearishRemovelist.Contains(v) {
@@ -466,9 +485,16 @@ func (e *SmartMoneyConcepts) obCoord(useMax bool, index, loc int, highs, lows, a
 		}
 	}
 
+	var times = e.ohlc.Time
+	var closes = e.ohlc.Close
+	var opens = e.ohlc.Open
 	list = list.Add(SmartMoneyConceptsDataOrderBlock{
 		IsTop: useMax,
-		Kline: e.kline.Candles[idx],
+		Time:  times[idx],
+		Open:  opens[idx],
+		Close: closes[idx],
+		High:  highs[idx],
+		Low:   lows[idx],
 	})
 	return list
 

@@ -13,7 +13,7 @@ type Dema struct {
 	Name   string
 	Period int //默认计算几天的Dema
 	data   []*DemaData
-	kline  *klines.Item
+	ohlc   *klines.OHLC
 }
 
 // DemaData Dema函数计算给定期间的双指数移动平均线 (Dema)。
@@ -28,7 +28,17 @@ type DemaData struct {
 func NewDema(klineItem *klines.Item, period int) *Dema {
 	m := &Dema{
 		Name:   fmt.Sprintf("Dema%d", period),
-		kline:  klineItem,
+		Period: period,
+	}
+	m.ohlc = klineItem.GetOHLC()
+	return m
+}
+
+// NewDema new Func
+func NewDemaOHLC(ohlc *klines.OHLC, period int) *Dema {
+	m := &Dema{
+		Name:   fmt.Sprintf("Dema%d", period),
+		ohlc:   ohlc,
 		Period: period,
 	}
 	return m
@@ -43,19 +53,16 @@ func NewDefaultDema(klineItem *klines.Item) *Dema {
 func (e *Dema) Calculation() *Dema {
 
 	period := e.Period
+	var close = e.ohlc.Close
+	var times = e.ohlc.Time
 
-	e.data = make([]*DemaData, len(e.kline.Candles))
+	e.data = make([]*DemaData, len(close))
 
-	var close = e.kline.GetOHLC().Close
-	var ema1 = ta.Ema(period, close)
-	var ema2 = ta.Ema(period, ema1)
-
-	// 2 * N日EMA － N日EMA的EMA
-	demas := ta.Subtract(ta.MultiplyBy(ema1, 2), ema2)
+	demas := ta.Dema(period, close)
 
 	for i := 0; i < len(demas); i++ {
 		e.data[i] = &DemaData{
-			Time:  e.kline.Candles[i].Time,
+			Time:  times[i],
 			Value: demas[i],
 		}
 	}

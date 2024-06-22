@@ -16,7 +16,7 @@ func GetTestKlineItem() *klines.Item {
 		panic(err)
 	}
 
-	var filePath = filepath.Join(workPath, "../")
+	var filePath = filepath.Join(workPath, "./")
 
 	filePath = filepath.Join(filePath, "data")
 	filePath = filepath.Join(filePath, "test.json")

@@ -21,7 +21,7 @@ type PivotPointSuperTrend struct {
 	Period int
 	Name   string
 	data   []PivotPointSuperTrendData
-	kline  *klines.Item
+	ohlc   *klines.OHLC
 }
 
 type PivotPointSuperTrendData struct {
@@ -36,7 +36,19 @@ type PivotPointSuperTrendData struct {
 func NewPivotPointSuperTrend(klineItem *klines.Item, period, atrPeriod int, atrFactor float64) *PivotPointSuperTrend {
 	m := &PivotPointSuperTrend{
 		Name:      fmt.Sprintf("PivotPointSuperTrend%d-%d-%f", period, atrPeriod, atrFactor),
-		kline:     klineItem,
+		AtrPeriod: atrPeriod,
+		AtrFactor: atrFactor,
+		Period:    period,
+	}
+	m.ohlc = klineItem.GetOHLC()
+	return m
+}
+
+// NewPivotPointSuperTrend new Func
+func NewPivotPointSuperTrendOHLC(ohlc *klines.OHLC, period, atrPeriod int, atrFactor float64) *PivotPointSuperTrend {
+	m := &PivotPointSuperTrend{
+		Name:      fmt.Sprintf("PivotPointSuperTrend%d-%d-%f", period, atrPeriod, atrFactor),
+		ohlc:      ohlc,
 		AtrPeriod: atrPeriod,
 		AtrFactor: atrFactor,
 		Period:    period,
@@ -52,18 +64,19 @@ func NewDefaultPivotPointSuperTrend(klineItem *klines.Item) *PivotPointSuperTren
 // Calculation Func
 func (e *PivotPointSuperTrend) Calculation() *PivotPointSuperTrend {
 
-	var close = e.kline.GetOHLC().Close
-	var highs = e.kline.GetOHLC().High
-	var lows = e.kline.GetOHLC().Low
+	var closes = e.ohlc.Close
+	var highs = e.ohlc.High
+	var lows = e.ohlc.Low
+	var times = e.ohlc.Time
 
 	var ph = ta.PivotHigh(highs, e.Period, e.Period)
 	var pl = ta.PivotLow(lows, e.Period, e.Period)
-	var _, atr = NewAtr(e.kline, e.AtrPeriod).GetValues()
+	var atr = ta.Atr(highs, lows, closes, e.AtrPeriod)
 
-	var tUP = make([]float64, len(e.kline.Candles))
-	var tDown = make([]float64, len(e.kline.Candles))
-	var tCenter = make([]float64, len(e.kline.Candles))
-	var trend = make([]int, len(e.kline.Candles))
+	var tUP = make([]float64, len(closes))
+	var tDown = make([]float64, len(closes))
+	var tCenter = make([]float64, len(closes))
+	var trend = make([]int, len(closes))
 
 	defer func() {
 		tUP = nil
@@ -73,17 +86,13 @@ func (e *PivotPointSuperTrend) Calculation() *PivotPointSuperTrend {
 		atr = nil
 		trend = nil
 		tCenter = nil
-		close = nil
-		highs = nil
-		lows = nil
 	}()
 
-	e.data = make([]PivotPointSuperTrendData, len(e.kline.Candles))
+	e.data = make([]PivotPointSuperTrendData, len(closes))
 
-	for i := 1; i < len(e.kline.Candles); i++ {
+	for i := 1; i < len(closes); i++ {
 
-		var c = close[i]
-		var time = e.kline.Candles[i].Time
+		var c = closes[i]
 
 		// var center float64
 		var lastpp = commonutils.If(ph[i] > 0, ph[i], commonutils.If(pl[i] > 0, pl[i], 0.0).(float64)).(float64)
@@ -98,7 +107,7 @@ func (e *PivotPointSuperTrend) Calculation() *PivotPointSuperTrend {
 			tCenter[i] = tCenter[i-1]
 		}
 
-		var closePrev = close[i-1]
+		var closePrev = closes[i-1]
 		var Up = tCenter[i] - (e.AtrFactor * atr[i])
 		var Dn = tCenter[i] + (e.AtrFactor * atr[i])
 
@@ -109,7 +118,7 @@ func (e *PivotPointSuperTrend) Calculation() *PivotPointSuperTrend {
 		var trailingsl = commonutils.If(trend[i] == 1, tUP[i], tDown[i]).(float64)
 
 		e.data[i] = PivotPointSuperTrendData{
-			Time:           time,
+			Time:           times[i],
 			UpTrend:        commonutils.If(trend[i] == 1 && trend[i-1] == 1, trailingsl, 0.0).(float64),
 			UpTrendBegin:   commonutils.If(trend[i] == 1 && trend[i-1] == -1, trailingsl, 0.0).(float64),
 			DownTrend:      commonutils.If(trend[i] == -1 && trend[i-1] == -1, trailingsl, 0.0).(float64),
@@ -142,11 +151,11 @@ func (e *PivotPointSuperTrend) GetData() []PivotPointSuperTrendData {
 
 // AnalysisSide Func
 func (e *PivotPointSuperTrend) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()
 	}
+	sides := make([]utils.Side, len(e.data))
 
 	for i, v := range e.data {
 		if i < 1 {

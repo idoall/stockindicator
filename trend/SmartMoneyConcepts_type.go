@@ -2,8 +2,6 @@ package trend
 
 import (
 	"time"
-
-	"github.com/idoall/stockindicator/utils/klines"
 )
 
 type SmartMoneyConceptsDataStrongWeak struct {
@@ -12,16 +10,16 @@ type SmartMoneyConceptsDataStrongWeak struct {
 }
 type SmartMoneyConceptsDataOrderBlock struct {
 	IsTop bool
-	Kline *klines.Candle
+	Time  time.Time
+	Close float64
+	High  float64
+	Low   float64
+	Open  float64
 }
 
 func (e SmartMoneyConceptsDataOrderBlock) Equal(k SmartMoneyConceptsDataOrderBlock) bool {
 	return e.IsTop == k.IsTop &&
-		e.Kline.Time.Equal(k.Kline.Time) &&
-		e.Kline.High == k.Kline.High &&
-		e.Kline.Low == k.Kline.Low &&
-		e.Kline.Open == k.Kline.Open &&
-		e.Kline.Close == k.Kline.Close
+		e.Time.Equal(k.Time)
 }
 
 type SmartMoneyConceptsDataOrderBlockList []SmartMoneyConceptsDataOrderBlock

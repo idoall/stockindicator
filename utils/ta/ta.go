@@ -250,6 +250,16 @@ func Rma(period int, values []float64) []float64 {
 	return result
 }
 
+func Dema(period int, values []float64) []float64 {
+
+	var close = values
+	var ema1 = Ema(period, close)
+	var ema2 = Ema(period, ema1)
+
+	demas := Subtract(MultiplyBy(ema1, 2), ema2)
+	return demas
+}
+
 func Ema(period int, values []float64) []float64 {
 	result := make([]float64, len(values))
 

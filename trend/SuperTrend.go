@@ -20,7 +20,8 @@ type SuperTrend struct {
 	ChangeAtr bool
 	Name      string
 	data      []SuperTrendData
-	kline     *klines.Item
+	ohlc      *klines.OHLC
+	hl2       []float64
 }
 
 type SuperTrendData struct {
@@ -35,7 +36,20 @@ type SuperTrendData struct {
 func NewSuperTrend(klineItem *klines.Item, atrPeriod, atrMultiplier int, changeAtr bool) *SuperTrend {
 	m := &SuperTrend{
 		Name:          fmt.Sprintf("SuperTrend%d-%d", atrPeriod, atrMultiplier),
-		kline:         klineItem,
+		AtrPeriod:     atrPeriod,
+		AtrMultiplier: atrMultiplier,
+		ChangeAtr:     changeAtr,
+	}
+	m.ohlc = klineItem.GetOHLC()
+	m.hl2 = klineItem.HL2()
+	return m
+}
+
+func NewSuperTrendOHLC(ohlc *klines.OHLC, hl2 []float64, atrPeriod, atrMultiplier int, changeAtr bool) *SuperTrend {
+	m := &SuperTrend{
+		Name:          fmt.Sprintf("SuperTrend%d-%d", atrPeriod, atrMultiplier),
+		ohlc:          ohlc,
+		hl2:           hl2,
 		AtrPeriod:     atrPeriod,
 		AtrMultiplier: atrMultiplier,
 		ChangeAtr:     changeAtr,
@@ -51,17 +65,21 @@ func NewDefaultSuperTrend(klineItem *klines.Item) *SuperTrend {
 // Calculation Func
 func (e *SuperTrend) Calculation() *SuperTrend {
 
-	var up = make([]float64, len(e.kline.Candles))
-	var upb = make([]float64, len(e.kline.Candles))
-	var up1 = make([]float64, len(e.kline.Candles))
-	var dn = make([]float64, len(e.kline.Candles))
-	var dnb = make([]float64, len(e.kline.Candles))
-	var dn1 = make([]float64, len(e.kline.Candles))
-	var trend = make([]float64, len(e.kline.Candles))
-	var atr = make([]float64, len(e.kline.Candles))
+	var closes = e.ohlc.Close
+	var highs = e.ohlc.High
+	var lows = e.ohlc.Low
+	var times = e.ohlc.Time
 
-	var src = e.kline.HL2()
-	var close = e.kline.GetOHLC().Close
+	var up = make([]float64, len(closes))
+	var upb = make([]float64, len(closes))
+	var up1 = make([]float64, len(closes))
+	var dn = make([]float64, len(closes))
+	var dnb = make([]float64, len(closes))
+	var dn1 = make([]float64, len(closes))
+	var trend = make([]float64, len(closes))
+	var atr = make([]float64, len(closes))
+
+	var src = e.hl2
 
 	defer func() {
 		up = nil
@@ -72,16 +90,13 @@ func (e *SuperTrend) Calculation() *SuperTrend {
 		dn1 = nil
 		trend = nil
 		atr = nil
-		src = nil
-		close = nil
 	}()
 	// 是否使用原ATR算法
 	if e.ChangeAtr {
-		_, atr = NewAtr(e.kline, e.AtrPeriod).GetValues()
-
+		atr = ta.Atr(highs, lows, closes, e.AtrPeriod)
 	} else {
-		var tr, _ = NewAtr(e.kline, e.AtrPeriod).GetValues()
-		atr = ta.Sma(e.AtrPeriod, tr)
+		natr := ta.Natr(highs, lows, closes, e.AtrPeriod)
+		atr = ta.Sma(e.AtrPeriod, natr)
 	}
 
 	for i := 0; i < len(src); i++ {
@@ -93,22 +108,22 @@ func (e *SuperTrend) Calculation() *SuperTrend {
 
 		up[i] = src[i] - (float64(e.AtrMultiplier) * atr[i])
 		up1[i] = ta.Nz(up[i-1], up[i])
-		if close[i-1] > up1[i] {
+		if closes[i-1] > up1[i] {
 			up[i] = math.Max(up[i], up1[i])
 		}
 
 		dn[i] = src[i] + (float64(e.AtrMultiplier) * atr[i])
 		dn1[i] = ta.Nz(dn[i-1], dn[i])
-		if close[i-1] < dn1[i] {
+		if closes[i-1] < dn1[i] {
 			dn[i] = math.Min(dn[i], dn1[i])
 		}
 
 		trend[i] = 1
 		trend[i] = ta.Nz(trend[i-1], trend[i])
 
-		if trend[i] == -1 && close[i] > dn1[i] {
+		if trend[i] == -1 && closes[i] > dn1[i] {
 			trend[i] = 1
-		} else if trend[i] == 1 && close[i] < up1[i] {
+		} else if trend[i] == 1 && closes[i] < up1[i] {
 			trend[i] = -1
 		}
 
@@ -119,10 +134,10 @@ func (e *SuperTrend) Calculation() *SuperTrend {
 		}
 	}
 
-	e.data = make([]SuperTrendData, len(e.kline.Candles))
-	for i, v := range e.kline.Candles {
+	e.data = make([]SuperTrendData, len(closes))
+	for i := 0; i < len(closes); i++ {
 		e.data[i] = SuperTrendData{
-			Time:           v.Time,
+			Time:           times[i],
 			UpTrend:        up[i],
 			UpTrendBegin:   upb[i],
 			DownTrend:      dn[i],
@@ -155,12 +170,11 @@ func (e *SuperTrend) GetData() []SuperTrendData {
 
 // AnalysisSide Func
 func (e *SuperTrend) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()
 	}
-
+	sides := make([]utils.Side, len(e.data))
 	for i, v := range e.data {
 		if i < 1 {
 			continue

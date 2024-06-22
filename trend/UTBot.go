@@ -16,8 +16,8 @@ type UTBot struct {
 	Period    int
 	AtrPeriod int
 	Name      string
+	ohlc      *klines.OHLC
 	data      []UTBotData
-	kline     *klines.Item
 }
 
 type UTBotData struct {
@@ -30,7 +30,18 @@ type UTBotData struct {
 func NewUTBot(klineItem *klines.Item, period, atrPeriod int) *UTBot {
 	m := &UTBot{
 		Name:      fmt.Sprintf("UTBot%d", period),
-		kline:     klineItem,
+		Period:    period,
+		AtrPeriod: atrPeriod,
+	}
+	m.ohlc = klineItem.GetOHLC()
+	return m
+}
+
+// NewUTBot new Func
+func NewUTBotOHLC(ohlc *klines.OHLC, period, atrPeriod int) *UTBot {
+	m := &UTBot{
+		Name:      fmt.Sprintf("UTBot%d", period),
+		ohlc:      ohlc,
 		Period:    period,
 		AtrPeriod: atrPeriod,
 	}
@@ -45,22 +56,22 @@ func NewDefaultUTBot(klineItem *klines.Item) *UTBot {
 // Calculation Func
 func (e *UTBot) Calculation() *UTBot {
 
-	var xATRTrailingStop = make([]float64, len(e.kline.Candles))
+	var ohlc = e.ohlc
 
-	var ohlc = e.kline.GetOHLC()
+	var closes = ohlc.Close
+	var times = ohlc.Time
 
-	var atr = ta.Atr(ohlc.High, ohlc.Low, ohlc.Close, e.AtrPeriod)
-	var closeing = ohlc.Close
+	var atr = ta.Atr(ohlc.High, ohlc.Low, closes, e.AtrPeriod)
+
+	var xATRTrailingStop = make([]float64, len(closes))
 
 	defer func() {
 		xATRTrailingStop = nil
-		ohlc = nil
 		atr = nil
-		closeing = nil
 	}()
 
-	e.data = make([]UTBotData, len(e.kline.Candles))
-	for i, close := range closeing {
+	e.data = make([]UTBotData, len(closes))
+	for i, close := range closes {
 		if i == 0 {
 			continue
 		}
@@ -68,9 +79,9 @@ func (e *UTBot) Calculation() *UTBot {
 		var nLoss = float64(e.Period) * atr[i]
 
 		// 计算xATRTrailingStop
-		if close > xATRTrailingStop[i-1] && closeing[i-1] > xATRTrailingStop[i-1] {
+		if close > xATRTrailingStop[i-1] && closes[i-1] > xATRTrailingStop[i-1] {
 			xATRTrailingStop[i] = math.Max(xATRTrailingStop[i-1], close-nLoss)
-		} else if close < xATRTrailingStop[i-1] && closeing[i-1] < xATRTrailingStop[i-1] {
+		} else if close < xATRTrailingStop[i-1] && closes[i-1] < xATRTrailingStop[i-1] {
 			xATRTrailingStop[i] = math.Min(xATRTrailingStop[i-1], close+nLoss)
 		} else if close > xATRTrailingStop[i-1] {
 			xATRTrailingStop[i] = close - nLoss
@@ -80,7 +91,7 @@ func (e *UTBot) Calculation() *UTBot {
 
 		// fmt.Printf("[%s]%f\t%f\tatr:%f\txATRTrailingStop:%f\tBuy:%+v\tSell:%+v\n", e.kline.Candles[i].Time.Format("2006-01-02 15:04:05"), close-nLoss, close+nLoss, atr[i], xATRTrailingStop[i], buy, sell)
 		e.data[i] = UTBotData{
-			Time:  e.kline.Candles[i].Time,
+			Time:  times[i],
 			Close: close,
 			Value: xATRTrailingStop[i],
 		}
@@ -91,11 +102,11 @@ func (e *UTBot) Calculation() *UTBot {
 
 // AnalysisSide Func
 func (e *UTBot) AnalysisSide() utils.SideData {
-	sides := make([]utils.Side, len(e.kline.Candles))
 
 	if len(e.data) == 0 {
 		e = e.Calculation()
 	}
+	sides := make([]utils.Side, len(e.data))
 
 	for i, v := range e.data {
 		if i < 1 {
