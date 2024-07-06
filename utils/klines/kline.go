@@ -47,13 +47,18 @@ func (e *Item) ConvertToNewInterval(newInterval Interval) (*Item, error) {
 
 	start := time.Unix(e.Candles[0].TimeUnix, 0)
 	end := time.Unix(e.Candles[len(e.Candles)-1].TimeUnix, 0).Add(e.Interval.Duration())
+	window := end.Sub(start)
+	// var window time.Duration
+	// if start.Before(end) {
+	// 	window = end.Sub(start)
+	// } else {
+	// 	window = start.Sub(end)
+	// }
 
-	var window time.Duration
-	if start.Before(end) {
-		window = end.Sub(start)
-	} else {
-		window = start.Sub(end)
-	}
+	// fmt.Printf("start:%+v\n", start)
+	// fmt.Printf("end:%+v\n", end)
+	// fmt.Printf("window:%d\n", window)
+	// fmt.Printf("e.Interval:%d\n", e.Interval)
 
 	if expected := int(window / e.Interval.Duration()); expected != len(e.Candles) {
 		return nil, fmt.Errorf("%w expected candles %d but have only %d when converting from %s to %s interval",

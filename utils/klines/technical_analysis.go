@@ -74,30 +74,29 @@ func (e *Item) ToHeikinAshi() *Item {
 
 // HL2 (最高价+最低价)/2
 func (e *Item) HL2() []float64 {
-	var result []float64
-
-	for _, candle := range e.Candles {
-		result = append(result, (candle.High+candle.Low)/2)
+	result := make([]float64, len(e.Candles))
+	for i, candle := range e.Candles {
+		result[i] = (candle.High + candle.Low) / 2
 	}
 	return result
 }
 
 // HLC3 (最高价+最低价+收盘价)/3
 func (e *Item) HLC3() []float64 {
-	var result []float64
 
-	for _, candle := range e.Candles {
-		result = append(result, (candle.High+candle.Low+candle.Close)/3)
+	result := make([]float64, len(e.Candles))
+	for i, candle := range e.Candles {
+		result[i] = (candle.High + candle.Low + candle.Close) / 3
 	}
 	return result
 }
 
 // OHLC4 (开盘价 + 最高价 + 最低价 + 收盘价)/4
 func (e *Item) OHLC4() []float64 {
-	var result []float64
 
-	for _, candle := range e.Candles {
-		result = append(result, (candle.Open+candle.High+candle.Low+candle.Close)/4)
+	result := make([]float64, len(e.Candles))
+	for i, candle := range e.Candles {
+		result[i] = (candle.Open + candle.High + candle.Low + candle.Close) / 4
 	}
 	return result
 }

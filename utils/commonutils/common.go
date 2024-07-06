@@ -1,15 +1,15 @@
 package commonutils
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/shopspring/decimal"
 )
 
@@ -66,7 +66,7 @@ func If(condition bool, trueVal, falseVal interface{}) interface{} {
 
 // ReadFile reads a file and returns read data as byte array.
 func ReadFile(path string) ([]byte, error) {
-	file, err := ioutil.ReadFile(path)
+	file, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func JSONDecode(data []byte, to interface{}) error {
 	if !strings.Contains(reflect.ValueOf(to).Type().String(), "*") {
 		return errors.New("json decode error - memory address not supplied")
 	}
-	return json.Unmarshal(data, to)
+	return sonic.Unmarshal(data, to)
 }
 
 // StartEndTimeCheck provides some basic checks which occur

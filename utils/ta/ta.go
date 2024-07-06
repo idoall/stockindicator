@@ -4,6 +4,8 @@ import (
 	"math"
 
 	"github.com/idoall/stockindicator/container/bst"
+	"github.com/idoall/stockindicator/helpertools"
+	"github.com/idoall/stockindicator/utils/commonutils"
 )
 
 // LinearReg - 线性回归
@@ -222,6 +224,47 @@ func Sma(period int, values []float64) []float64 {
 	return result
 }
 
+func SmaT[T commonutils.Number](period int, c <-chan T) <-chan T {
+	cs := helpertools.Duplicate(c, 2)
+	cs[1] = helpertools.Shift(cs[1], period, 0)
+
+	sum := T(0)
+
+	sums := helpertools.Operate(cs[0], cs[1], func(c, b T) T {
+		sum = sum + c - b
+		return sum
+	})
+
+	return helpertools.Apply(sums, func(sum T) T {
+		return sum / T(period)
+	})
+}
+
+// func TSma[T commonutils.Number](period int, c <-chan T) <-chan T {
+// 	result := make([]float64, len(values))
+// 	sum := float64(0)
+
+// 	for i, value := range values {
+// 		count := i + 1
+// 		sum += value
+
+// 		if i >= period {
+// 			sum -= values[i-period]
+// 			count = period
+// 		}
+
+// 		val := sum / float64(count)
+// 		if math.IsNaN(val) || math.IsInf(val, -1) {
+// 			result[i] = 0
+// 		} else {
+// 			result[i] = val
+// 		}
+// 	}
+
+// 	values = nil
+// 	return result
+// }
+
 // Rolling Moving Average (RMA).
 //
 // R[0] to R[p-1] is SMA(values)
@@ -337,11 +380,7 @@ func CCI(hlc3 []float64, period, smaPeriod int) []float64 {
 	ccis := make([]float64, len(hlc3))
 
 	// 计算典型价格、移动平均和平均偏差
-	typicalPrices := make([]float64, len(hlc3))
-	for i := 0; i < len(hlc3); i++ {
-		// 计算典型价格
-		typicalPrices[i] = hlc3[i]
-	}
+	typicalPrices := hlc3
 	ma := Sma(smaPeriod, typicalPrices)
 	md := MeanDeviation(typicalPrices, period, ma)
 
