@@ -13,6 +13,7 @@
 - [Simple Moving Average(SMA)](#simple-moving-average)
 - [Vortex Indicator(Vortex)](#vortex-indicator)
 - [Stochastic Relative Strength Index(Stoch RSI)](#stochastic-relative-strength-index)
+- [Average Directional Index(ADX)](#average-directional-dndex)
 
 
 
@@ -163,4 +164,14 @@ Stoch RSI(Stochastic Relative Strength Index)结合了两种非常流行的技�
 stock := NewDefaultStochRsi(list)
 
 var dataList = stock.GetData()
+```
+
+
+### Average Directional Index
+
+ADX（Average Directional Index，平均方向指数）是由J. Welles Wilder在1978年开发的技术分析指标，用于衡量市场趋势的强度。ADX本身不显示趋势的方向，只显示趋势的强弱。ADX通常结合两个方向性指标（+DI 和 -DI）一起使用，以确定市场的上升或下降趋势。
+
+```golang
+
+var dataList = trend.NewAverageDirectionalIndexOHLC(list.GetOHLC(), 30, 14).GetData()
 ```

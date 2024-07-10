@@ -240,31 +240,6 @@ func SmaT[T commonutils.Number](period int, c <-chan T) <-chan T {
 	})
 }
 
-// func TSma[T commonutils.Number](period int, c <-chan T) <-chan T {
-// 	result := make([]float64, len(values))
-// 	sum := float64(0)
-
-// 	for i, value := range values {
-// 		count := i + 1
-// 		sum += value
-
-// 		if i >= period {
-// 			sum -= values[i-period]
-// 			count = period
-// 		}
-
-// 		val := sum / float64(count)
-// 		if math.IsNaN(val) || math.IsInf(val, -1) {
-// 			result[i] = 0
-// 		} else {
-// 			result[i] = val
-// 		}
-// 	}
-
-// 	values = nil
-// 	return result
-// }
-
 // Rolling Moving Average (RMA).
 //
 // R[0] to R[p-1] is SMA(values)
