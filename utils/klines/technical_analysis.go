@@ -1,7 +1,7 @@
 package klines
 
 import (
-	"github.com/idoall/stockindicator/container/bst"
+	"math"
 )
 
 // OHLC is a connector for technical analysis usage
@@ -49,19 +49,20 @@ func (e *Item) ToHeikinAshi() *Item {
 	result.Candles = make([]*Candle, len(e.Candles))
 	for index, candle := range e.Candles {
 
-		var open = candle.Open
-		if len(result.Candles) > 1 {
-			var prev = e.Candles[len(e.Candles)-1]
+		var open = (candle.Open + candle.Close) / 2
+		if index > 1 {
+			var prev = e.Candles[index-1]
 			open = (prev.Open + prev.Close) / 2
 		}
 
 		var heikinAshiCandle = &Candle{
 			Open:     open,
 			Close:    (candle.Open + candle.High + candle.Low + candle.Close) / 4,
-			High:     bst.New().Inserts([]float64{candle.High, candle.Open, candle.Close}).Max().(float64),
-			Low:      bst.New().Inserts([]float64{candle.Close, candle.Open, candle.Close}).Min().(float64),
+			High:     math.Max(candle.High, math.Max(open, candle.Close)),
+			Low:      math.Max(candle.Low, math.Min(open, candle.Close)),
 			TimeUnix: candle.TimeUnix,
 		}
+
 		heikinAshiCandle.ChangePercent = (candle.Close - candle.Open) / candle.Open
 		if candle.Close > candle.Open {
 			heikinAshiCandle.IsBullMarket = true
