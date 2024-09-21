@@ -57,7 +57,9 @@ type BollData struct {
 	Upper  float64
 	Middle float64
 	Lower  float64
-	Time   time.Time
+	// 标准差
+	MD   float64
+	Time time.Time
 }
 
 // NewBoll Func
@@ -101,12 +103,13 @@ func (e *Boll) Calculation() *Boll {
 	var upper = ta.Add(middle, md)
 	var lower = ta.Subtract(middle, md)
 
-	for i, _ := range middle {
+	for i := range middle {
 		e.data[i] = BollData{
 			Time:   time.Unix(e.kline.Candles[i].TimeUnix, 0),
 			Middle: middle[i],
 			Upper:  upper[i],
 			Lower:  lower[i],
+			MD:     md[i],
 		}
 	}
 	return e
