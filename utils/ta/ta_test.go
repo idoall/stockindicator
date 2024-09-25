@@ -1,6 +1,7 @@
 package ta_test
 
 import (
+	"math"
 	"reflect"
 	"testing"
 
@@ -28,4 +29,63 @@ func TestSmaT(t *testing.T) {
 	if !reflect.DeepEqual(result, expected) {
 		t.Fatalf("result %v expected %v", result, expected)
 	}
+}
+
+// go test -v ./utils/ta -run ^TestSD$
+func TestSD(t *testing.T) {
+	tests := []struct {
+		name     string
+		values   []float64
+		expected float64
+	}{
+		{
+			name:     "happy path",
+			values:   []float64{1, 2, 3, 4, 5},
+			expected: math.Sqrt(2.0), // Standard deviation for {1, 2, 3, 4, 5}
+		},
+		{
+			name:     "single value",
+			values:   []float64{5},
+			expected: 0.0, // Standard deviation for a single value
+		},
+		{
+			name:     "two values",
+			values:   []float64{1, 3},
+			expected: 1.0, // Standard deviation for {1, 3}
+		},
+		{
+			name:     "all same value",
+			values:   []float64{4, 4, 4, 4},
+			expected: 0.0, // All same values should have a standard deviation of 0
+		},
+		{
+			name:     "negative values",
+			values:   []float64{-1, -2, -3, -4, -5},
+			expected: math.Sqrt(2.0), // Standard deviation for {-1, -2, -3, -4, -5}
+		},
+		{
+			name:     "mixed values",
+			values:   []float64{-1, 0, 1},
+			expected: 0.816496580927726, // Standard deviation for {-1, 0, 1}
+		},
+		{
+			name:     "empty slice",
+			values:   []float64{},
+			expected: 0.0, // Standard deviation for an empty slice
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := ta.SD(tt.values)
+			if !almostEqual(result, tt.expected) {
+				t.Errorf("Expected %v but got %v", tt.expected, result)
+			}
+		})
+	}
+}
+
+func almostEqual(a, b float64) bool {
+	const epsilon = 1e-9
+	return math.Abs(a-b) < epsilon
 }

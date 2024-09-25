@@ -198,6 +198,29 @@ func Stochastic(closing, highs, lows []float64, period int) (k, d []float64) {
 	return k, d
 }
 
+// StdDev - 标准差
+func SD(values []float64) float64 {
+	// 首先计算收盘价的平均值
+	sum := 0.0
+	for _, k := range values {
+		sum += k
+	}
+	mean := sum / float64(len(values))
+
+	// 计算每个收盘价与平均值的平方差
+	sumOfSquares := 0.0
+	for _, k := range values {
+		diff := k - mean
+		sumOfSquares += diff * diff
+	}
+
+	// 计算标准差
+	variance := sumOfSquares / float64(len(values)) // 方差
+	stdDeviation := math.Sqrt(variance)             // 标准差
+
+	return stdDeviation
+}
+
 // 简单移动均线简写为SMA，有时候也直接记为MA。 移动平均线，SMA(N)它将指定周期内的收盘价格之和除以周期N得到的一个指标
 func Sma(period int, values []float64) []float64 {
 	result := make([]float64, len(values))
