@@ -221,6 +221,25 @@ func SD(values []float64) float64 {
 	return stdDeviation
 }
 
+// MovingAverage 计算 MA 序列
+func MA(source []float64, length int) []float64 {
+	n := len(source)
+	ma := make([]float64, n)
+
+	if length <= 0 || n < length {
+		return ma
+	}
+
+	for i := length - 1; i < n; i++ {
+		var sum float64
+		for j := i - length + 1; j <= i; j++ {
+			sum += source[j]
+		}
+		ma[i] = sum / float64(length)
+	}
+	return ma
+}
+
 // 简单移动均线简写为SMA，有时候也直接记为MA。 移动平均线，SMA(N)它将指定周期内的收盘价格之和除以周期N得到的一个指标
 func Sma(period int, values []float64) []float64 {
 	result := make([]float64, len(values))
@@ -390,6 +409,29 @@ func CCI(hlc3 []float64, period, smaPeriod int) []float64 {
 	}
 
 	return ccis
+}
+
+// 计算CCI - AiCoin
+func AiCoinCCI(close []float64, period int, factor float64) []float64 {
+
+	// 计算典型价格、移动平均和平均偏差
+	// get maData
+	matp := MA(close, period)
+	md := Dev(close, period)
+
+	// 计算CCI值
+	n := len(close)
+	cci := make([]float64, n)
+
+	for i := 0; i < n; i++ {
+		if md[i] == 0 {
+			cci[i] = 0 // 或者 math.NaN()
+			continue
+		}
+		cci[i] = (close[i] - matp[i]) / (0.015 * md[i])
+	}
+	return cci
+
 }
 
 // Atr（真实波动幅度均值）返回真实范围的RMA。
@@ -993,6 +1035,35 @@ func Variance(inReal []float64, inTimePeriod int) []float64 {
 		ok = i < len(inReal)
 	}
 	return outReal
+}
+
+// Dev 计算平均偏差序列（Mean Deviation）
+func Dev(source []float64, length int) []float64 {
+	n := len(source)
+	md := make([]float64, n)
+
+	if length <= 0 || n < length {
+		return md // 返回全 0
+	}
+
+	for i := length - 1; i < n; i++ {
+		// 计算窗口内 MA
+		var sum float64
+		for j := i - length + 1; j <= i; j++ {
+			sum += source[j]
+		}
+		ma := sum / float64(length)
+
+		// 计算窗口内 dev
+		var devSum float64
+		for j := i - length + 1; j <= i; j++ {
+			devSum += math.Abs(source[j] - ma)
+		}
+		md[i] = devSum / float64(length)
+	}
+
+	// 前 length-1 项无法计算，保持为 0
+	return md
 }
 
 // stdDev - 标准差
