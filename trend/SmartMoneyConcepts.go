@@ -10,73 +10,158 @@ import (
 	"github.com/idoall/stockindicator/utils/ta"
 )
 
-// SmartMoneyConcepts struct
-// 简称SMC交易策略
-// 特征变化（CHOCH）： 特征变化意味着市场在一段时间内改变了其趋势或订单流。
-// 结构突破 (BOS)：  “结构突破”用于描述超过图表上关键支撑位或阻力位的重大价格变动。该水平通常由机构交易员或其他重要投资者预先确定，他们将其设定为市场变动的关键阈值。
+// SmartMoneyConcepts 智能资金概念（SMC）交易策略结构体
+//
+// SMC 是一种基于机构交易行为的技术分析方法，通过识别市场结构变化来捕捉趋势转折点。
+// 该策略主要关注以下几个核心概念：
+//
+//  1. CHoCH (Change of Character - 特征变化):
+//     表示市场在一段时间内改变了其趋势或订单流方向。
+//     当价格突破前一个摆动高点/低点，且之前处于相反趋势时，形成 CHoCH。
+//     这是趋势反转的早期信号。
+//
+//  2. BOS (Break of Structure - 结构突破):
+//     描述价格突破图表上关键支撑位或阻力位的重大价格变动。
+//     当价格突破前一个摆动高点/低点，且保持当前趋势方向时，形成 BOS。
+//     这是趋势延续的确认信号。
+//
+//  3. Order Blocks (订单区块):
+//     机构交易者在市场反转前最后一次下单的价格区域。
+//     这些区域往往成为未来的支撑或阻力位。
+//
+//  4. EQH/EQL (Equal Highs/Equal Lows - 相等高点/相等低点):
+//     两个或多个相近的高点或低点，通常表示流动性积累区域。
+//     机构可能在这些区域进行扫单操作。
+//
+//  5. Strong/Weak High/Low (强/弱高点/低点):
+//     根据趋势背景判断高点和低点的强弱。
+//     强高点：下跌趋势中的高点；强低点：上涨趋势中的低点。
+//     弱高点：上涨趋势中的高点；弱低点：下跌趋势中的低点。
 type SmartMoneyConcepts struct {
 
-	// Real Time Swing Structure
+	// SwingLenght 实时摆动结构的周期长度
+	// 用于计算摆动高点和摆动低点的回溯期数
+	// 较大的值会产生更平滑但滞后的摆动点
 	SwingLenght int
 
-	// Bars Confirmation，最小是1
-	//
-	// 用于确认相等高点和相等低点的条数
+	// EQHEQL_BarsConfirmation 相等高点/低点的确认K线数量（最小值为1）
+	// 用于确认相等高点和相等低点所需的K线数量
+	// 增加此值可以减少虚假信号，但可能错过一些有效信号
 	EQHEQL_BarsConfirmation int
 
-	// Threshold，1-5之间
-	//
-	// 用于检测相等的高低的范围（0，1）内的灵敏度阈值\n\n较低的值将返回较少但更相关的结果
+	// EQHEQL_Threshold 相等高点/低点检测的灵敏度阈值（取值范围：1-5）
+	// 用于检测相等高低点的价格接近程度
+	// 较低的值将返回较少但更精确的相等高低点信号
+	// 阈值基于 ATR（平均真实波幅）的倍数
 	EQHEQL_Threshold int
 
+	// EQHEQL_Enable 是否启用相等高点/低点检测
 	EQHEQL_Enable bool
 
+	// Name 指标名称，包含参数信息
 	Name string
+
+	// data 存储每个K线的计算结果
 	data []SmartMoneyConceptsData
+
+	// ohlc OHLC 数据（开盘价、最高价、最低价、收盘价）
 	ohlc *klines.OHLC
-	// Order Blocks Number
-	OrderBlockNumber  int
+
+	// OrderBlockNumber 保留的订单区块数量
+	// 控制在图表上显示多少个最近的订单区块
+	OrderBlockNumber int
+
+	// OrderBlockBullish 看涨订单区块列表
+	// 存储可能作为支撑位的价格区域
 	OrderBlockBullish SmartMoneyConceptsDataOrderBlockList
+
+	// OrderBlockBearish 看跌订单区块列表
+	// 存储可能作为阻力位的价格区域
 	OrderBlockBearish SmartMoneyConceptsDataOrderBlockList
 
-	// 内部变量
-	os1Prev        int
-	os2Prev        int
+	// ========== 内部状态变量 ==========
+
+	// os1Prev 长周期摆动的前一个振荡器状态（0=看涨，1=看跌）
+	os1Prev int
+
+	// os2Prev 短周期摆动的前一个振荡器状态（0=看涨，1=看跌）
+	os2Prev int
+
+	// idxPrevBullish 前一个看涨订单区块的索引位置
 	idxPrevBullish int
+
+	// idxPrevBearish 前一个看跌订单区块的索引位置
 	idxPrevBearish int
 
-	// K线到最后时显示压力、阻力位
+	// ========== 强弱高低点（仅在K线末尾显示） ==========
+
+	// StrongHigh 强高点（下跌趋势中的高点）
+	// 表示可能的阻力位
 	StrongHigh SmartMoneyConceptsDataStrongWeak
-	WeakHigh   SmartMoneyConceptsDataStrongWeak
-	StrongLow  SmartMoneyConceptsDataStrongWeak
-	WeakLow    SmartMoneyConceptsDataStrongWeak
+
+	// WeakHigh 弱高点（上涨趋势中的高点）
+	// 可能会被突破，成为支撑位
+	WeakHigh SmartMoneyConceptsDataStrongWeak
+
+	// StrongLow 强低点（上涨趋势中的低点）
+	// 表示可能的支撑位
+	StrongLow SmartMoneyConceptsDataStrongWeak
+
+	// WeakLow 弱低点（下跌趋势中的低点）
+	// 可能会被突破，成为阻力位
+	WeakLow SmartMoneyConceptsDataStrongWeak
+
+	// ========== Fair Value Gap 配置 ==========
+
+	// FVG_Enable 是否启用 Fair Value Gap 检测
+	// true: 启用 FVG 检测，false: 禁用 FVG 检测
+	FVG_Enable bool
+
+	// FVG_AutoThreshold 是否启用自动阈值过滤
+	// true: 使用动态阈值过滤波动性小的 FVG
+	// false: 不使用阈值，检测所有 FVG
+	FVG_AutoThreshold bool
+
+	// FVG_KeepHistory 是否保留历史 FVG 记录
+	// true: 保留所有已失效的 FVG 用于统计分析
+	// false: 不保留历史，节省内存
+	FVG_KeepHistory bool
+
+	// ========== Fair Value Gap 历史记录 ==========
+
+	// FVG_History 所有已失效的 FVG 历史记录
+	// 用于统计分析、回测等场景
+	FVG_History []SmartMoneyConceptsDataFairValueGap
+
+	// ========== 内部状态变量（FVG 追踪）==========
+
+	// currentBullishFVG 当前活跃的看涨 FVG
+	// 用于在后续 K 线中持续传播
+	currentBullishFVG SmartMoneyConceptsDataFairValueGap
+
+	// currentBearishFVG 当前活跃的看跌 FVG
+	// 用于在后续 K 线中持续传播
+	currentBearishFVG SmartMoneyConceptsDataFairValueGap
+
+	// fvgBullishStartIndex 当前看涨 FVG 产生的索引位置
+	// 用于计算 FVG 持续时间
+	fvgBullishStartIndex int
+
+	// fvgBearishStartIndex 当前看跌 FVG 产生的索引位置
+	// 用于计算 FVG 持续时间
+	fvgBearishStartIndex int
 }
 
-type SmartMoneyConceptsData struct {
-	Time time.Time
-	// 顶部短线结构突破
-	HighBOSShort float64
-	// 顶部的短线特征变化
-	HighCHoCHShort float64
-	// 顶部长线结构突破
-	HighBOSLong float64
-	// 顶部的长线特征变化
-	HighCHoCHLong float64
-	// 底部短线结构突破
-	LowBOSShort float64
-	// 底部的短线特征变化
-	LowChoCHShort float64
-	// 底部长线结构突破
-	LowBOSLong float64
-	// 底部的长线特征变化
-	LowChoCHLong float64
-
-	// 双顶、双底区域
-	EQH float64
-	EQL float64
-}
-
-// NewSmartMoneyConcepts new Func
+// NewSmartMoneyConcepts 创建一个新的 SmartMoneyConcepts 指标实例
+//
+// 参数:
+//   - klineItem: K线数据项，包含 OHLC 数据
+//   - swingLenght: 摆动结构的周期长度，推荐值 50
+//   - eqheql_BarsConfirmation: 相等高低点确认所需的K线数量，推荐值 3
+//   - eqheql_Threshold: 相等高低点检测阈值（1-5），推荐值 1
+//
+// 返回:
+//   - *SmartMoneyConcepts: SMC 指标实例
 func NewSmartMoneyConcepts(klineItem *klines.Item, swingLenght int, eqheql_BarsConfirmation, eqheql_Threshold int) *SmartMoneyConcepts {
 	m := &SmartMoneyConcepts{
 		Name:                    fmt.Sprintf("SmartMoneyConcepts%d-%d-%d", swingLenght, eqheql_BarsConfirmation, eqheql_Threshold),
@@ -84,13 +169,31 @@ func NewSmartMoneyConcepts(klineItem *klines.Item, swingLenght int, eqheql_BarsC
 		EQHEQL_BarsConfirmation: eqheql_BarsConfirmation,
 		EQHEQL_Threshold:        eqheql_Threshold,
 		// EQHEQL_Enable:           eqheql_enable,
-		OrderBlockNumber: 5,
+		OrderBlockNumber: 5,   // 默认保留5个订单区块
+		FVG_Enable:       true, // 默认启用 FVG 检测
+		FVG_AutoThreshold: true, // 默认启用自动阈值过滤
+		FVG_KeepHistory:  true, // 默认保留历史记录
 	}
 	m.ohlc = klineItem.GetOHLC()
 	return m
 }
 
-// NewSmartMoneyConcepts new Func
+// NewSmartMoneyConceptsOHLC 使用原始 OHLC 数据创建 SmartMoneyConcepts 指标实例
+//
+// 当你已有分离的 OHLC 数组数据时使用此构造函数
+//
+// 参数:
+//   - opens: 开盘价数组
+//   - highs: 最高价数组
+//   - lows: 最低价数组
+//   - closes: 收盘价数组
+//   - times: Unix 时间戳数组
+//   - swingLenght: 摆动结构的周期长度
+//   - eqheql_BarsConfirmation: 相等高低点确认所需的K线数量
+//   - eqheql_Threshold: 相等高低点检测阈值（1-5）
+//
+// 返回:
+//   - *SmartMoneyConcepts: SMC 指标实例
 func NewSmartMoneyConceptsOHLC(opens, highs, lows, closes []float64, times []int64, swingLenght int, eqheql_BarsConfirmation, eqheql_Threshold int) *SmartMoneyConcepts {
 	m := &SmartMoneyConcepts{
 		Name:                    fmt.Sprintf("SmartMoneyConcepts%d-%d-%d", swingLenght, eqheql_BarsConfirmation, eqheql_Threshold),
@@ -98,7 +201,10 @@ func NewSmartMoneyConceptsOHLC(opens, highs, lows, closes []float64, times []int
 		EQHEQL_BarsConfirmation: eqheql_BarsConfirmation,
 		EQHEQL_Threshold:        eqheql_Threshold,
 		// EQHEQL_Enable:           eqheql_enable,
-		OrderBlockNumber: 5,
+		OrderBlockNumber: 5,    // 默认保留5个订单区块
+		FVG_Enable:       true,  // 默认启用 FVG 检测
+		FVG_AutoThreshold: true, // 默认启用自动阈值过滤
+		FVG_KeepHistory:  true,  // 默认保留历史记录
 	}
 	m.ohlc = &klines.OHLC{
 		Open:     opens,
@@ -111,18 +217,41 @@ func NewSmartMoneyConceptsOHLC(opens, highs, lows, closes []float64, times []int
 	return m
 }
 
-// NewSmartMoneyConcepts new Func
+// NewDefaultSmartMoneyConcepts 使用默认参数创建 SmartMoneyConcepts 指标实例
+//
+// 默认参数:
+//   - swingLenght: 50（较长的摆动周期，适合日线级别）
+//   - eqheql_BarsConfirmation: 3（中等确认强度）
+//   - eqheql_Threshold: 1（最严格的相等检测）
+//
+// 参数:
+//   - klineItem: K线数据项
+//
+// 返回:
+//   - *SmartMoneyConcepts: 使用默认参数的 SMC 指标实例
 func NewDefaultSmartMoneyConcepts(klineItem *klines.Item) *SmartMoneyConcepts {
 	return NewSmartMoneyConcepts(klineItem, 50, 3, 1)
 }
 
+// Clear 清空所有计算结果和订单区块数据
+// 当需要重新计算或释放内存时调用
 func (e *SmartMoneyConcepts) Clear() {
 	e.data = nil
 	e.OrderBlockBearish = nil
 	e.OrderBlockBullish = nil
 }
 
-// Calculation Func
+// Calculation 执行 SMC 指标的完整计算
+//
+// 该方法会遍历所有K线数据，计算以下指标：
+//  1. 摆动高点和低点（基于长周期和短周期）
+//  2. BOS（结构突破）和 CHoCH（特征变化）信号
+//  3. 订单区块（Order Blocks）
+//  4. 相等高点/低点（EQH/EQL）
+//  5. 强弱高低点（Strong/Weak High/Low）
+//
+// 返回:
+//   - *SmartMoneyConcepts: 返回自身，支持链式调用
 func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 
 	var ohlc = e.ohlc
@@ -131,45 +260,80 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 	var lows = ohlc.Low
 	var times = ohlc.TimeUnix
 
+	// 计算200周期的ATR，用于订单区块阈值和相等高低点检测
 	var atr = ta.Atr(highs, lows, closes, 200)
 
+	// 初始化结果数据数组
 	e.data = make([]SmartMoneyConceptsData, len(closes))
 
+	// ========== 趋势状态变量 ==========
+	// trend: 长周期趋势方向（1=上涨，-1=下跌，0=中性）
 	var trend = 0
+	// itrend: 短周期（内部）趋势方向（1=上涨，-1=下跌，0=中性）
 	var itrend = 0
 
+	// ========== 长周期摆动点变量 ==========
+	// top_y: 当前摆动高点的价格
 	var top_y = 0.0
+	// top_x: 当前摆动高点的索引位置
 	var top_x = 0
+	// btm_y: 当前摆动低点的价格
 	var btm_y = 0.0
+	// btm_x: 当前摆动低点的索引位置
 	var btm_x = 0
 
+	// ========== 短周期（5根K线）摆动点变量 ==========
+	// itop_y: 内部摆动高点的价格
 	var itop_y = 0.0
+	// itop_x: 内部摆动高点的索引位置
 	var itop_x = 0
+	// ibtm_y: 内部摆动低点的价格
 	var ibtm_y = 0.0
+	// ibtm_x: 内部摆动低点的索引位置
 	var ibtm_x = 0
 
+	// ========== 跟踪高低点变量（用于强弱高低点计算） ==========
+	// trail_up: 跟踪的最高价格
 	var trail_up = 0.0
+	// trail_dn: 跟踪的最低价格
 	var trail_dn = 0.0
+	// trail_up_x: 跟踪最高价的索引位置
 	var trail_up_x = 0
+	// trail_dn_x: 跟踪最低价的索引位置
 	var trail_dn_x = 0
 
+	// ========== 交叉标志变量（避免重复触发） ==========
+	// top_cross: 长周期高点是否可以触发交叉
 	var top_cross = true
+	// btm_cross: 长周期低点是否可以触发交叉
 	var btm_cross = true
+	// itop_cross: 短周期高点是否可以触发交叉
 	var itop_cross = true
+	// ibtm_cross: 短周期低点是否可以触发交叉
 	var ibtm_cross = true
 
+	// ========== 相等高低点变量 ==========
+	// eq_prev_top: 前一个枢轴高点的价格
 	var eq_prev_top = 0.0
+	// eq_top_x: 前一个枢轴高点的索引位置
 	var eq_top_x = 0
 
+	// eq_prev_btm: 前一个枢轴低点的价格
 	var eq_prev_btm = 0.0
+	// eq_btm_x: 前一个枢轴低点的索引位置
 	var eq_btm_x = 0
 
+	// FVG 相关变量
+	var cumulativeDelta = 0.0 // 累积的 K 线百分比变化（用于动态阈值）
+
+	// 在函数结束时释放内存
 	defer func() {
 		closes = nil
 		highs = nil
 		lows = nil
 	}()
 
+	// 主循环：遍历所有K线数据进行SMC分析
 	for i := 1; i < len(closes); i++ {
 
 		var close = closes[i]
@@ -177,305 +341,447 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 		var low = lows[i]
 		var timeUnix = times[i]
 
+		// 初始化跟踪高点（第一次遇到时）
 		if trail_up == 0.0 {
 			trail_up = high
 		}
 
+		// 初始化跟踪低点（第一次遇到时）
 		if trail_dn == 0.0 {
 			trail_dn = low
 		}
 
+		// 跳过前SwingLenght根K线，因为无法计算摆动点
 		if i < e.SwingLenght {
 			continue
 		}
 
+		// 计算长周期摆动点（基于SwingLenght参数）
+		// top: 检测到的摆动高点价格，btm: 检测到的摆动低点价格
 		var top, btm = e.swings(highs[:i+1], lows[:i+1], e.SwingLenght, i, 1)
+
+		// 计算短周期摆动点（固定5根K线）
+		// itop: 内部摆动高点，ibtm: 内部摆动低点
 		var itop, ibtm = e.swings(highs[:i+1], lows[:i+1], 5, i, 2)
 
+		// ========== 处理长周期摆动高点 ==========
 		if top != 0.0 {
+			// 允许该高点触发交叉信号
 			top_cross = true
-			// var txt_top =
+			// 更新当前摆动高点价格和位置
 			top_y = top
 			top_x = i - e.SwingLenght
 
+			// 更新跟踪高点（用于强弱高点判断）
 			trail_up = top
 			trail_up_x = i - e.SwingLenght
 		}
 
+		// ========== 处理短周期摆动高点 ==========
 		if itop != 0.0 {
+			// 允许该高点触发交叉信号
 			itop_cross = true
+			// 更新内部摆动高点价格和位置
 			itop_y = itop
 			itop_x = i - 5
 		}
 
+		// 持续更新跟踪高点为最高价
 		trail_up = math.Max(high, trail_up)
 		if trail_up == high {
 			trail_up_x = i
 		}
 
+		// ========== 处理长周期摆动低点 ==========
 		if btm != 0.0 {
+			// 允许该低点触发交叉信号
 			btm_cross = true
 
+			// 更新当前摆动低点价格和位置
 			btm_y = btm
 			btm_x = i - e.SwingLenght
 
+			// 更新跟踪低点（用于强弱低点判断）
 			trail_dn = btm
 			trail_dn_x = i - e.SwingLenght
 		}
 
+		// ========== 处理短周期摆动低点 ==========
 		if ibtm != 0.0 {
+			// 允许该低点触发交叉信号
 			ibtm_cross = true
 
+			// 更新内部摆动低点价格和位置
 			ibtm_y = ibtm
 			ibtm_x = i - 5
 		}
 
+		// 持续更新跟踪低点为最低价
 		trail_dn = math.Min(low, trail_dn)
 		if trail_dn == low {
 			trail_dn_x = i
 		}
 
-		//
-		// Pivot High BOS/CHoCH
-		//
+		// ========== 检测短周期摆动高点的突破（BOS 或 CHoCH） ==========
+		// 当收盘价向上穿越内部摆动高点时触发
 		if ta.CrossOver(closes[:i+1], itop_y) && itop_cross && top_y != itop_y {
 			var choch = false
 
+			// 如果之前是下跌趋势，则为CHoCH（特征变化/趋势反转）
 			if itrend < 0 {
 				choch = true
 			}
 
+			// 标记相关K线的信号类型
 			if choch {
+				// 标记为CHoCH信号（趋势反转）
 				for candleIndex := itop_x; candleIndex <= i; candleIndex++ {
 					e.data[candleIndex].HighCHoCHShort = itop_y
 				}
 			} else {
+				// 标记为BOS信号（趋势延续）
 				for candleIndex := itop_x; candleIndex <= i; candleIndex++ {
 					e.data[candleIndex].HighBOSShort = itop_y
 				}
 			}
 
+			// 重置交叉标志，避免重复触发
 			itop_cross = false
+			// 更新短周期趋势为上涨
 			itrend = 1
 
+			// 记录看涨订单区块（突破前的最后下跌区域）
 			e.OrderBlockBullish = e.obCoord(false, i, itop_x, highs[:i+1], lows[:i+1], atr[:i+1], e.OrderBlockBullish, 1)
 
 		}
 
+		// ========== 检测长周期摆动高点的突破（BOS 或 CHoCH） ==========
+		// 当收盘价向上穿越长周期摆动高点时触发
 		if ta.CrossOver(closes[:i+1], top_y) && top_cross {
 			var choch = false
 
+			// 如果之前是下跌趋势，则为CHoCH（特征变化/趋势反转）
 			if trend < 0 {
 				choch = true
 			}
+
+			// 标记相关K线的信号类型
 			if choch {
+				// 标记为长周期CHoCH信号（更强的趋势反转确认）
 				for candleIndex := top_x; candleIndex <= i; candleIndex++ {
 					e.data[candleIndex].HighCHoCHLong = top_y
 				}
 			} else {
+				// 标记为长周期BOS信号（更强的趋势延续确认）
 				for candleIndex := top_x; candleIndex <= i; candleIndex++ {
 					e.data[candleIndex].HighBOSLong = top_y
 				}
 			}
 
+			// 重置交叉标志
 			top_cross = false
+			// 更新长周期趋势为上涨
 			trend = 1
 
+			// 记录看跌订单区块（突破前的最后上涨区域，可能成为未来阻力位）
 			e.OrderBlockBearish = e.obCoord(false, i, top_x, highs[:i+1], lows[:i+1], atr[:i+1], e.OrderBlockBearish, 2)
 		}
 
-		//
-		// Pivot LOW BOS/CHoCH
-		//
+		// ========== 检测短周期摆动低点的下破（BOS 或 CHoCH） ==========
+		// 当收盘价向下穿越内部摆动低点时触发
 		if ta.CrossUnder(closes[:i+1], ibtm_y) && ibtm_cross && btm_y != ibtm_y {
 
 			var choch = false
 
+			// 如果之前是上涨趋势，则为CHoCH（特征变化/趋势反转）
 			if itrend > 0 {
 				choch = true
 			}
+
+			// 标记相关K线的信号类型
 			if choch {
+				// 标记为CHoCH信号（趋势反转）
 				for candleIndex := ibtm_x; candleIndex <= i; candleIndex++ {
 					e.data[candleIndex].LowChoCHShort = ibtm_y
 				}
 			} else {
+				// 标记为BOS信号（趋势延续）
 				for candleIndex := ibtm_x; candleIndex <= i; candleIndex++ {
 					e.data[candleIndex].LowBOSShort = ibtm_y
 				}
 			}
 
+			// 重置交叉标志
 			ibtm_cross = false
+			// 更新短周期趋势为下跌
 			itrend = -1
 
+			// 记录看涨订单区块（下破前的最后上涨区域，可能成为未来支撑位）
 			e.OrderBlockBullish = e.obCoord(true, i, ibtm_x, highs[:i+1], lows[:i+1], atr[:i+1], e.OrderBlockBullish, 1)
 		}
 
+		// ========== 检测长周期摆动低点的下破（BOS 或 CHoCH） ==========
+		// 当收盘价向下穿越长周期摆动低点时触发
 		if ta.CrossUnder(closes[:i+1], btm_y) && btm_cross {
 
 			var choch = false
+			// 如果之前是上涨趋势，则为CHoCH（特征变化/趋势反转）
 			if itrend > 0 {
 				choch = true
 			}
 
+			// 标记相关K线的信号类型
 			if choch {
+				// 标记为长周期CHoCH信号（更强的趋势反转确认）
 				for candleIndex := btm_x; candleIndex <= i; candleIndex++ {
 					e.data[candleIndex].LowChoCHLong = btm_y
 				}
 			} else {
+				// 标记为长周期BOS信号（更强的趋势延续确认）
 				for candleIndex := btm_x; candleIndex <= i; candleIndex++ {
 					e.data[candleIndex].LowBOSLong = btm_y
 				}
 			}
 
+			// 重置交叉标志
 			btm_cross = false
+			// 更新长周期趋势为下跌
 			trend = -1
 
+			// 记录看跌订单区块（下破前的最后下跌区域，可能成为未来阻力位）
 			e.OrderBlockBearish = e.obCoord(true, i, btm_x, highs[:i+1], lows[:i+1], atr[:i+1], e.OrderBlockBearish, 2)
 		}
 
-		//
-		// Order Blocks
-		//
+		// ========== 订单区块管理和清理 ==========
+		// 移除已失效的看涨订单区块
+
 		var orderBlockBullishList = e.OrderBlockBullish
 		var orderBlockBullishRemovelist SmartMoneyConceptsDataOrderBlockList
+
 		for j, v := range orderBlockBullishList {
+			// 价格跌破订单区块的收盘价，该区块失效（支撑失效）
 			if close < v.Close && !v.IsTop {
 				orderBlockBullishRemovelist = append(orderBlockBullishRemovelist, v)
 			} else if close > v.High && v.IsTop {
+				// 价格突破订单区块的最高价，该区块失效
 				orderBlockBullishRemovelist = append(orderBlockBullishRemovelist, v)
 			}
+			// 超过最大保留数量的订单区块需要移除（保留最新的）
 			if j > e.OrderBlockNumber && !orderBlockBullishRemovelist.Contains(v) {
 				orderBlockBullishRemovelist = append(orderBlockBullishRemovelist, v)
 			}
 		}
+		// 执行移除操作
 		for _, v := range orderBlockBullishRemovelist {
 			e.OrderBlockBullish = e.OrderBlockBullish.Remove(v)
 		}
 
+		// 移除已失效的看跌订单区块
 		var orderBlockBearishList = e.OrderBlockBearish
 		var orderBlockBearishRemovelist SmartMoneyConceptsDataOrderBlockList
+
 		for j, v := range orderBlockBearishList {
+			// 价格跌破订单区块的收盘价，该区块失效
 			if close < v.Close && !v.IsTop {
 				orderBlockBearishRemovelist = append(orderBlockBearishRemovelist, v)
 			} else if close > v.High && v.IsTop {
+				// 价格突破订单区块的最高价，该区块失效（阻力失效）
 				orderBlockBearishRemovelist = append(orderBlockBearishRemovelist, v)
 			}
+			// 超过最大保留数量的订单区块需要移除（保留最新的）
 			if j > e.OrderBlockNumber && !orderBlockBearishRemovelist.Contains(v) {
 				orderBlockBearishRemovelist = append(orderBlockBearishRemovelist, v)
 			}
 		}
+		// 执行移除操作
 		for _, v := range orderBlockBearishRemovelist {
 			e.OrderBlockBearish = e.OrderBlockBearish.Remove(v)
 		}
 
-		//
-		// EQH/EQL
-		//
+		// ========== 相等高点/低点（EQH/EQL）检测 ==========
+		// 识别价格相近的高点或低点，这些区域通常是流动性池
 		if e.EQHEQL_Enable {
+			// 计算枢轴高点（需要左右各EQHEQL_BarsConfirmation根K线确认）
 			var eq_topArr = ta.PivotHigh(highs[:i+1], e.EQHEQL_BarsConfirmation, e.EQHEQL_BarsConfirmation)
 			var eq_top = eq_topArr[len(eq_topArr)-1]
+
+			// 计算枢轴低点（需要左右各EQHEQL_BarsConfirmation根K线确认）
 			var eq_btmArr = ta.PivotLow(lows[:i+1], e.EQHEQL_BarsConfirmation, e.EQHEQL_BarsConfirmation)
 			var eq_btm = eq_btmArr[len(eq_btmArr)-1]
 
+			// 检测相等高点
 			if eq_top != 0.0 {
 				var max = math.Max(eq_top, eq_prev_top)
 				var min = math.Min(eq_top, eq_prev_top)
+
+				// 判断两个高点是否足够接近（基于ATR阈值）
+				// 如果最大值和最小值之间的差距小于ATR*阈值，则认为是相等高点
 				if max < (min + atr[i]*float64(e.EQHEQL_Threshold)/10.0) {
-					// 划EQH线
+					// 标记相等高点线段
 					for candleIndex := eq_top_x; candleIndex <= i-e.EQHEQL_BarsConfirmation; candleIndex++ {
 						e.data[candleIndex].EQH = eq_prev_top
 					}
 				}
+
+				// 更新前一个高点的价格和位置
 				eq_prev_top = eq_top
 				eq_top_x = i - e.EQHEQL_BarsConfirmation
 			}
 
+			// 检测相等低点
 			if eq_btm != 0.0 {
 				var max = math.Max(eq_btm, eq_prev_btm)
 				var min = math.Min(eq_btm, eq_prev_btm)
+
+				// 判断两个低点是否足够接近（基于ATR阈值）
+				// 如果最小值和最大值之间的差距小于ATR*阈值，则认为是相等低点
 				if min > (max - atr[i]*float64(e.EQHEQL_Threshold)/10.0) {
-					// 划EQL线
+					// 标记相等低点线段
 					for candleIndex := eq_btm_x; candleIndex <= i-e.EQHEQL_BarsConfirmation; candleIndex++ {
 						e.data[candleIndex].EQL = eq_prev_btm
 					}
 				}
+
+				// 更新前一个低点的价格和位置
 				eq_prev_btm = eq_btm
 				eq_btm_x = i - e.EQHEQL_BarsConfirmation
 			}
 		}
 
-		//
-		// Strong High/Weak High/Strong Low/Weak Low
-		//
+		// ========== 更新强弱高低点 ==========
+		// 根据当前趋势方向判断高低点的强弱属性
+
+		// 处理高点：下跌趋势中的高点为强高点，上涨趋势中的高点为弱高点
 		if trend < 0 {
+			// 下跌趋势：高点是重要的阻力位（强高点）
 			e.StrongHigh = SmartMoneyConceptsDataStrongWeak{
 				Time:  time.Unix(times[trail_up_x], 0),
 				Value: trail_up,
 			}
 		} else {
+			// 上涨趋势：高点可能会被突破（弱高点）
 			e.WeakHigh = SmartMoneyConceptsDataStrongWeak{
 				Time:  time.Unix(times[trail_up_x], 0),
 				Value: trail_up,
 			}
 		}
 
+		// 处理低点：上涨趋势中的低点为强低点，下跌趋势中的低点为弱低点
 		if trend > 0 {
+			// 上涨趋势：低点是重要的支撑位（强低点）
 			e.StrongLow = SmartMoneyConceptsDataStrongWeak{
 				Time:  time.Unix(times[trail_dn_x], 0),
 				Value: trail_dn,
 			}
 		} else {
+			// 下跌趋势：低点可能会被突破（弱低点）
 			e.WeakLow = SmartMoneyConceptsDataStrongWeak{
 				Time:  time.Unix(times[trail_dn_x], 0),
 				Value: trail_dn,
 			}
 		}
 
+		// 设置当前K线的时间戳
 		e.data[i].Time = time.Unix(timeUnix, 0)
+
+		// ========== Fair Value Gap 处理 ==========
+		if e.FVG_Enable && i >= 2 { // 至少需要 3 根 K 线
+
+			// 1. 检查现有 FVG 是否失效
+			e.checkFVGInvalidation(i, highs, lows, times)
+
+			// 2. 检测新的 FVG
+			e.detectNewFVG(i, ohlc.Open, highs, lows, closes, times, cumulativeDelta)
+
+			// 3. 将当前 FVG 状态传播到当前 K 线数据
+			e.data[i].BullishFVG = e.currentBullishFVG
+			e.data[i].BearishFVG = e.currentBearishFVG
+
+			// 4. 更新累积 delta（用于动态阈值）
+			if i > 0 && ohlc.Open[i-1] != 0 {
+				barDeltaPercent := (closes[i-1] - ohlc.Open[i-1]) / ohlc.Open[i-1]
+				cumulativeDelta += math.Abs(barDeltaPercent)
+			}
+		}
 	}
 
 	return e
 }
 
+// obCoord 识别并记录订单区块（Order Block）的坐标和范围
+//
+// 订单区块是指机构在市场反转前最后一次下单的价格区域。
+// 该函数在检测到市场结构突破（BOS/CHoCH）时被调用，用于定位订单区块的位置。
+//
+// 参数:
+//   - useMax: true=寻找最高价区域（看涨OB），false=寻找最低价区域（看跌OB）
+//   - index: 当前K线索引位置
+//   - loc: 摆动点位置（突破开始的位置）
+//   - highs: 最高价数组
+//   - lows: 最低价数组
+//   - atr: ATR数组，用作波动率阈值
+//   - list: 现有的订单区块列表
+//   - obType: 订单区块类型（1=看涨，2=看跌）
+//
+// 返回:
+//   - SmartMoneyConceptsDataOrderBlockList: 更新后的订单区块列表
 func (e *SmartMoneyConcepts) obCoord(useMax bool, index, loc int, highs, lows, atr []float64, list SmartMoneyConceptsDataOrderBlockList, obType int) SmartMoneyConceptsDataOrderBlockList {
 
-	var min = 99999999.0
-	var max = 0.0
-	var idx = 1
-	var ob_threshold = atr
+	var min = 99999999.0   // 初始化为极大值
+	var max = 0.0          // 初始化为极小值
+	var idx = 1            // 订单区块K线的索引位置
+	var ob_threshold = atr // ATR阈值，用于过滤波动过大的K线
 
+	// 寻找最高价区域的订单区块（用于看涨突破后识别支撑）
 	if useMax {
+		// 从当前位置向后扫描到摆动点位置
 		for i := index; i > (loc - 1); i-- {
 			var h = highs[i]
 			var l = lows[i]
+
+			// 仅考虑波动范围小于2倍ATR的K线（排除异常波动）
 			if (h - l) < ob_threshold[i]*2 {
 				var idxPrev = e.idxPrevBullish
 				if obType == 2 {
 					idxPrev = e.idxPrevBearish
 				}
+
+				// 寻找该区间内的最高价
 				max = math.Max(h, max)
+				// 如果当前K线创造了新高，记录其低点作为OB下边界
 				min = commonutils.If(max == h, l, min).(float64)
+				// 如果当前K线创造了新高，记录其索引
 				idx = commonutils.If(max == h, i, idxPrev).(int)
+
+				// 更新对应类型的OB索引
 				if obType == 1 {
 					e.idxPrevBullish = idx
 				} else if obType == 2 {
 					e.idxPrevBearish = idx
 				}
 			}
-
 		}
 	} else {
+		// 寻找最低价区域的订单区块（用于看跌突破后识别阻力）
 		for i := index; i > (loc - 1); i-- {
 			var h = highs[i]
 			var l = lows[i]
+
+			// 仅考虑波动范围小于2倍ATR的K线（排除异常波动）
 			if (h - l) < ob_threshold[i]*2 {
 				var idxPrev = e.idxPrevBullish
 				if obType == 2 {
 					idxPrev = e.idxPrevBearish
 				}
+
+				// 寻找该区间内的最低价
 				min = math.Min(l, min)
+				// 如果当前K线创造了新低，记录其高点作为OB上边界
 				max = commonutils.If(min == l, h, max).(float64)
+				// 如果当前K线创造了新低，记录其索引
 				idx = commonutils.If(min == l, i, idxPrev).(int)
+
+				// 更新对应类型的OB索引
 				if obType == 1 {
 					e.idxPrevBullish = idx
 				} else if obType == 2 {
@@ -485,26 +791,54 @@ func (e *SmartMoneyConcepts) obCoord(useMax bool, index, loc int, highs, lows, a
 		}
 	}
 
+	// 获取OHLC数据
 	var times = e.ohlc.TimeUnix
 	var closes = e.ohlc.Close
 	var opens = e.ohlc.Open
+
+	// 创建新的订单区块并添加到列表
 	list = list.Add(SmartMoneyConceptsDataOrderBlock{
-		IsTop: useMax,
-		Time:  time.Unix(times[idx], 0),
-		Open:  opens[idx],
-		Close: closes[idx],
-		High:  highs[idx],
-		Low:   lows[idx],
+		IsTop: useMax,                   // 是否是顶部区块
+		Time:  time.Unix(times[idx], 0), // 订单区块的时间
+		Open:  opens[idx],               // 开盘价
+		Close: closes[idx],              // 收盘价
+		High:  highs[idx],               // 最高价（阻力位）
+		Low:   lows[idx],                // 最低价（支撑位）
 	})
 	return list
-
 }
 
-// swings 摆动检测，测量
+// swings 摆动点检测函数
+//
+// 该函数使用振荡器方法检测价格的摆动高点和摆动低点。
+// 摆动高点是指价格在回溯期内创建新高后开始回落的点。
+// 摆动低点是指价格在回溯期内创建新低后开始反弹的点。
+//
+// 工作原理：
+// 1. 计算指定周期内的最高价和最低价
+// 2. 使用振荡器状态（os）跟踪当前市场方向：
+//   - os = 0: 看涨状态（价格创新高）
+//   - os = 1: 看跌状态（价格创新低）
+//
+// 3. 当振荡器状态改变时，记录摆动点
+//
+// 参数:
+//   - highs: 最高价数组
+//   - lows: 最低价数组
+//   - lenght: 回溯周期长度
+//   - index: 当前K线索引（用于调试，实际未使用）
+//   - osType: 振荡器类型（1=长周期，2=短周期）
+//
+// 返回:
+//   - top: 检测到的摆动高点价格（0表示未检测到）
+//   - btm: 检测到的摆动低点价格（0表示未检测到）
 func (e *SmartMoneyConcepts) swings(highs, lows []float64, lenght, index int, osType int) (float64, float64) {
+	// 计算回溯期内的最高价和最低价
 	var upper = ta.Highest(highs, lenght)
 	var lower = ta.Lowest(lows, lenght)
 
+	// 获取lenght根K线之前的高点和低点
+	// 这是用来判断是否形成摆动点的参考价格
 	var h = highs[len(highs)-1]
 	if len(highs)-lenght-1 >= 0 {
 		h = highs[len(highs)-lenght-1]
@@ -514,29 +848,37 @@ func (e *SmartMoneyConcepts) swings(highs, lows []float64, lenght, index int, os
 		l = lows[len(lows)-lenght-1]
 	}
 
+	// 获取前一个振荡器状态
 	var os, osPrev int
 	if osType == 1 {
-		osPrev = e.os1Prev
+		osPrev = e.os1Prev // 长周期振荡器状态
 	} else if osType == 2 {
-		osPrev = e.os2Prev
-	}
-	if h > upper {
-		os = 0
-	} else if l < lower {
-		os = 1
-	} else {
-		os = osPrev
+		osPrev = e.os2Prev // 短周期振荡器状态
 	}
 
+	// 更新当前振荡器状态
+	if h > upper {
+		os = 0 // 价格创新高，进入看涨状态
+	} else if l < lower {
+		os = 1 // 价格创新低，进入看跌状态
+	} else {
+		os = osPrev // 保持之前的状态
+	}
+
+	// 检测摆动点：当振荡器状态发生改变时
 	var top, btm float64
+
+	// 从非看涨状态转为看涨状态时，前一个高点即为摆动高点
 	if os == 0 && osPrev != 0 {
 		top = h
 	}
 
+	// 从非看跌状态转为看跌状态时，前一个低点即为摆动低点
 	if os == 1 && osPrev != 1 {
 		btm = l
 	}
 
+	// 保存当前振荡器状态供下次使用
 	if osType == 1 {
 		e.os1Prev = os
 	} else if osType == 2 {
@@ -546,8 +888,154 @@ func (e *SmartMoneyConcepts) swings(highs, lows []float64, lenght, index int, os
 	return top, btm
 }
 
-// GetData Func
+// checkFVGInvalidation 检查并清除失效的 FVG
+//
+// 失效条件：
+//   - 看涨 FVG: 当前 K 线最低价 < FVG 底部（价格向下回填缺口）
+//   - 看跌 FVG: 当前 K 线最高价 > FVG 顶部（价格向上回填缺口）
+//
+// 当 FVG 失效时，会记录失效信息（填补时间、填补价格、持续时间）
+// 并将 FVG 添加到历史记录中（如果启用了历史记录功能）
+//
+// 参数:
+//   - index: 当前 K 线索引
+//   - highs: 最高价数组
+//   - lows: 最低价数组
+//   - times: 时间戳数组
+func (e *SmartMoneyConcepts) checkFVGInvalidation(index int, highs, lows []float64, times []int64) {
+	// 检查看涨 FVG 是否失效
+	if e.currentBullishFVG.IsValid() {
+		if lows[index] < e.currentBullishFVG.Bottom {
+			// 价格跌破 FVG 底部，FVG 失效
+
+			// 记录失效信息
+			e.currentBullishFVG.FilledTime = time.Unix(times[index], 0)
+			e.currentBullishFVG.FilledPrice = lows[index]
+			e.currentBullishFVG.Duration = index - e.fvgBullishStartIndex
+
+			// 在当前 K 线数据中记录失效的 FVG
+			e.data[index].FilledBullishFVG = e.currentBullishFVG
+
+			// 如果启用了历史记录，添加到历史列表
+			if e.FVG_KeepHistory {
+				e.FVG_History = append(e.FVG_History, e.currentBullishFVG)
+			}
+
+			// 清空当前活跃的看涨 FVG
+			e.currentBullishFVG.Clear()
+		}
+	}
+
+	// 检查看跌 FVG 是否失效
+	if e.currentBearishFVG.IsValid() {
+		if highs[index] > e.currentBearishFVG.Top {
+			// 价格突破 FVG 顶部，FVG 失效
+
+			// 记录失效信息
+			e.currentBearishFVG.FilledTime = time.Unix(times[index], 0)
+			e.currentBearishFVG.FilledPrice = highs[index]
+			e.currentBearishFVG.Duration = index - e.fvgBearishStartIndex
+
+			// 在当前 K 线数据中记录失效的 FVG
+			e.data[index].FilledBearishFVG = e.currentBearishFVG
+
+			// 如果启用了历史记录，添加到历史列表
+			if e.FVG_KeepHistory {
+				e.FVG_History = append(e.FVG_History, e.currentBearishFVG)
+			}
+
+			// 清空当前活跃的看跌 FVG
+			e.currentBearishFVG.Clear()
+		}
+	}
+}
+
+// detectNewFVG 检测新的 Fair Value Gap
+//
+// FVG 形成条件（三根 K 线模式）：
+//   看涨 FVG: 当前 K 线低点 > 两根前 K 线高点（存在向上缺口）
+//            且上一根 K 线收盘价 > 两根前 K 线高点（确认方向）
+//   看跌 FVG: 当前 K 线高点 < 两根前 K 线低点（存在向下缺口）
+//            且上一根 K 线收盘价 < 两根前 K 线低点（确认方向）
+//
+// 参数:
+//   - index: 当前 K 线索引
+//   - opens: 开盘价数组
+//   - highs: 最高价数组
+//   - lows: 最低价数组
+//   - closes: 收盘价数组
+//   - times: 时间戳数组
+//   - cumulativeDelta: 累积的 K 线百分比变化（用于阈值计算）
+func (e *SmartMoneyConcepts) detectNewFVG(index int, opens, highs, lows, closes []float64, times []int64, cumulativeDelta float64) {
+	// 获取三根 K 线的数据
+	last2High := highs[index-2]  // 两根前的高点
+	last2Low := lows[index-2]    // 两根前的低点
+	lastClose := closes[index-1] // 上一根的收盘价
+	lastOpen := opens[index-1]   // 上一根的开盘价
+	currentHigh := highs[index]  // 当前高点
+	currentLow := lows[index]    // 当前低点
+
+	// 计算上一根 K 线的涨跌幅百分比
+	barDeltaPercent := 0.0
+	if lastOpen != 0 {
+		barDeltaPercent = (lastClose - lastOpen) / lastOpen
+	}
+
+	// 计算动态阈值
+	threshold := 0.0
+	if e.FVG_AutoThreshold && index > 0 {
+		// 阈值 = 平均 K 线变化的 2 倍
+		threshold = (cumulativeDelta / float64(index)) * 2
+	}
+
+	// 检测看涨 FVG
+	if currentLow > last2High && // 存在向上缺口
+		lastClose > last2High && // 收盘价确认方向
+		barDeltaPercent > threshold && // 超过动态阈值
+		!e.currentBullishFVG.IsValid() { // 当前没有活跃的看涨 FVG
+
+		// 创建新的看涨 FVG
+		e.currentBullishFVG = SmartMoneyConceptsDataFairValueGap{
+			Time:      time.Unix(times[index], 0),
+			Top:       currentLow, // FVG 上边界 = 当前低点
+			Bottom:    last2High,  // FVG 下边界 = 两根前高点
+			IsBullish: true,
+		}
+		e.fvgBullishStartIndex = index
+
+		// 在当前 K 线数据中标记新产生的 FVG
+		e.data[index].NewBullishFVG = e.currentBullishFVG
+	}
+
+	// 检测看跌 FVG
+	if currentHigh < last2Low && // 存在向下缺口
+		lastClose < last2Low && // 收盘价确认方向
+		-barDeltaPercent > threshold && // 超过动态阈值（注意负号）
+		!e.currentBearishFVG.IsValid() { // 当前没有活跃的看跌 FVG
+
+		// 创建新的看跌 FVG
+		e.currentBearishFVG = SmartMoneyConceptsDataFairValueGap{
+			Time:      time.Unix(times[index], 0),
+			Top:       last2Low,     // FVG 上边界 = 两根前低点
+			Bottom:    currentHigh,  // FVG 下边界 = 当前高点
+			IsBullish: false,
+		}
+		e.fvgBearishStartIndex = index
+
+		// 在当前 K 线数据中标记新产生的 FVG
+		e.data[index].NewBearishFVG = e.currentBearishFVG
+	}
+}
+
+// GetData 获取所有K线的SMC计算结果
+//
+// 如果数据尚未计算，会自动调用 Calculation() 方法进行计算。
+// 该方法实现了延迟计算模式（lazy evaluation）。
+//
+// 返回:
+//   - []SmartMoneyConceptsData: 包含每个K线的SMC指标数据的切片
 func (e *SmartMoneyConcepts) GetData() []SmartMoneyConceptsData {
+	// 如果数据未计算，先执行计算
 	if len(e.data) == 0 {
 		e = e.Calculation()
 	}

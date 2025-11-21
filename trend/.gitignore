@@ -1,0 +1,6 @@
+test.json
+
+
+# 其他测试数据
+*.test.json
+*_test_data.json
