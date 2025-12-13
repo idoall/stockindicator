@@ -3,154 +3,42 @@ package trend
 import (
 	"fmt"
 	"math"
+	"sync"
 	"time"
 
 	"github.com/idoall/stockindicator/utils/commonutils"
 	"github.com/idoall/stockindicator/utils/klines"
 	"github.com/idoall/stockindicator/utils/ta"
+	"github.com/shopspring/decimal"
 )
 
-// SmartMoneyConcepts 智能资金概念（SMC）交易策略结构体
-//
-// SMC 是一种基于机构交易行为的技术分析方法，通过识别市场结构变化来捕捉趋势转折点。
-// 该策略主要关注以下几个核心概念：
-//
-//  1. CHoCH (Change of Character - 特征变化):
-//     表示市场在一段时间内改变了其趋势或订单流方向。
-//     当价格突破前一个摆动高点/低点，且之前处于相反趋势时，形成 CHoCH。
-//     这是趋势反转的早期信号。
-//
-//  2. BOS (Break of Structure - 结构突破):
-//     描述价格突破图表上关键支撑位或阻力位的重大价格变动。
-//     当价格突破前一个摆动高点/低点，且保持当前趋势方向时，形成 BOS。
-//     这是趋势延续的确认信号。
-//
-//  3. Order Blocks (订单区块):
-//     机构交易者在市场反转前最后一次下单的价格区域。
-//     这些区域往往成为未来的支撑或阻力位。
-//
-//  4. EQH/EQL (Equal Highs/Equal Lows - 相等高点/相等低点):
-//     两个或多个相近的高点或低点，通常表示流动性积累区域。
-//     机构可能在这些区域进行扫单操作。
-//
-//  5. Strong/Weak High/Low (强/弱高点/低点):
-//     根据趋势背景判断高点和低点的强弱。
-//     强高点：下跌趋势中的高点；强低点：上涨趋势中的低点。
-//     弱高点：上涨趋势中的高点；弱低点：下跌趋势中的低点。
-type SmartMoneyConcepts struct {
-
-	// SwingLenght 实时摆动结构的周期长度
-	// 用于计算摆动高点和摆动低点的回溯期数
-	// 较大的值会产生更平滑但滞后的摆动点
-	SwingLenght int
-
-	// EQHEQL_BarsConfirmation 相等高点/低点的确认K线数量（最小值为1）
-	// 用于确认相等高点和相等低点所需的K线数量
-	// 增加此值可以减少虚假信号，但可能错过一些有效信号
-	EQHEQL_BarsConfirmation int
-
-	// EQHEQL_Threshold 相等高点/低点检测的灵敏度阈值（取值范围：1-5）
-	// 用于检测相等高低点的价格接近程度
-	// 较低的值将返回较少但更精确的相等高低点信号
-	// 阈值基于 ATR（平均真实波幅）的倍数
-	EQHEQL_Threshold int
-
-	// EQHEQL_Enable 是否启用相等高点/低点检测
-	EQHEQL_Enable bool
-
-	// Name 指标名称，包含参数信息
-	Name string
-
-	// data 存储每个K线的计算结果
-	data []SmartMoneyConceptsData
-
-	// ohlc OHLC 数据（开盘价、最高价、最低价、收盘价）
-	ohlc *klines.OHLC
-
-	// OrderBlockNumber 保留的订单区块数量
-	// 控制在图表上显示多少个最近的订单区块
-	OrderBlockNumber int
-
-	// OrderBlockBullish 看涨订单区块列表
-	// 存储可能作为支撑位的价格区域
-	OrderBlockBullish SmartMoneyConceptsDataOrderBlockList
-
-	// OrderBlockBearish 看跌订单区块列表
-	// 存储可能作为阻力位的价格区域
-	OrderBlockBearish SmartMoneyConceptsDataOrderBlockList
-
-	// ========== 内部状态变量 ==========
-
-	// os1Prev 长周期摆动的前一个振荡器状态（0=看涨，1=看跌）
-	os1Prev int
-
-	// os2Prev 短周期摆动的前一个振荡器状态（0=看涨，1=看跌）
-	os2Prev int
-
-	// idxPrevBullish 前一个看涨订单区块的索引位置
-	idxPrevBullish int
-
-	// idxPrevBearish 前一个看跌订单区块的索引位置
-	idxPrevBearish int
-
-	// ========== 强弱高低点（仅在K线末尾显示） ==========
-
-	// StrongHigh 强高点（下跌趋势中的高点）
-	// 表示可能的阻力位
-	StrongHigh SmartMoneyConceptsDataStrongWeak
-
-	// WeakHigh 弱高点（上涨趋势中的高点）
-	// 可能会被突破，成为支撑位
-	WeakHigh SmartMoneyConceptsDataStrongWeak
-
-	// StrongLow 强低点（上涨趋势中的低点）
-	// 表示可能的支撑位
-	StrongLow SmartMoneyConceptsDataStrongWeak
-
-	// WeakLow 弱低点（下跌趋势中的低点）
-	// 可能会被突破，成为阻力位
-	WeakLow SmartMoneyConceptsDataStrongWeak
-
-	// ========== Fair Value Gap 配置 ==========
-
-	// FVG_Enable 是否启用 Fair Value Gap 检测
-	// true: 启用 FVG 检测，false: 禁用 FVG 检测
-	FVG_Enable bool
-
-	// FVG_AutoThreshold 是否启用自动阈值过滤
-	// true: 使用动态阈值过滤波动性小的 FVG
-	// false: 不使用阈值，检测所有 FVG
-	FVG_AutoThreshold bool
-
-	// FVG_KeepHistory 是否保留历史 FVG 记录
-	// true: 保留所有已失效的 FVG 用于统计分析
-	// false: 不保留历史，节省内存
-	FVG_KeepHistory bool
-
-	// ========== Fair Value Gap 历史记录 ==========
-
-	// FVG_History 所有已失效的 FVG 历史记录
-	// 用于统计分析、回测等场景
-	FVG_History []SmartMoneyConceptsDataFairValueGap
-
-	// ========== 内部状态变量（FVG 追踪）==========
-
-	// currentBullishFVG 当前活跃的看涨 FVG
-	// 用于在后续 K 线中持续传播
-	currentBullishFVG SmartMoneyConceptsDataFairValueGap
-
-	// currentBearishFVG 当前活跃的看跌 FVG
-	// 用于在后续 K 线中持续传播
-	currentBearishFVG SmartMoneyConceptsDataFairValueGap
-
-	// fvgBullishStartIndex 当前看涨 FVG 产生的索引位置
-	// 用于计算 FVG 持续时间
-	fvgBullishStartIndex int
-
-	// fvgBearishStartIndex 当前看跌 FVG 产生的索引位置
-	// 用于计算 FVG 持续时间
-	fvgBearishStartIndex int
+// decimalPool 对象池，用于复用 decimal.Decimal 对象，减少 GC 压力
+var decimalPool = sync.Pool{
+	New: func() interface{} {
+		return new(decimal.Decimal)
+	},
 }
+
+// SmartMoneyConcepts 相关常量
+const (
+	// 摆动点检测相关常量
+	ShortSwingPeriod       = 5  // 短周期摆动点周期（固定5根K线）
+	DefaultLongSwingPeriod = 50 // 默认长周期摆动点周期
+
+	// 订单区块相关常量
+	DefaultOrderBlockCount  = 5   // 默认保留的订单区块数量
+	OrderBlockATRMultiplier = 2.0 // 订单区块过滤的ATR倍数阈值
+
+	// ATR 相关常量
+	DefaultATRPeriod = 200 // 默认ATR计算周期
+
+	// FVG 相关常量
+	FVGAutoThresholdMultiplier = 2.0 // FVG 动态阈值倍数
+
+	// EQH/EQL 相关常量
+	DefaultEQHEQLBarsConfirmation = 3 // 默认确认K线数量
+	DefaultEQHEQLThreshold        = 1 // 默认灵敏度阈值
+)
 
 // NewSmartMoneyConcepts 创建一个新的 SmartMoneyConcepts 指标实例
 //
@@ -165,14 +53,14 @@ type SmartMoneyConcepts struct {
 func NewSmartMoneyConcepts(klineItem *klines.Item, swingLenght int, eqheql_BarsConfirmation, eqheql_Threshold int) *SmartMoneyConcepts {
 	m := &SmartMoneyConcepts{
 		Name:                    fmt.Sprintf("SmartMoneyConcepts%d-%d-%d", swingLenght, eqheql_BarsConfirmation, eqheql_Threshold),
-		SwingLenght:             swingLenght,
+		SwingLength:             swingLenght,
 		EQHEQL_BarsConfirmation: eqheql_BarsConfirmation,
 		EQHEQL_Threshold:        eqheql_Threshold,
 		// EQHEQL_Enable:           eqheql_enable,
-		OrderBlockNumber: 5,   // 默认保留5个订单区块
-		FVG_Enable:       true, // 默认启用 FVG 检测
-		FVG_AutoThreshold: true, // 默认启用自动阈值过滤
-		FVG_KeepHistory:  true, // 默认保留历史记录
+		OrderBlockNumber:  DefaultOrderBlockCount, // 默认保留5个订单区块
+		FVG_Enable:        true,                   // 默认启用 FVG 检测
+		FVG_AutoThreshold: true,                   // 默认启用自动阈值过滤
+		FVG_KeepHistory:   true,                   // 默认保留历史记录
 	}
 	m.ohlc = klineItem.GetOHLC()
 	return m
@@ -197,14 +85,14 @@ func NewSmartMoneyConcepts(klineItem *klines.Item, swingLenght int, eqheql_BarsC
 func NewSmartMoneyConceptsOHLC(opens, highs, lows, closes []float64, times []int64, swingLenght int, eqheql_BarsConfirmation, eqheql_Threshold int) *SmartMoneyConcepts {
 	m := &SmartMoneyConcepts{
 		Name:                    fmt.Sprintf("SmartMoneyConcepts%d-%d-%d", swingLenght, eqheql_BarsConfirmation, eqheql_Threshold),
-		SwingLenght:             swingLenght,
+		SwingLength:             swingLenght,
 		EQHEQL_BarsConfirmation: eqheql_BarsConfirmation,
 		EQHEQL_Threshold:        eqheql_Threshold,
 		// EQHEQL_Enable:           eqheql_enable,
-		OrderBlockNumber: 5,    // 默认保留5个订单区块
-		FVG_Enable:       true,  // 默认启用 FVG 检测
-		FVG_AutoThreshold: true, // 默认启用自动阈值过滤
-		FVG_KeepHistory:  true,  // 默认保留历史记录
+		OrderBlockNumber:  DefaultOrderBlockCount, // 默认保留5个订单区块
+		FVG_Enable:        true,                   // 默认启用 FVG 检测
+		FVG_AutoThreshold: true,                   // 默认启用自动阈值过滤
+		FVG_KeepHistory:   true,                   // 默认保留历史记录
 	}
 	m.ohlc = &klines.OHLC{
 		Open:     opens,
@@ -236,9 +124,10 @@ func NewDefaultSmartMoneyConcepts(klineItem *klines.Item) *SmartMoneyConcepts {
 // Clear 清空所有计算结果和订单区块数据
 // 当需要重新计算或释放内存时调用
 func (e *SmartMoneyConcepts) Clear() {
-	e.data = nil
+	// e.data = nil
 	e.OrderBlockBearish = nil
 	e.OrderBlockBullish = nil
+	e.cachedATR = nil // 清空 ATR 缓存
 }
 
 // Calculation 执行 SMC 指标的完整计算
@@ -260,11 +149,24 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 	var lows = ohlc.Low
 	var times = ohlc.TimeUnix
 
-	// 计算200周期的ATR，用于订单区块阈值和相等高低点检测
-	var atr = ta.Atr(highs, lows, closes, 200)
+	// 设置默认 ATR 周期
+	if e.atrPeriod == 0 {
+		e.atrPeriod = DefaultATRPeriod
+	}
+
+	// 计算或复用缓存的 ATR（用于订单区块阈值和相等高低点检测）
+	var atr []float64
+	if e.cachedATR != nil && len(e.cachedATR) == len(closes) {
+		// 复用缓存，避免重复计算
+		atr = e.cachedATR
+	} else {
+		// 重新计算并缓存
+		atr = ta.Atr(highs, lows, closes, e.atrPeriod)
+		e.cachedATR = atr
+	}
 
 	// 初始化结果数据数组
-	e.data = make([]SmartMoneyConceptsData, len(closes))
+	// e.data = make([]SmartMoneyConceptsData, len(closes))
 
 	// ========== 趋势状态变量 ==========
 	// trend: 长周期趋势方向（1=上涨，-1=下跌，0=中性）
@@ -326,12 +228,14 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 	// FVG 相关变量
 	var cumulativeDelta = 0.0 // 累积的 K 线百分比变化（用于动态阈值）
 
-	// 在函数结束时释放内存
-	defer func() {
-		closes = nil
-		highs = nil
-		lows = nil
-	}()
+	// 预计算循环常量，避免重复访问结构体字段
+	swingLength := e.SwingLength
+	orderBlockNumber := e.OrderBlockNumber
+	eqheqlEnable := e.EQHEQL_Enable
+	eqheqlBarsConfirmation := e.EQHEQL_BarsConfirmation
+	eqheqlThreshold := e.EQHEQL_Threshold
+	fvgEnable := e.FVG_Enable
+	strongWeakEnable := e.StrongWeak_Enable
 
 	// 主循环：遍历所有K线数据进行SMC分析
 	for i := 1; i < len(closes); i++ {
@@ -339,7 +243,7 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 		var close = closes[i]
 		var high = highs[i]
 		var low = lows[i]
-		var timeUnix = times[i]
+		// var timeUnix = times[i]
 
 		// 初始化跟踪高点（第一次遇到时）
 		if trail_up == 0.0 {
@@ -351,18 +255,18 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 			trail_dn = low
 		}
 
-		// 跳过前SwingLenght根K线，因为无法计算摆动点
-		if i < e.SwingLenght {
+		// 跳过前SwingLength根K线，因为无法计算摆动点
+		if i < swingLength {
 			continue
 		}
 
-		// 计算长周期摆动点（基于SwingLenght参数）
+		// 计算长周期摆动点（基于SwingLength参数）
 		// top: 检测到的摆动高点价格，btm: 检测到的摆动低点价格
-		var top, btm = e.swings(highs[:i+1], lows[:i+1], e.SwingLenght, i, 1)
+		var top, btm = e.swings(highs[:i+1], lows[:i+1], swingLength, 1)
 
 		// 计算短周期摆动点（固定5根K线）
 		// itop: 内部摆动高点，ibtm: 内部摆动低点
-		var itop, ibtm = e.swings(highs[:i+1], lows[:i+1], 5, i, 2)
+		var itop, ibtm = e.swings(highs[:i+1], lows[:i+1], ShortSwingPeriod, 2)
 
 		// ========== 处理长周期摆动高点 ==========
 		if top != 0.0 {
@@ -370,11 +274,11 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 			top_cross = true
 			// 更新当前摆动高点价格和位置
 			top_y = top
-			top_x = i - e.SwingLenght
+			top_x = i - swingLength
 
 			// 更新跟踪高点（用于强弱高点判断）
 			trail_up = top
-			trail_up_x = i - e.SwingLenght
+			trail_up_x = i - swingLength
 		}
 
 		// ========== 处理短周期摆动高点 ==========
@@ -383,7 +287,7 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 			itop_cross = true
 			// 更新内部摆动高点价格和位置
 			itop_y = itop
-			itop_x = i - 5
+			itop_x = i - ShortSwingPeriod
 		}
 
 		// 持续更新跟踪高点为最高价
@@ -399,11 +303,11 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 
 			// 更新当前摆动低点价格和位置
 			btm_y = btm
-			btm_x = i - e.SwingLenght
+			btm_x = i - swingLength
 
 			// 更新跟踪低点（用于强弱低点判断）
 			trail_dn = btm
-			trail_dn_x = i - e.SwingLenght
+			trail_dn_x = i - swingLength
 		}
 
 		// ========== 处理短周期摆动低点 ==========
@@ -413,7 +317,7 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 
 			// 更新内部摆动低点价格和位置
 			ibtm_y = ibtm
-			ibtm_x = i - 5
+			ibtm_x = i - ShortSwingPeriod
 		}
 
 		// 持续更新跟踪低点为最低价
@@ -425,24 +329,15 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 		// ========== 检测短周期摆动高点的突破（BOS 或 CHoCH） ==========
 		// 当收盘价向上穿越内部摆动高点时触发
 		if ta.CrossOver(closes[:i+1], itop_y) && itop_cross && top_y != itop_y {
-			var choch = false
-
-			// 如果之前是下跌趋势，则为CHoCH（特征变化/趋势反转）
-			if itrend < 0 {
-				choch = true
-			}
-
-			// 标记相关K线的信号类型
-			if choch {
-				// 标记为CHoCH信号（趋势反转）
-				for candleIndex := itop_x; candleIndex <= i; candleIndex++ {
-					e.data[candleIndex].HighCHoCHShort = itop_y
-				}
-			} else {
-				// 标记为BOS信号（趋势延续）
-				for candleIndex := itop_x; candleIndex <= i; candleIndex++ {
-					e.data[candleIndex].HighBOSShort = itop_y
-				}
+			// 处理结构突破信号
+			_, signal, shouldRecord := e.handleStructureBreak(
+				i, itop_x, itop_y,
+				itrend, itrend < 0, // 如果之前是下跌趋势，则为CHoCH
+				PeriodTypeShort, PositionTypeHigh,
+				closes, times,
+			)
+			if shouldRecord {
+				e.recordStructureBreak(signal)
 			}
 
 			// 重置交叉标志，避免重复触发
@@ -452,30 +347,20 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 
 			// 记录看涨订单区块（突破前的最后下跌区域）
 			e.OrderBlockBullish = e.obCoord(false, i, itop_x, highs[:i+1], lows[:i+1], atr[:i+1], e.OrderBlockBullish, 1)
-
 		}
 
 		// ========== 检测长周期摆动高点的突破（BOS 或 CHoCH） ==========
 		// 当收盘价向上穿越长周期摆动高点时触发
 		if ta.CrossOver(closes[:i+1], top_y) && top_cross {
-			var choch = false
-
-			// 如果之前是下跌趋势，则为CHoCH（特征变化/趋势反转）
-			if trend < 0 {
-				choch = true
-			}
-
-			// 标记相关K线的信号类型
-			if choch {
-				// 标记为长周期CHoCH信号（更强的趋势反转确认）
-				for candleIndex := top_x; candleIndex <= i; candleIndex++ {
-					e.data[candleIndex].HighCHoCHLong = top_y
-				}
-			} else {
-				// 标记为长周期BOS信号（更强的趋势延续确认）
-				for candleIndex := top_x; candleIndex <= i; candleIndex++ {
-					e.data[candleIndex].HighBOSLong = top_y
-				}
+			// 处理结构突破信号
+			_, signal, shouldRecord := e.handleStructureBreak(
+				i, top_x, top_y,
+				trend, trend < 0, // 如果之前是下跌趋势，则为CHoCH
+				PeriodTypeLong, PositionTypeHigh,
+				closes, times,
+			)
+			if shouldRecord {
+				e.recordStructureBreak(signal)
 			}
 
 			// 重置交叉标志
@@ -490,25 +375,15 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 		// ========== 检测短周期摆动低点的下破（BOS 或 CHoCH） ==========
 		// 当收盘价向下穿越内部摆动低点时触发
 		if ta.CrossUnder(closes[:i+1], ibtm_y) && ibtm_cross && btm_y != ibtm_y {
-
-			var choch = false
-
-			// 如果之前是上涨趋势，则为CHoCH（特征变化/趋势反转）
-			if itrend > 0 {
-				choch = true
-			}
-
-			// 标记相关K线的信号类型
-			if choch {
-				// 标记为CHoCH信号（趋势反转）
-				for candleIndex := ibtm_x; candleIndex <= i; candleIndex++ {
-					e.data[candleIndex].LowChoCHShort = ibtm_y
-				}
-			} else {
-				// 标记为BOS信号（趋势延续）
-				for candleIndex := ibtm_x; candleIndex <= i; candleIndex++ {
-					e.data[candleIndex].LowBOSShort = ibtm_y
-				}
+			// 处理结构突破信号
+			_, signal, shouldRecord := e.handleStructureBreak(
+				i, ibtm_x, ibtm_y,
+				itrend, itrend > 0, // 如果之前是上涨趋势，则为CHoCH
+				PeriodTypeShort, PositionTypeLow,
+				closes, times,
+			)
+			if shouldRecord {
+				e.recordStructureBreak(signal)
 			}
 
 			// 重置交叉标志
@@ -523,24 +398,15 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 		// ========== 检测长周期摆动低点的下破（BOS 或 CHoCH） ==========
 		// 当收盘价向下穿越长周期摆动低点时触发
 		if ta.CrossUnder(closes[:i+1], btm_y) && btm_cross {
-
-			var choch = false
-			// 如果之前是上涨趋势，则为CHoCH（特征变化/趋势反转）
-			if itrend > 0 {
-				choch = true
-			}
-
-			// 标记相关K线的信号类型
-			if choch {
-				// 标记为长周期CHoCH信号（更强的趋势反转确认）
-				for candleIndex := btm_x; candleIndex <= i; candleIndex++ {
-					e.data[candleIndex].LowChoCHLong = btm_y
-				}
-			} else {
-				// 标记为长周期BOS信号（更强的趋势延续确认）
-				for candleIndex := btm_x; candleIndex <= i; candleIndex++ {
-					e.data[candleIndex].LowBOSLong = btm_y
-				}
+			// 处理结构突破信号
+			_, signal, shouldRecord := e.handleStructureBreak(
+				i, btm_x, btm_y,
+				trend, itrend > 0, // 如果之前是上涨趋势，则为CHoCH
+				PeriodTypeLong, PositionTypeLow,
+				closes, times,
+			)
+			if shouldRecord {
+				e.recordStructureBreak(signal)
 			}
 
 			// 重置交叉标志
@@ -553,60 +419,70 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 		}
 
 		// ========== 订单区块管理和清理 ==========
-		// 移除已失效的看涨订单区块
+		// 使用单次遍历优化，避免 O(n²) 复杂度
 
-		var orderBlockBullishList = e.OrderBlockBullish
-		var orderBlockBullishRemovelist SmartMoneyConceptsDataOrderBlockList
+		// 从对象池获取 closeDecimal，仅在需要时才初始化
+		var closeDecimal *decimal.Decimal
+		var closeDecimalFromPool bool
 
-		for j, v := range orderBlockBullishList {
-			// 价格跌破订单区块的收盘价，该区块失效（支撑失效）
-			if close < v.Close && !v.IsTop {
-				orderBlockBullishRemovelist = append(orderBlockBullishRemovelist, v)
-			} else if close > v.High && v.IsTop {
-				// 价格突破订单区块的最高价，该区块失效
-				orderBlockBullishRemovelist = append(orderBlockBullishRemovelist, v)
+		// 清理看涨订单区块（单次遍历，O(n)）- 使用原地过滤算法
+		if len(e.OrderBlockBullish) > 0 {
+			if closeDecimal == nil {
+				closeDecimal = decimalPool.Get().(*decimal.Decimal)
+				*closeDecimal = decimal.NewFromFloat(close)
+				closeDecimalFromPool = true
 			}
-			// 超过最大保留数量的订单区块需要移除（保留最新的）
-			if j > e.OrderBlockNumber && !orderBlockBullishRemovelist.Contains(v) {
-				orderBlockBullishRemovelist = append(orderBlockBullishRemovelist, v)
+			validCount := 0
+			for j := range e.OrderBlockBullish {
+				// 保留条件：
+				// 1. 价格未跌破 Low（支撑仍然有效）
+				// 2. 在保留数量范围内（保留最新的 OrderBlockNumber 个）
+				if !closeDecimal.LessThan(e.OrderBlockBullish[j].Low) && j <= orderBlockNumber {
+					if validCount != j {
+						e.OrderBlockBullish[validCount] = e.OrderBlockBullish[j]
+					}
+					validCount++
+				}
 			}
+			e.OrderBlockBullish = e.OrderBlockBullish[:validCount]
 		}
-		// 执行移除操作
-		for _, v := range orderBlockBullishRemovelist {
-			e.OrderBlockBullish = e.OrderBlockBullish.Remove(v)
+
+		// 清理看跌订单区块（单次遍历，O(n)）- 使用原地过滤算法
+		if len(e.OrderBlockBearish) > 0 {
+			if closeDecimal == nil {
+				closeDecimal = decimalPool.Get().(*decimal.Decimal)
+				*closeDecimal = decimal.NewFromFloat(close)
+				closeDecimalFromPool = true
+			}
+			validCount := 0
+			for j := range e.OrderBlockBearish {
+				// 保留条件：
+				// 1. 价格未突破 High（阻力仍然有效）
+				// 2. 在保留数量范围内（保留最新的 OrderBlockNumber 个）
+				if !closeDecimal.GreaterThan(e.OrderBlockBearish[j].High) && j <= orderBlockNumber {
+					if validCount != j {
+						e.OrderBlockBearish[validCount] = e.OrderBlockBearish[j]
+					}
+					validCount++
+				}
+			}
+			e.OrderBlockBearish = e.OrderBlockBearish[:validCount]
 		}
 
-		// 移除已失效的看跌订单区块
-		var orderBlockBearishList = e.OrderBlockBearish
-		var orderBlockBearishRemovelist SmartMoneyConceptsDataOrderBlockList
-
-		for j, v := range orderBlockBearishList {
-			// 价格跌破订单区块的收盘价，该区块失效
-			if close < v.Close && !v.IsTop {
-				orderBlockBearishRemovelist = append(orderBlockBearishRemovelist, v)
-			} else if close > v.High && v.IsTop {
-				// 价格突破订单区块的最高价，该区块失效（阻力失效）
-				orderBlockBearishRemovelist = append(orderBlockBearishRemovelist, v)
-			}
-			// 超过最大保留数量的订单区块需要移除（保留最新的）
-			if j > e.OrderBlockNumber && !orderBlockBearishRemovelist.Contains(v) {
-				orderBlockBearishRemovelist = append(orderBlockBearishRemovelist, v)
-			}
-		}
-		// 执行移除操作
-		for _, v := range orderBlockBearishRemovelist {
-			e.OrderBlockBearish = e.OrderBlockBearish.Remove(v)
+		// 归还对象到对象池
+		if closeDecimalFromPool {
+			decimalPool.Put(closeDecimal)
 		}
 
 		// ========== 相等高点/低点（EQH/EQL）检测 ==========
 		// 识别价格相近的高点或低点，这些区域通常是流动性池
-		if e.EQHEQL_Enable {
+		if eqheqlEnable {
 			// 计算枢轴高点（需要左右各EQHEQL_BarsConfirmation根K线确认）
-			var eq_topArr = ta.PivotHigh(highs[:i+1], e.EQHEQL_BarsConfirmation, e.EQHEQL_BarsConfirmation)
+			var eq_topArr = ta.PivotHigh(highs[:i+1], eqheqlBarsConfirmation, eqheqlBarsConfirmation)
 			var eq_top = eq_topArr[len(eq_topArr)-1]
 
 			// 计算枢轴低点（需要左右各EQHEQL_BarsConfirmation根K线确认）
-			var eq_btmArr = ta.PivotLow(lows[:i+1], e.EQHEQL_BarsConfirmation, e.EQHEQL_BarsConfirmation)
+			var eq_btmArr = ta.PivotLow(lows[:i+1], eqheqlBarsConfirmation, eqheqlBarsConfirmation)
 			var eq_btm = eq_btmArr[len(eq_btmArr)-1]
 
 			// 检测相等高点
@@ -616,16 +492,39 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 
 				// 判断两个高点是否足够接近（基于ATR阈值）
 				// 如果最大值和最小值之间的差距小于ATR*阈值，则认为是相等高点
-				if max < (min + atr[i]*float64(e.EQHEQL_Threshold)/10.0) {
+				if max < (min + atr[i]*float64(eqheqlThreshold)/10.0) {
 					// 标记相等高点线段
-					for candleIndex := eq_top_x; candleIndex <= i-e.EQHEQL_BarsConfirmation; candleIndex++ {
-						e.data[candleIndex].EQH = eq_prev_top
+					// for candleIndex := eq_top_x; candleIndex <= i-e.EQHEQL_BarsConfirmation; candleIndex++ {
+					// 	e.data[candleIndex].EQH = eq_prev_top
+					// }
+
+					// 如果启用了 EQH/EQL 历史记录，添加到列表
+					if eq_prev_top > 0 { // 确保有前一个高点
+						priceDiff := math.Abs(eq_top - eq_prev_top)
+						priceDiffPercent := priceDiff / eq_prev_top
+
+						newEQH := SmartMoneyConceptsDataEqualHighLow{
+							Time:             time.Unix(times[i-eqheqlBarsConfirmation], 0),
+							StartIndex:       i - eqheqlBarsConfirmation,        // 存储索引，用于快速计算 Duration
+							Price:            decimal.NewFromFloat(eq_prev_top), // 使用相等的价格
+							IsHigh:           true,
+							FirstPointTime:   time.Unix(times[eq_top_x], 0),
+							FirstPointPrice:  decimal.NewFromFloat(eq_prev_top),
+							SecondPointTime:  time.Unix(times[i-eqheqlBarsConfirmation], 0),
+							SecondPointPrice: decimal.NewFromFloat(eq_top),
+							PointDistance:    (i - eqheqlBarsConfirmation) - eq_top_x,
+							PriceDifference:  decimal.NewFromFloat(priceDiff),
+							PriceDiffPercent: decimal.NewFromFloat(priceDiffPercent),
+						}
+
+						e.EQHList = append(e.EQHList, newEQH)
+						// e.data[i-e.EQHEQL_BarsConfirmation].NewEQH = newEQH
 					}
 				}
 
 				// 更新前一个高点的价格和位置
 				eq_prev_top = eq_top
-				eq_top_x = i - e.EQHEQL_BarsConfirmation
+				eq_top_x = i - eqheqlBarsConfirmation
 			}
 
 			// 检测相等低点
@@ -637,8 +536,31 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 				// 如果最小值和最大值之间的差距小于ATR*阈值，则认为是相等低点
 				if min > (max - atr[i]*float64(e.EQHEQL_Threshold)/10.0) {
 					// 标记相等低点线段
-					for candleIndex := eq_btm_x; candleIndex <= i-e.EQHEQL_BarsConfirmation; candleIndex++ {
-						e.data[candleIndex].EQL = eq_prev_btm
+					// for candleIndex := eq_btm_x; candleIndex <= i-e.EQHEQL_BarsConfirmation; candleIndex++ {
+					// 	e.data[candleIndex].EQL = eq_prev_btm
+					// }
+
+					// 如果启用了 EQH/EQL 历史记录，添加到列表
+					if eq_prev_btm > 0 { // 确保有前一个低点
+						priceDiff := math.Abs(eq_btm - eq_prev_btm)
+						priceDiffPercent := priceDiff / eq_prev_btm
+
+						newEQL := SmartMoneyConceptsDataEqualHighLow{
+							Time:             time.Unix(times[i-e.EQHEQL_BarsConfirmation], 0),
+							StartIndex:       i - e.EQHEQL_BarsConfirmation,     // 存储索引，用于快速计算 Duration
+							Price:            decimal.NewFromFloat(eq_prev_btm), // 使用相等的价格
+							IsHigh:           false,
+							FirstPointTime:   time.Unix(times[eq_btm_x], 0),
+							FirstPointPrice:  decimal.NewFromFloat(eq_prev_btm),
+							SecondPointTime:  time.Unix(times[i-e.EQHEQL_BarsConfirmation], 0),
+							SecondPointPrice: decimal.NewFromFloat(eq_btm),
+							PointDistance:    (i - e.EQHEQL_BarsConfirmation) - eq_btm_x,
+							PriceDifference:  decimal.NewFromFloat(priceDiff),
+							PriceDiffPercent: decimal.NewFromFloat(priceDiffPercent),
+						}
+
+						e.EQLList = append(e.EQLList, newEQL)
+						// e.data[i-e.EQHEQL_BarsConfirmation].NewEQL = newEQL
 					}
 				}
 
@@ -652,40 +574,61 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 		// 根据当前趋势方向判断高低点的强弱属性
 
 		// 处理高点：下跌趋势中的高点为强高点，上涨趋势中的高点为弱高点
-		if trend < 0 {
-			// 下跌趋势：高点是重要的阻力位（强高点）
-			e.StrongHigh = SmartMoneyConceptsDataStrongWeak{
-				Time:  time.Unix(times[trail_up_x], 0),
-				Value: trail_up,
+		if strongWeakEnable {
+			if e.StrongWeakDetail == nil {
+				e.StrongWeakDetail = &StrongWeakDetail{}
 			}
-		} else {
-			// 上涨趋势：高点可能会被突破（弱高点）
-			e.WeakHigh = SmartMoneyConceptsDataStrongWeak{
-				Time:  time.Unix(times[trail_up_x], 0),
-				Value: trail_up,
+			if trend < 0 {
+				// 下跌趋势：高点是重要的阻力位（强高点）
+				e.StrongWeakDetail.StrongHigh = SmartMoneyConceptsDataStrongWeak{
+					Time:  time.Unix(times[trail_up_x], 0),
+					Value: decimal.NewFromFloat(trail_up),
+					Role:  CoinSMCKeyLevelRoleStrongResistance, // 强阻力位
+				}
+			} else {
+				// 上涨趋势：高点可能会被突破（弱高点）
+				e.StrongWeakDetail.WeakHigh = SmartMoneyConceptsDataStrongWeak{
+					Time:  time.Unix(times[trail_up_x], 0),
+					Value: decimal.NewFromFloat(trail_up),
+					Role:  CoinSMCKeyLevelRoleWeakResistance, // 弱阻力位
+				}
 			}
-		}
 
-		// 处理低点：上涨趋势中的低点为强低点，下跌趋势中的低点为弱低点
-		if trend > 0 {
-			// 上涨趋势：低点是重要的支撑位（强低点）
-			e.StrongLow = SmartMoneyConceptsDataStrongWeak{
-				Time:  time.Unix(times[trail_dn_x], 0),
-				Value: trail_dn,
-			}
-		} else {
-			// 下跌趋势：低点可能会被突破（弱低点）
-			e.WeakLow = SmartMoneyConceptsDataStrongWeak{
-				Time:  time.Unix(times[trail_dn_x], 0),
-				Value: trail_dn,
+			// 处理低点：上涨趋势中的低点为强低点，下跌趋势中的低点为弱低点
+			if trend > 0 {
+				// 上涨趋势：低点是重要的支撑位（强低点）
+				e.StrongWeakDetail.StrongLow = SmartMoneyConceptsDataStrongWeak{
+					Time:  time.Unix(times[trail_dn_x], 0),
+					Value: decimal.NewFromFloat(trail_dn),
+					Role:  CoinSMCKeyLevelRoleStrongSupport, // 强支撑位
+				}
+			} else {
+				// 下跌趋势：低点可能会被突破（弱低点）
+				e.StrongWeakDetail.WeakLow = SmartMoneyConceptsDataStrongWeak{
+					Time:  time.Unix(times[trail_dn_x], 0),
+					Value: decimal.NewFromFloat(trail_dn),
+					Role:  CoinSMCKeyLevelRoleWeakSupport, // 弱支撑位
+				}
 			}
 		}
 
 		// 设置当前K线的时间戳
-		e.data[i].Time = time.Unix(timeUnix, 0)
+		// e.data[i].Time = time.Unix(timeUnix, 0)
+
+		// ========== CHoCH/BOS 结构突破处理 ==========
+		// 注意：信号在创建时就已经包含了完整的生命周期信息（Duration、FilledTime等）
+		// 因此不需要额外的失效检测逻辑
+		// if e.StructureBreak_Enable {
+		// 	e.checkStructureBreakInvalidation(i, highs, lows, closes, times)
+		// }
+
+		// ========== EQH/EQL 相等高低点处理 ==========
+		if e.EQHEQL_Enable {
+			e.checkEQHEQLInvalidation(i, highs, lows, times)
+		}
 
 		// ========== Fair Value Gap 处理 ==========
-		if e.FVG_Enable && i >= 2 { // 至少需要 3 根 K 线
+		if fvgEnable && i >= 2 { // 至少需要 3 根 K 线
 
 			// 1. 检查现有 FVG 是否失效
 			e.checkFVGInvalidation(i, highs, lows, times)
@@ -693,19 +636,116 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 			// 2. 检测新的 FVG
 			e.detectNewFVG(i, ohlc.Open, highs, lows, closes, times, cumulativeDelta)
 
-			// 3. 将当前 FVG 状态传播到当前 K 线数据
-			e.data[i].BullishFVG = e.currentBullishFVG
-			e.data[i].BearishFVG = e.currentBearishFVG
-
-			// 4. 更新累积 delta（用于动态阈值）
+			// 3. 更新累积 delta（用于动态阈值）
 			if i > 0 && ohlc.Open[i-1] != 0 {
 				barDeltaPercent := (closes[i-1] - ohlc.Open[i-1]) / ohlc.Open[i-1]
 				cumulativeDelta += math.Abs(barDeltaPercent)
 			}
 		}
+
 	}
 
 	return e
+}
+
+// handleStructureBreak 处理结构突破信号（BOS/CHoCH）的公共逻辑
+//
+// 该函数提取了4个重复代码块的公共逻辑，用于检测和记录市场结构突破信号。
+//
+// 参数:
+//   - currentIndex: 当前K线索引
+//   - pivotIndex: 摆动点K线索引
+//   - pivotPrice: 摆动点价���
+//   - currentTrend: 当前趋势（1=上涨，-1=下跌）
+//   - trendCheck: CHoCH判断条件（当前趋势 < 0 或 > 0）
+//   - period: 周期类型（PeriodTypeShort 或 PeriodTypeLong）
+//   - position: 位置类型（PositionTypeHigh 或 PositionTypeLow）
+//   - closes: 收盘价数组
+//   - times: 时间戳数组
+//
+// 返回:
+//   - signalType: 信号类型（SignalTypeCHoCH 或 SignalTypeBOS）
+//   - signal: 生成的结构突破信号（如果启用了记录）
+//   - shouldRecord: 是否应该记录该信号
+func (e *SmartMoneyConcepts) handleStructureBreak(
+	currentIndex, pivotIndex int,
+	pivotPrice float64,
+	currentTrend int,
+	trendCheck bool,
+	period PeriodType,
+	position PositionType,
+	closes []float64,
+	times []int64,
+) (SignalType, SmartMoneyConceptsDataStructureBreak, bool) {
+
+	// 判断是否为CHoCH（趋势反转）
+	var signalType SignalType
+	if trendCheck {
+		signalType = SignalTypeCHoCH
+	} else {
+		signalType = SignalTypeBOS
+	}
+
+	// 如果未启用结构突破记录，直接返回
+	if !e.StructureBreak_Enable {
+		return signalType, SmartMoneyConceptsDataStructureBreak{}, false
+	}
+
+	// 创建结构突破信号
+	pivotTime := time.Unix(times[pivotIndex], 0)
+	signal := SmartMoneyConceptsDataStructureBreak{
+		Time:       pivotTime, // Time = PivotTime，信号产生时间就是摆动点时间
+		Type:       signalType,
+		Period:     period,
+		Position:   position,
+		BreakPrice: decimal.NewFromFloat(pivotPrice),
+		ClosePrice: decimal.NewFromFloat(closes[currentIndex]),
+		BreakTime:  time.Unix(times[currentIndex], 0), // 实际突破时间
+		PivotTime:  pivotTime,
+		PivotPrice: decimal.NewFromFloat(pivotPrice),
+		Duration:   currentIndex - pivotIndex + 1, // K线标记区间长度
+	}
+
+	return signalType, signal, true
+}
+
+// recordStructureBreak 将结构突破信号记录到对应的列表中
+//
+// 根据信号的周期、位置和类型，将信号添加到对应的列表中。
+//
+// 参数:
+//   - signal: 结构突破信号
+func (e *SmartMoneyConcepts) recordStructureBreak(signal SmartMoneyConceptsDataStructureBreak) {
+	// 根据位置、类型和周期选择对应的列表
+	if signal.Position == PositionTypeHigh {
+		if signal.Type == SignalTypeCHoCH {
+			if signal.Period == PeriodTypeShort {
+				e.HighCHoCHShortList = append(e.HighCHoCHShortList, signal)
+			} else {
+				e.HighCHoCHLongList = append(e.HighCHoCHLongList, signal)
+			}
+		} else {
+			if signal.Period == PeriodTypeShort {
+				e.HighBOSShortList = append(e.HighBOSShortList, signal)
+			} else {
+				e.HighBOSLongList = append(e.HighBOSLongList, signal)
+			}
+		}
+	} else {
+		if signal.Type == SignalTypeCHoCH {
+			if signal.Period == PeriodTypeShort {
+				e.LowCHoCHShortList = append(e.LowCHoCHShortList, signal)
+			} else {
+				e.LowCHoCHLongList = append(e.LowCHoCHLongList, signal)
+			}
+		} else {
+			if signal.Period == PeriodTypeShort {
+				e.LowBOSShortList = append(e.LowBOSShortList, signal)
+			} else {
+				e.LowBOSLongList = append(e.LowBOSLongList, signal)
+			}
+		}
+	}
 }
 
 // obCoord 识别并记录订单区块（Order Block）的坐标和范围
@@ -740,7 +780,7 @@ func (e *SmartMoneyConcepts) obCoord(useMax bool, index, loc int, highs, lows, a
 			var l = lows[i]
 
 			// 仅考虑波动范围小于2倍ATR的K线（排除异常波动）
-			if (h - l) < ob_threshold[i]*2 {
+			if (h - l) < ob_threshold[i]*OrderBlockATRMultiplier {
 				var idxPrev = e.idxPrevBullish
 				if obType == 2 {
 					idxPrev = e.idxPrevBearish
@@ -754,9 +794,10 @@ func (e *SmartMoneyConcepts) obCoord(useMax bool, index, loc int, highs, lows, a
 				idx = commonutils.If(max == h, i, idxPrev).(int)
 
 				// 更新对应类型的OB索引
-				if obType == 1 {
+				switch obType {
+				case 1:
 					e.idxPrevBullish = idx
-				} else if obType == 2 {
+				case 2:
 					e.idxPrevBearish = idx
 				}
 			}
@@ -768,7 +809,7 @@ func (e *SmartMoneyConcepts) obCoord(useMax bool, index, loc int, highs, lows, a
 			var l = lows[i]
 
 			// 仅考虑波动范围小于2倍ATR的K线（排除异常波动）
-			if (h - l) < ob_threshold[i]*2 {
+			if (h - l) < ob_threshold[i]*OrderBlockATRMultiplier {
 				var idxPrev = e.idxPrevBullish
 				if obType == 2 {
 					idxPrev = e.idxPrevBearish
@@ -782,11 +823,13 @@ func (e *SmartMoneyConcepts) obCoord(useMax bool, index, loc int, highs, lows, a
 				idx = commonutils.If(min == l, i, idxPrev).(int)
 
 				// 更新对应类型的OB索引
-				if obType == 1 {
+				switch obType {
+				case 1:
 					e.idxPrevBullish = idx
-				} else if obType == 2 {
+				case 2:
 					e.idxPrevBearish = idx
 				}
+
 			}
 		}
 	}
@@ -798,12 +841,12 @@ func (e *SmartMoneyConcepts) obCoord(useMax bool, index, loc int, highs, lows, a
 
 	// 创建新的订单区块并添加到列表
 	list = list.Add(SmartMoneyConceptsDataOrderBlock{
-		IsTop: useMax,                   // 是否是顶部区块
-		Time:  time.Unix(times[idx], 0), // 订单区块的时间
-		Open:  opens[idx],               // 开盘价
-		Close: closes[idx],              // 收盘价
-		High:  highs[idx],               // 最高价（阻力位）
-		Low:   lows[idx],                // 最低价（支撑位）
+		IsTop: useMax,                            // 是否是顶部区块
+		Time:  time.Unix(times[idx], 0),          // 订单区块的时间
+		Open:  decimal.NewFromFloat(opens[idx]),  // 开盘价
+		Close: decimal.NewFromFloat(closes[idx]), // 收盘价
+		High:  decimal.NewFromFloat(highs[idx]),  // 最高价（阻力位）
+		Low:   decimal.NewFromFloat(lows[idx]),   // 最低价（支撑位）
 	})
 	return list
 }
@@ -825,34 +868,35 @@ func (e *SmartMoneyConcepts) obCoord(useMax bool, index, loc int, highs, lows, a
 // 参数:
 //   - highs: 最高价数组
 //   - lows: 最低价数组
-//   - lenght: 回溯周期长度
+//   - length: 回溯周期长度
 //   - index: 当前K线索引（用于调试，实际未使用）
 //   - osType: 振荡器类型（1=长周期，2=短周期）
 //
 // 返回:
 //   - top: 检测到的摆动高点价格（0表示未检测到）
 //   - btm: 检测到的摆动低点价格（0表示未检测到）
-func (e *SmartMoneyConcepts) swings(highs, lows []float64, lenght, index int, osType int) (float64, float64) {
+func (e *SmartMoneyConcepts) swings(highs, lows []float64, length, osType int) (float64, float64) {
 	// 计算回溯期内的最高价和最低价
-	var upper = ta.Highest(highs, lenght)
-	var lower = ta.Lowest(lows, lenght)
+	var upper = ta.Highest(highs, length)
+	var lower = ta.Lowest(lows, length)
 
-	// 获取lenght根K线之前的高点和低点
+	// 获取length根K线之前的高点和低点
 	// 这是用来判断是否形成摆动点的参考价格
 	var h = highs[len(highs)-1]
-	if len(highs)-lenght-1 >= 0 {
-		h = highs[len(highs)-lenght-1]
+	if len(highs)-length-1 >= 0 {
+		h = highs[len(highs)-length-1]
 	}
 	var l = lows[len(lows)-1]
-	if len(lows)-lenght-1 >= 0 {
-		l = lows[len(lows)-lenght-1]
+	if len(lows)-length-1 >= 0 {
+		l = lows[len(lows)-length-1]
 	}
 
 	// 获取前一个振荡器状态
 	var os, osPrev int
-	if osType == 1 {
+	switch osType {
+	case 1:
 		osPrev = e.os1Prev // 长周期振荡器状态
-	} else if osType == 2 {
+	case 2:
 		osPrev = e.os2Prev // 短周期振荡器状态
 	}
 
@@ -879,16 +923,17 @@ func (e *SmartMoneyConcepts) swings(highs, lows []float64, lenght, index int, os
 	}
 
 	// 保存当前振荡器状态供下次使用
-	if osType == 1 {
+	switch osType {
+	case 1:
 		e.os1Prev = os
-	} else if osType == 2 {
+	case 2:
 		e.os2Prev = os
 	}
 
 	return top, btm
 }
 
-// checkFVGInvalidation 检查并清除失效的 FVG
+// checkFVGInvalidation 检查并清除失效的 FVG（遍历所有活跃 FVG）
 //
 // 失效条件：
 //   - 看涨 FVG: 当前 K 线最低价 < FVG 底部（价格向下回填缺口）
@@ -903,60 +948,86 @@ func (e *SmartMoneyConcepts) swings(highs, lows []float64, lenght, index int, os
 //   - lows: 最低价数组
 //   - times: 时间戳数组
 func (e *SmartMoneyConcepts) checkFVGInvalidation(index int, highs, lows []float64, times []int64) {
-	// 检查看涨 FVG 是否失效
-	if e.currentBullishFVG.IsValid() {
-		if lows[index] < e.currentBullishFVG.Bottom {
+	// 从对象池获取 decimal 对象
+	lowsDecimal := decimalPool.Get().(*decimal.Decimal)
+	highDecimal := decimalPool.Get().(*decimal.Decimal)
+	defer func() {
+		decimalPool.Put(lowsDecimal)
+		decimalPool.Put(highDecimal)
+	}()
+
+	*lowsDecimal = decimal.NewFromFloat(lows[index])
+	*highDecimal = decimal.NewFromFloat(highs[index])
+
+	// 检查所有看涨 FVG 是否失效 - 使用原地过滤算法
+	validCount := 0
+	for i := range e.BullishFVGList {
+		fvg := &e.BullishFVGList[i]
+
+		// 更新持续时间（直接使用 StartIndex，避免 O(n) 查找）
+		fvg.Duration = index - fvg.StartIndex
+
+		if lowsDecimal.LessThan(fvg.Bottom) {
 			// 价格跌破 FVG 底部，FVG 失效
 
 			// 记录失效信息
-			e.currentBullishFVG.FilledTime = time.Unix(times[index], 0)
-			e.currentBullishFVG.FilledPrice = lows[index]
-			e.currentBullishFVG.Duration = index - e.fvgBullishStartIndex
-
-			// 在当前 K 线数据中记录失效的 FVG
-			e.data[index].FilledBullishFVG = e.currentBullishFVG
+			fvg.FilledTime = time.Unix(times[index], 0)
+			fvg.FilledPrice = *lowsDecimal
 
 			// 如果启用了历史记录，添加到历史列表
 			if e.FVG_KeepHistory {
-				e.FVG_History = append(e.FVG_History, e.currentBullishFVG)
+				e.FVG_History = append(e.FVG_History, *fvg)
 			}
-
-			// 清空当前活跃的看涨 FVG
-			e.currentBullishFVG.Clear()
+			// 不保留到有效列表
+		} else {
+			// FVG 仍然有效，保留在列表中
+			if validCount != i {
+				e.BullishFVGList[validCount] = *fvg
+			}
+			validCount++
 		}
 	}
+	e.BullishFVGList = e.BullishFVGList[:validCount]
 
-	// 检查看跌 FVG 是否失效
-	if e.currentBearishFVG.IsValid() {
-		if highs[index] > e.currentBearishFVG.Top {
+	// 检查所有看跌 FVG 是否失效 - 使用原地过滤算法
+	validCount = 0
+	for i := range e.BearishFVGList {
+		fvg := &e.BearishFVGList[i]
+
+		// 更新持续时间（直接使用 StartIndex，避免 O(n) 查找）
+		fvg.Duration = index - fvg.StartIndex
+
+		if highDecimal.GreaterThan(fvg.Top) {
 			// 价格突破 FVG 顶部，FVG 失效
 
 			// 记录失效信息
-			e.currentBearishFVG.FilledTime = time.Unix(times[index], 0)
-			e.currentBearishFVG.FilledPrice = highs[index]
-			e.currentBearishFVG.Duration = index - e.fvgBearishStartIndex
-
-			// 在当前 K 线数据中记录失效的 FVG
-			e.data[index].FilledBearishFVG = e.currentBearishFVG
+			fvg.FilledTime = time.Unix(times[index], 0)
+			fvg.FilledPrice = *highDecimal
 
 			// 如果启用了历史记录，添加到历史列表
 			if e.FVG_KeepHistory {
-				e.FVG_History = append(e.FVG_History, e.currentBearishFVG)
+				e.FVG_History = append(e.FVG_History, *fvg)
 			}
-
-			// 清空当前活跃的看跌 FVG
-			e.currentBearishFVG.Clear()
+			// 不保留到有效列表
+		} else {
+			// FVG 仍然有效，保留在列表中
+			if validCount != i {
+				e.BearishFVGList[validCount] = *fvg
+			}
+			validCount++
 		}
 	}
+	e.BearishFVGList = e.BearishFVGList[:validCount]
 }
 
-// detectNewFVG 检测新的 Fair Value Gap
+// detectNewFVG 检测新的 Fair Value Gap 并添加到列表
 //
 // FVG 形成条件（三根 K 线模式）：
-//   看涨 FVG: 当前 K 线低点 > 两根前 K 线高点（存在向上缺口）
-//            且上一根 K 线收盘价 > 两根前 K 线高点（确认方向）
-//   看跌 FVG: 当前 K 线高点 < 两根前 K 线低点（存在向下缺口）
-//            且上一根 K 线收盘价 < 两根前 K 线低点（确认方向）
+//
+//	看涨 FVG: 当前 K 线低点 > 两根前 K 线高点（存在向上缺口）
+//	         且上一根 K 线收盘价 > 两根前 K 线高点（确认方向）
+//	看跌 FVG: 当前 K 线高点 < 两根前 K 线低点（存在向下缺口）
+//	         且上一根 K 线收盘价 < 两根前 K 线低点（确认方向）
 //
 // 参数:
 //   - index: 当前 K 线索引
@@ -985,86 +1056,141 @@ func (e *SmartMoneyConcepts) detectNewFVG(index int, opens, highs, lows, closes 
 	threshold := 0.0
 	if e.FVG_AutoThreshold && index > 0 {
 		// 阈值 = 平均 K 线变化的 2 倍
-		threshold = (cumulativeDelta / float64(index)) * 2
+		threshold = (cumulativeDelta / float64(index)) * FVGAutoThresholdMultiplier
 	}
 
 	// 检测看涨 FVG
 	if currentLow > last2High && // 存在向上缺口
 		lastClose > last2High && // 收盘价确认方向
-		barDeltaPercent > threshold && // 超过动态阈值
-		!e.currentBullishFVG.IsValid() { // 当前没有活跃的看涨 FVG
+		barDeltaPercent > threshold { // 超过动态阈值
 
 		// 创建新的看涨 FVG
-		e.currentBullishFVG = SmartMoneyConceptsDataFairValueGap{
-			Time:      time.Unix(times[index], 0),
-			Top:       currentLow, // FVG 上边界 = 当前低点
-			Bottom:    last2High,  // FVG 下边界 = 两根前高点
-			IsBullish: true,
+		// 注意: FVG 由三根 K 线形成,记录中间那根 K 线(index-1)的时间
+		newFVG := SmartMoneyConceptsDataFairValueGap{
+			Time:       time.Unix(times[index-1], 0),     // 中间 K 线的时间
+			StartIndex: index - 1,                        // 存储索引，用于快速计算 Duration
+			Top:        decimal.NewFromFloat(currentLow), // FVG 上边界 = 当前低点
+			Bottom:     decimal.NewFromFloat(last2High),  // FVG 下边界 = 两根前高点
+			IsBullish:  true,
+			Duration:   0, // 初始持续时间为0，从index开始计算
 		}
-		e.fvgBullishStartIndex = index
+
+		// 添加到看涨 FVG 列表（添加到列表头部，类似 Pine Script 的 unshift）
+		e.BullishFVGList = append([]SmartMoneyConceptsDataFairValueGap{newFVG}, e.BullishFVGList...)
 
 		// 在当前 K 线数据中标记新产生的 FVG
-		e.data[index].NewBullishFVG = e.currentBullishFVG
+		// e.data[index].NewBullishFVG = newFVG
 	}
 
 	// 检测看跌 FVG
 	if currentHigh < last2Low && // 存在向下缺口
 		lastClose < last2Low && // 收盘价确认方向
-		-barDeltaPercent > threshold && // 超过动态阈值（注意负号）
-		!e.currentBearishFVG.IsValid() { // 当前没有活跃的看跌 FVG
+		-barDeltaPercent > threshold { // 超过动态阈值（注意负号）
 
 		// 创建新的看跌 FVG
-		e.currentBearishFVG = SmartMoneyConceptsDataFairValueGap{
-			Time:      time.Unix(times[index], 0),
-			Top:       last2Low,     // FVG 上边界 = 两根前低点
-			Bottom:    currentHigh,  // FVG 下边界 = 当前高点
-			IsBullish: false,
+		// 注意: FVG 由三根 K 线形成,记录中间那根 K 线(index-1)��时间
+		newFVG := SmartMoneyConceptsDataFairValueGap{
+			Time:       time.Unix(times[index-1], 0),      // 中间 K 线的时间
+			StartIndex: index - 1,                         // 存储索引，用于快速计算 Duration
+			Top:        decimal.NewFromFloat(last2Low),    // FVG 上边界 = 两根前低点
+			Bottom:     decimal.NewFromFloat(currentHigh), // FVG 下边界 = 当前高点
+			IsBullish:  false,
+			Duration:   0, // 初始持续时间为0，从index开始计算
 		}
-		e.fvgBearishStartIndex = index
+
+		// 添加到看跌 FVG 列表（添加到列表头部，类似 Pine Script 的 unshift）
+		e.BearishFVGList = append([]SmartMoneyConceptsDataFairValueGap{newFVG}, e.BearishFVGList...)
 
 		// 在当前 K 线数据中标记新产生的 FVG
-		e.data[index].NewBearishFVG = e.currentBearishFVG
+		// e.data[index].NewBearishFVG = newFVG
 	}
 }
 
-// GetData 获取所有K线的SMC计算结果
+// checkEQHEQLInvalidation 检查并更新所有 EQH/EQL 信号的状态
 //
-// 如果数据尚未计算，会自动调用 Calculation() 方法进行计算。
-// 该方法实现了延迟计算模式（lazy evaluation）。
+// 功能说明：
+//  1. 遍历所有 EQH 和 EQL 列表
+//  2. 更新每个信号的持续时间
+//  3. 检查失效条件并标记失效信号
+//  4. 将失效的信号移至历史记录（如果启用）
 //
-// 返回:
-//   - []SmartMoneyConceptsData: 包含每个K线的SMC指标数据的切片
-func (e *SmartMoneyConcepts) GetData() []SmartMoneyConceptsData {
-	// 如果数据未计算，先执行计算
-	if len(e.data) == 0 {
-		e = e.Calculation()
+// 失效条件：
+//   - EQH（相等高点）: 价格向上突破该水平（high > Price）
+//   - EQL（相等低点）: 价格向下突破该水平（low < Price）
+//
+// 参数:
+//   - index: 当前 K 线索引
+//   - highs: 最高价数组
+//   - lows: 最低价数组
+//   - times: 时间戳数组
+func (e *SmartMoneyConcepts) checkEQHEQLInvalidation(index int, highs, lows []float64, times []int64) {
+	// 从对象池获取 decimal 对象
+	currentHigh := decimalPool.Get().(*decimal.Decimal)
+	currentLow := decimalPool.Get().(*decimal.Decimal)
+	defer func() {
+		decimalPool.Put(currentHigh)
+		decimalPool.Put(currentLow)
+	}()
+
+	*currentHigh = decimal.NewFromFloat(highs[index])
+	*currentLow = decimal.NewFromFloat(lows[index])
+	currentTime := time.Unix(times[index], 0)
+
+	// 检查所有 EQH（相等高点）是否失效 - 使用原地过滤算法
+	validCount := 0
+	for i := range e.EQHList {
+		eqh := &e.EQHList[i]
+
+		// 更新持续时间（直接使用 StartIndex，避免 O(n) 查找）
+		eqh.Duration = index - eqh.StartIndex
+
+		// 检查失效条件：价格向上突破相等高点
+		if currentHigh.GreaterThan(eqh.Price) {
+			eqh.FilledTime = currentTime
+			eqh.FilledPrice = *currentHigh
+			eqh.BreakDirection = "Upward"
+
+			// 添加到历史记录
+			if e.EQHEQL_KeepHistory {
+				e.EQHEQL_History = append(e.EQHEQL_History, *eqh)
+			}
+			// 不保留到有效列表
+		} else {
+			// EQH 仍然有效，更新后保留
+			if validCount != i {
+				e.EQHList[validCount] = *eqh
+			}
+			validCount++
+		}
 	}
-	return e.data
+	e.EQHList = e.EQHList[:validCount]
+
+	// 检查所有 EQL（相等低点）是否失效 - 使用原地过滤算法
+	validCount = 0
+	for i := range e.EQLList {
+		eql := &e.EQLList[i]
+
+		// 更新持续时间（直接使用 StartIndex，避免 O(n) 查找）
+		eql.Duration = index - eql.StartIndex
+
+		// 检查失效条件：价格向下突破相等低点
+		if currentLow.LessThan(eql.Price) {
+			eql.FilledTime = currentTime
+			eql.FilledPrice = *currentLow
+			eql.BreakDirection = "Downward"
+
+			// 添加到历史记录
+			if e.EQHEQL_KeepHistory {
+				e.EQHEQL_History = append(e.EQHEQL_History, *eql)
+			}
+			// 不保留到有效列表
+		} else {
+			// EQL 仍然有效，更新后保留
+			if validCount != i {
+				e.EQLList[validCount] = *eql
+			}
+			validCount++
+		}
+	}
+	e.EQLList = e.EQLList[:validCount]
 }
-
-// AnalysisSide Func
-// func (e *SmartMoneyConcepts) AnalysisSide() utils.SideData {
-// 	sides := make([]utils.Side, len(e.kline.Candles))
-
-// 	if len(e.data) == 0 {
-// 		e = e.Calculation()
-// 	}
-
-// 	for i, v := range e.data {
-// 		if i < 1 {
-// 			continue
-// 		}
-
-// 		if v.UpTrendBegin != 0 {
-// 			sides[i] = utils.Buy
-// 		} else if v.DownTrendBegin != 0 {
-// 			sides[i] = utils.Sell
-// 		} else {
-// 			sides[i] = utils.Hold
-// 		}
-// 	}
-// 	return utils.SideData{
-// 		Name: e.Name,
-// 		Data: sides,
-// 	}
-// }

@@ -106,11 +106,12 @@ func (e *StochasticHeat) Calculation() *StochasticHeat {
 		var getAverage = (stoch1[i] + stoch2[i] + stoch3[i] + stoch4[i] + stoch5[i] + stoch6[i] + stoch7[i] + stoch8[i] + stoch9[i] + stoch10[i] + stoch11[i] + stoch12[i] + stoch13[i] + stoch14[i] + stoch15[i] + stoch16[i] + stoch17[i] + stoch18[i] + stoch19[i] + stoch20[i] + stoch21[i] + stoch22[i] + stoch23[i] + stoch24[i] + stoch25[i] + stoch26[i] + stoch27[i] + stoch28[i]) / float64(e.PlotNum)
 		fast[i] = ((getAverage / 100) * float64(e.PlotNum))
 
-		if e.MATypes == types.EMA {
+		switch e.MATypes {
+		case types.EMA:
 			slow = ta.Ema(e.SmoothSlow, fast)
-		} else if e.MATypes == types.SMA {
+		case types.SMA:
 			slow = ta.Sma(e.SmoothSlow, fast)
-		} else {
+		default:
 			slow = ta.Wma(e.SmoothSlow, fast)
 		}
 	}
