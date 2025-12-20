@@ -44,7 +44,7 @@ func TestSmartMoneyConcepts(t *testing.T) {
 
 	// 启用 EQH/EQL 历史记录（EQHEQL_Enable 已在构造函数中默认启用）
 	stock.EQHEQL_Enable = true
-	stock.EQHEQL_KeepHistory = true
+	stock.EQHEQL_KeepHistory = false
 
 	stock.Calculation()
 
