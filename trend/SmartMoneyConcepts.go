@@ -61,6 +61,7 @@ func NewSmartMoneyConcepts(klineItem *klines.Item, swingLenght int, eqheql_BarsC
 		FVG_Enable:        true,                   // 默认启用 FVG 检测
 		FVG_AutoThreshold: true,                   // 默认启用自动阈值过滤
 		FVG_KeepHistory:   true,                   // 默认保留历史记录
+		MaxHistorySize:    100,                    // 默认保存最新 100 条历史记录
 	}
 	m.ohlc = klineItem.GetOHLC()
 	return m
@@ -93,6 +94,7 @@ func NewSmartMoneyConceptsOHLC(opens, highs, lows, closes []float64, times []int
 		FVG_Enable:        true,                   // 默认启用 FVG 检测
 		FVG_AutoThreshold: true,                   // 默认启用自动阈值过滤
 		FVG_KeepHistory:   true,                   // 默认保留历史记录
+		MaxHistorySize:    100,                    // 默认保存最新 100 条历史记录
 	}
 	m.ohlc = &klines.OHLC{
 		Open:     opens,
@@ -236,6 +238,15 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 	eqheqlThreshold := e.EQHEQL_Threshold
 	fvgEnable := e.FVG_Enable
 	strongWeakEnable := e.StrongWeak_Enable
+
+	// EQH/EQL 性能优化：预先缓存 Pivot 计算结果
+	// 避免在主循环中重复计算，将时间复杂度从 O(N²) 降至 O(N)
+	var pivotHighCache []float64
+	var pivotLowCache []float64
+	if eqheqlEnable {
+		pivotHighCache = ta.PivotHigh(highs, eqheqlBarsConfirmation, eqheqlBarsConfirmation)
+		pivotLowCache = ta.PivotLow(lows, eqheqlBarsConfirmation, eqheqlBarsConfirmation)
+	}
 
 	// 主循环：遍历所有K线数据进行SMC分析
 	for i := 1; i < len(closes); i++ {
@@ -477,13 +488,9 @@ func (e *SmartMoneyConcepts) Calculation() *SmartMoneyConcepts {
 		// ========== 相等高点/低点（EQH/EQL）检测 ==========
 		// 识别价格相近的高点或低点，这些区域通常是流动性池
 		if eqheqlEnable {
-			// 计算枢轴高点（需要左右各EQHEQL_BarsConfirmation根K线确认）
-			var eq_topArr = ta.PivotHigh(highs[:i+1], eqheqlBarsConfirmation, eqheqlBarsConfirmation)
-			var eq_top = eq_topArr[len(eq_topArr)-1]
-
-			// 计算枢轴低点（需要左右各EQHEQL_BarsConfirmation根K线确认）
-			var eq_btmArr = ta.PivotLow(lows[:i+1], eqheqlBarsConfirmation, eqheqlBarsConfirmation)
-			var eq_btm = eq_btmArr[len(eq_btmArr)-1]
+			// 使用预先缓存的 Pivot 值（性能优化：避免 O(N²) 重复计算）
+			eq_top := pivotHighCache[i]
+			eq_btm := pivotLowCache[i]
 
 			// 检测相等高点
 			if eq_top != 0.0 {
@@ -977,6 +984,10 @@ func (e *SmartMoneyConcepts) checkFVGInvalidation(index int, highs, lows []float
 			// 如果启用了历史记录，添加到历史列表
 			if e.FVG_KeepHistory {
 				e.FVG_History = append(e.FVG_History, *fvg)
+				// 限制历史记录长度，保留最新的记录
+				if e.MaxHistorySize > 0 && len(e.FVG_History) > e.MaxHistorySize {
+					e.FVG_History = e.FVG_History[len(e.FVG_History)-e.MaxHistorySize:]
+				}
 			}
 			// 不保留到有效列表
 		} else {
@@ -1007,6 +1018,10 @@ func (e *SmartMoneyConcepts) checkFVGInvalidation(index int, highs, lows []float
 			// 如果启用了历史记录，添加到历史列表
 			if e.FVG_KeepHistory {
 				e.FVG_History = append(e.FVG_History, *fvg)
+				// 限制历史记录长度，保留最新的记录
+				if e.MaxHistorySize > 0 && len(e.FVG_History) > e.MaxHistorySize {
+					e.FVG_History = e.FVG_History[len(e.FVG_History)-e.MaxHistorySize:]
+				}
 			}
 			// 不保留到有效列表
 		} else {
@@ -1153,6 +1168,10 @@ func (e *SmartMoneyConcepts) checkEQHEQLInvalidation(index int, highs, lows []fl
 			// 添加到历史记录
 			if e.EQHEQL_KeepHistory {
 				e.EQHEQL_History = append(e.EQHEQL_History, *eqh)
+				// 限制历史记录长度，保留最新的记录
+				if e.MaxHistorySize > 0 && len(e.EQHEQL_History) > e.MaxHistorySize {
+					e.EQHEQL_History = e.EQHEQL_History[len(e.EQHEQL_History)-e.MaxHistorySize:]
+				}
 			}
 			// 不保留到有效列表
 		} else {
@@ -1182,6 +1201,10 @@ func (e *SmartMoneyConcepts) checkEQHEQLInvalidation(index int, highs, lows []fl
 			// 添加到历史记录
 			if e.EQHEQL_KeepHistory {
 				e.EQHEQL_History = append(e.EQHEQL_History, *eql)
+				// 限制历史记录长度，保留最新的记录
+				if e.MaxHistorySize > 0 && len(e.EQHEQL_History) > e.MaxHistorySize {
+					e.EQHEQL_History = e.EQHEQL_History[len(e.EQHEQL_History)-e.MaxHistorySize:]
+				}
 			}
 			// 不保留到有效列表
 		} else {

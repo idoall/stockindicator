@@ -43,6 +43,7 @@ func TestSmartMoneyConcepts(t *testing.T) {
 	stock.StructureBreak_Enable = true
 
 	// 启用 EQH/EQL 历史记录（EQHEQL_Enable 已在构造函数中默认启用）
+	stock.EQHEQL_Enable = true
 	stock.EQHEQL_KeepHistory = true
 
 	stock.Calculation()
@@ -210,7 +211,7 @@ func TestSmartMoneyConcepts(t *testing.T) {
 	// 输出历史 FVG 详情（最多显示 20 个）
 	if len(stock.FVG_History) > 0 {
 		output += "\n"
-		output += fmt.Sprintf("========== 历史 FVG 详情 (最近%d个) ==========\n", min(20, len(stock.FVG_History)))
+		output += fmt.Sprintf("========== 历史 FVG 详情 (最近%d/%d个) ==========\n", min(20, len(stock.FVG_History)), len(stock.FVG_History))
 		displayCount := min(20, len(stock.FVG_History))
 		for i := 0; i < displayCount; i++ {
 			// 倒序遍历：从最新的 FVG 开始显示
@@ -283,10 +284,26 @@ func TestSmartMoneyConcepts(t *testing.T) {
 
 	// 检查上方的 EQH（可能被扫单的流动性）
 	for _, v := range stock.EQHList {
-		output += fmt.Sprintf("%+v\n", v)
+		output += fmt.Sprintf("EQH:%+v\n", v)
 	}
 	for _, v := range stock.EQLList {
-		output += fmt.Sprintf("%+v\n", v)
+		output += fmt.Sprintf("EQL:%+v\n", v)
+	}
+
+	// 输出历史 FVG 详情（最多显示 20 个）
+	if len(stock.EQHEQL_History) > 0 {
+		output += "\n"
+		output += fmt.Sprintf("========== 历史 EQHEQL 详情 (最近%d/%d个) ==========\n", min(20, len(stock.EQHEQL_History)), len(stock.EQHEQL_History))
+		displayCount := min(20, len(stock.EQHEQL_History))
+		for i := 0; i < displayCount; i++ {
+			// 倒序遍历：从最新的 FVG 开始显示
+			eqheql := stock.EQHEQL_History[len(stock.EQHEQL_History)-1-i]
+
+			output += fmt.Sprintf("[%d] %+v\n",
+				i,
+				eqheql,
+			)
+		}
 	}
 
 	fmt.Println(output)

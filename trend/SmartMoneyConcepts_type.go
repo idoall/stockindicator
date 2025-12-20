@@ -556,4 +556,10 @@ type SmartMoneyConcepts struct {
 	// atrPeriod ATR 计算周期（默认 200）
 	// 用于订单区块过滤和相等高低点检测
 	atrPeriod int
+
+	// MaxHistorySize 历史记录最大保存数量（默认 100）
+	// 适用于 FVG_History 和 EQHEQL_History
+	// 当历史记录超过此数量时，保留最新的记录，删除最旧的记录
+	// 设置为 0 表示不限制（不推荐，可能导致内存持续增长）
+	MaxHistorySize int
 }

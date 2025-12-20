@@ -19,7 +19,7 @@ func GetTestKlineItem() *klines.Item {
 	var filePath = filepath.Join(workPath, "../")
 
 	filePath = filepath.Join(filePath, "data")
-	filePath = filepath.Join(filePath, "test.json")
+	filePath = filepath.Join(filePath, "binance_spot_BTC-USDT.json")
 
 	// 读取文件内容
 	file, err := commonutils.ReadFile(filePath)
@@ -33,11 +33,21 @@ func GetTestKlineItem() *klines.Item {
 	if err != nil {
 		panic(err)
 	}
-	return &klines.Item{
+
+	klineItem := &klines.Item{
 		Exchange: "testExchange",
-		Interval: klines.ThirtyMin,
+		Interval: klines.OneMin,
 		Candles:  candles,
 	}
+
+	// 转换新的时间维度
+	klineItemConvert, err := klineItem.ConvertToNewInterval(klines.FourHour)
+	if err != nil {
+		panic(err)
+	}
+	klineItemConvert.RemoveDuplicates()
+
+	return klineItemConvert
 }
 
 // func GetTestKline() Klines {
